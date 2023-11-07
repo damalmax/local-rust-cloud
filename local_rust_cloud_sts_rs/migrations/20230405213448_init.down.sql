@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS credentials;
+DROP TABLE IF EXISTS regions;
+DROP TABLE IF EXISTS sts_roles;
+DROP TABLE IF EXISTS accounts;
