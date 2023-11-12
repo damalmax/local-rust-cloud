@@ -14,6 +14,7 @@ The project is created to help with serverless apps testing on local environment
 <details>
 <summary>1. IAM</sumary>
 
+#### Actions supported
 - [ ] add_client_id_to_open_id_connect_provider
 - [ ] add_role_to_instance_profile
 - [ ] add_user_to_group
@@ -27,13 +28,13 @@ The project is created to help with serverless apps testing on local environment
 - [ ] create_instance_profile
 - [ ] create_login_profile
 - [ ] create_open_id_connect_provider
-- [ ] create_policy
+- [X] create_policy
 - [ ] create_policy_version
 - [ ] create_role
 - [ ] create_saml_provider
 - [ ] create_service_linked_role
 - [ ] create_service_specific_credential
-- [ ] create_user
+- [X] create_user
 - [ ] create_virtual_mfa_device
 - [ ] deactivate_mfa_device
 - [ ] delete_access_key
@@ -181,6 +182,7 @@ The project is created to help with serverless apps testing on local environment
 <details>
 <summary>2. STS</summary>
 
+#### Actions supported
 - [X] assume_role
 - [ ] assume_role_with_saml
 - [ ] assume_role_with_web_identity
