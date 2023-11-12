@@ -12,9 +12,8 @@ The project is created to help with serverless apps testing on local environment
 ### Services implementation coverage
 
 <details>
-<summary>1. IAM</sumary>
+<summary>1. IAM</summary>
 
-#### Actions supported
 - [ ] add_client_id_to_open_id_connect_provider
 - [ ] add_role_to_instance_profile
 - [ ] add_user_to_group
@@ -182,7 +181,6 @@ The project is created to help with serverless apps testing on local environment
 <details>
 <summary>2. STS</summary>
 
-#### Actions supported
 - [X] assume_role
 - [ ] assume_role_with_saml
 - [ ] assume_role_with_web_identity
