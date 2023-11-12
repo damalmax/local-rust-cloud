@@ -1,3 +1,4 @@
+use aws_smithy_types::date_time::Format;
 use aws_smithy_xml::encode::ScopeWriter;
 
 ///Adds a new sub-tag to the parent tag with the given name in case if value is defined.
@@ -5,6 +6,20 @@ pub fn write_tag_with_value(parent_tag: &mut ScopeWriter, child_tag_name: &str, 
     if value.is_some() {
         let mut child_tag = parent_tag.start_el(child_tag_name).finish();
         child_tag.data(value.unwrap().into().as_str());
+        child_tag.finish();
+    }
+}
+
+///Adds a new sub-tag to the parent tag with the given name in case if value is defined.
+pub fn write_tag_with_date_value(parent_tag: &mut ScopeWriter, child_tag_name: &str, value: Option<&aws_smithy_types::DateTime>) {
+    if value.is_some() {
+        let mut child_tag = parent_tag.start_el(child_tag_name).finish();
+        child_tag.data(
+            value
+                .map(|date_time| date_time.fmt(Format::DateTime).expect("Failed to format date"))
+                .expect("Failed to format date")
+                .as_str(),
+        );
         child_tag.finish();
     }
 }

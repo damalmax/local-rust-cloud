@@ -44,6 +44,64 @@ impl AwsRequest {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Tag {
+    pub key: String,
+    pub value: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct QueryReader {
+    params: HashMap<String, String>,
+}
+
+impl QueryReader {
+    pub fn new(params: HashMap<String, String>) -> Self {
+        QueryReader { params }
+    }
+
+    pub fn get_string(&self, key: impl Into<String>) -> Option<String> {
+        let key = key.into();
+        if self.params.contains_key(key.as_str()) {
+            Option::Some(self.params.get(key.as_str()).unwrap().to_string())
+        } else {
+            Option::None
+        }
+    }
+
+    pub fn get_i32(&self, key: impl Into<String>) -> Option<i32> {
+        self.get_string(key).map(|v| v.parse::<i32>().expect("Failed to parse property"))
+    }
+
+    pub fn get_i32_or_default(&self, key: impl Into<String>, default: i32) -> Option<i32> {
+        self.get_i32(key).or_else(|| Option::Some(default))
+    }
+
+    fn get_tag_value(&self, key: &str) -> Option<String> {
+        let parts: Vec<&str> = key.split('.').collect();
+        let value_tag_key = format!("Tags.member.{}.Value", parts[2]);
+        self.params.get(&value_tag_key).map(|v| v.to_string())
+    }
+
+    pub fn get_tags(&self) -> Option<Vec<Tag>> {
+        let mut tags: Vec<Tag> = vec![];
+        for param in &self.params {
+            let key = param.0;
+            if key.starts_with("Tags.member.") && key.ends_with(".Key") {
+                let tag = Tag {
+                    key: param.1.to_string(),
+                    value: self.get_tag_value(&key),
+                };
+                tags.push(tag)
+            }
+        }
+        if tags.len() > 0 {
+            return Option::Some(tags);
+        }
+        return Option::None;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use actix_web::web::Bytes;

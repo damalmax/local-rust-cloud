@@ -1,5 +1,5 @@
 use actix_web::dev::Server;
-use actix_web::{post, get, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use dotenv::dotenv;
 use log::LevelFilter;
 use serde::Serialize;
@@ -17,7 +17,6 @@ mod error;
 mod logger;
 mod models;
 mod repository;
-mod secure;
 
 #[cfg(test)]
 mod tests;
@@ -29,13 +28,13 @@ pub struct Response {
     pub message: String,
 }
 
-#[post("/sts/")]
+#[post("/iam/")]
 async fn handle_service_request(body_bytes: web::Bytes, req: HttpRequest) -> impl Responder {
     let aws_request = AwsRequest::from_request(body_bytes, &req);
     return match aws_request {
         Ok(aws_request) => {
             let action_name = aws_request.aws_service_target;
-            let action = action::Sts::from_str(&action_name);
+            let action = action::Iam::from_str(&action_name);
             return action.handle(&req, aws_request.query_params);
         }
         Err(e) => {
@@ -52,7 +51,7 @@ pub struct HealthcheckResponse {
 
 #[get("/healthcheck")]
 async fn handle_healthcheck_request() -> impl Responder {
-    let response = HealthcheckResponse {status: "Ok".to_string()};
+    let response = HealthcheckResponse { status: "Ok".to_string() };
     HttpResponse::Ok().json(response)
 }
 
@@ -81,12 +80,12 @@ async fn create_http_server(app_config_factory: impl Fn() -> AppConfig) -> std::
     let app_data = web::Data::new(sts_db);
 
     // start HTTP server
-    log::info!("Starting Local Rust Cloud STS on port {}", app_config.service_port);
+    log::info!("Starting Local Rust Cloud IAM on port {}", app_config.service_port);
     let server = HttpServer::new(move || {
         App::new()
             .app_data(app_data.clone())
             .service(handle_service_request)
-            .service(handle_healthcheck_request)
+            // .service(handle_healthcheck_request)
             .wrap(actix_web::middleware::Logger::default())
     })
     .bind(("0.0.0.0", app_config.service_port))?

@@ -9,7 +9,7 @@ async fn assume_role() {
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))
-        .endpoint_url(format!("http://localhost:{}/", port))
+        .endpoint_url(format!("http://localhost:{}/sts", port))
         .credentials_provider(SharedCredentialsProvider::new(credentials_provider()))
         .build();
     let client = aws_sdk_sts::Client::new(&config);
