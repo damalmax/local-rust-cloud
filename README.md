@@ -194,6 +194,9 @@ The project is created to help with serverless apps testing on local environment
 # How to contribute
 All services are implemented using [Rust language](https://www.rust-lang.org/).
 
+# Third-Party Software used
+- [SQLite DB](https://www.sqlite.org/index.html) - for storing all services-related data.
+- [etcd](https://etcd.io/) - for storing app configs, shared data, etc.
 
 # Windows Build prerequisites
 
@@ -201,10 +204,12 @@ Guide Used: https://gist.github.com/zeljic/d8b542788b225b1bcb5fce169ee28c55
 
 ### How to build SQLite3 .lib file on Windows 10
 
-1. Download source from [source](https://www.sqlite.org/download.html) (https://www.sqlite.org/download.html)
-	For example: [source](https://www.sqlite.org/2022/sqlite-amalgamation-3390300.zip) `https://www.sqlite.org/2022/sqlite-amalgamation-3390300.zip`
+1. Download source from [source](https://www.sqlite.org/download.html)
+
+For example: [source](https://www.sqlite.org/2022/sqlite-amalgamation-3390300.zip) 
 2. Download binary from [binary](https://www.sqlite.org/download.html)
-	For example: [binary](https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.zip) `https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.zip`
+
+For example: [binary](https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.zip) 
 
 3. Extract both archives to the same directory
 
@@ -212,4 +217,4 @@ Guide Used: https://gist.github.com/zeljic/d8b542788b225b1bcb5fce169ee28c55
 
 5. Go to directory where you've extracted **source code** and **binary** files (via opened cmd)
 6. Run
-	```lib /DEF:sqlite3.def /OUT:sqlite3.lib /MACHINE:x64```
+```lib /DEF:sqlite3.def /OUT:sqlite3.lib /MACHINE:x64```

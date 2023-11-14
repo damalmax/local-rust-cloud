@@ -1,6 +1,7 @@
 use actix_web::dev::ServerHandle;
 use aws_credential_types::provider::ProvideCredentials;
 use std::net::TcpListener;
+use uuid::Uuid;
 
 #[cfg(test)]
 mod assume_role;
@@ -14,10 +15,12 @@ pub struct TestContext {
 impl TestContext {
     pub async fn new() -> TestContext {
         let port = get_available_port().expect("Failed to bind available port for Test Server");
-
-        let server = crate::create_http_server(|| crate::config::AppConfig::with_params("file::memory:?cache=shared", port.clone()))
-            .await
-            .expect("Failed to start Test Server");
+        let db_file_name = Uuid::new_v4();
+        let server = crate::create_http_server(|| {
+            crate::config::AppConfig::with_params(format!("file:{}?mode=memory&cache=shared", db_file_name), port.clone())
+        })
+        .await
+        .expect("Failed to start Test Server");
 
         let server_handle = server.handle();
         actix_rt::spawn(server);
