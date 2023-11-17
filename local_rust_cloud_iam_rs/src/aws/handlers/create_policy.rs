@@ -79,18 +79,13 @@ impl From<IamCreatePolicyOutput> for String {
             local_rust_cloud_xml::write_tag_with_value(&mut policy_tag, "Description", policy.description());
             local_rust_cloud_xml::write_tag_with_date_value(&mut policy_tag, "CreateDate", policy.create_date());
             local_rust_cloud_xml::write_tag_with_date_value(&mut policy_tag, "UpdateDate", policy.update_date());
-            if policy.tags().is_some() {
-                let mut tags_tag = policy_tag.start_el("Tags").finish();
-                let tags = policy.tags().unwrap();
-                for tag in tags {
-                    let mut tag_tag = tags_tag.start_el("Tag").finish();
-                    local_rust_cloud_xml::write_tag_with_value(&mut tag_tag, "Key", tag.key());
-                    local_rust_cloud_xml::write_tag_with_value(&mut tag_tag, "Value", tag.value());
-                    tag_tag.finish();
-                }
-                tags_tag.finish();
-            }
-            policy_tag.finish();
+            local_rust_cloud_xml::write_key_value_tags(
+                &mut policy_tag,
+                "Tag",
+                policy.tags(),
+                |t: &Tag| t.key().map(|v| v.to_string()),
+                |t: &Tag| t.value().map(|v| v.to_string()),
+            );
         }
         create_policy_result_tag.finish();
 

@@ -14,4 +14,8 @@ impl<T: Sized> OutputWrapper<T> {
     pub fn new(inner: T, request_id: String) -> OutputWrapper<T> {
         OutputWrapper { inner, request_id }
     }
+
+    pub fn write_tags() {
+        
+    }
 }

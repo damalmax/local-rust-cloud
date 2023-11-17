@@ -24,6 +24,23 @@ pub fn write_tag_with_date_value(parent_tag: &mut ScopeWriter, child_tag_name: &
     }
 }
 
+pub fn write_key_value_tags<T>(
+    parent_tag: &mut ScopeWriter, group_name: &str, tags: Option<&[T]>, key_mapper: fn(&T) -> Option<String>,
+    value_mapper: fn(&T) -> Option<String>,
+) {
+    if tags.is_some() {
+        let mut tags_tag = parent_tag.start_el(group_name).finish();
+        let tags = tags.unwrap();
+        for tag in tags {
+            let mut tag_tag = tags_tag.start_el("Tag").finish();
+            write_tag_with_value(&mut tag_tag, "Key", key_mapper(&tag));
+            write_tag_with_value(&mut tag_tag, "Value", value_mapper(&tag));
+            tag_tag.finish();
+        }
+        tags_tag.finish();
+    }
+}
+
 #[cfg(test)]
 mod test {
     use aws_smithy_protocol_test::{assert_ok, validate_body, MediaType};
