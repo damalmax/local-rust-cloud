@@ -3,3 +3,5 @@
 target/
 *.session.sql
 *.db
+*.db-shm
+*.db-wal

@@ -3,8 +3,6 @@ use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use log::LevelFilter;
 
-use sqlx::migrate::Migrator;
-
 use crate::config::AppConfig;
 
 mod aws;
@@ -17,8 +15,6 @@ mod repository;
 
 #[cfg(test)]
 mod tests;
-
-pub static MIGRATOR: Migrator = sqlx::migrate!();
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -34,7 +30,7 @@ async fn main() -> std::io::Result<()> {
 async fn create_http_server(app_config_factory: impl Fn() -> AppConfig) -> std::io::Result<Server> {
     let app_config = app_config_factory();
     // connect to DB
-    let sts_db = local_rust_cloud_sqlite::Database::new(&app_config.database_url, &MIGRATOR)
+    let sts_db = local_rust_cloud_sqlite::Database::new(&app_config.database_url, &sqlx::migrate!())
         .await
         .map_err(|err| {
             log::error!("Failed to setup DB: {}", err);
