@@ -24,6 +24,7 @@ futures.workspace = true
 
 rand.workspace = true
 parking_lot.workspace = true
+etcd-client.workspace = true
 
 aws-config.workspace = true
 aws-smithy-xml.workspace = true

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
 
+use actix_web::http::header::HeaderMap;
 use actix_web::{http, web, HttpRequest};
 
 const AWS_SERVICE_TARGET: &str = "X-Amz-Target";
@@ -12,11 +13,21 @@ pub struct AwsRequest {
     pub query_params: HashMap<String, String>,
 }
 
+fn is_form_urlencoded_media_type_request(headers: &HeaderMap) -> bool {
+    if !headers.contains_key(http::header::CONTENT_TYPE) {
+        return false;
+    }
+    let header_value = headers
+        .get(http::header::CONTENT_TYPE)
+        .map(|h| h.to_str().unwrap_or(""))
+        .unwrap_or("");
+    let parts: Vec<&str> = header_value.split(';').collect();
+    return parts.len() != 0 && FORM_URLENCODED_MEDIA_TYPE == parts[0];
+}
+
 impl AwsRequest {
     pub fn from_request(body_bytes: web::Bytes, req: &HttpRequest) -> Result<AwsRequest, Error> {
-        if req.headers().contains_key(http::header::CONTENT_TYPE)
-            && FORM_URLENCODED_MEDIA_TYPE == req.headers().get(http::header::CONTENT_TYPE).unwrap().to_str().unwrap()
-        {
+        if is_form_urlencoded_media_type_request(req.headers()) {
             let body_str = String::from_utf8(body_bytes.to_vec()).expect("failed to parse request body");
             let query = web::Query::<HashMap<String, String>>::from_query(body_str.as_str()).unwrap();
 
@@ -125,6 +136,19 @@ mod tests {
     async fn from_request_with_query_string_in_body() {
         let req = test::TestRequest::default()
             .append_header((http::header::CONTENT_TYPE, FORM_URLENCODED_MEDIA_TYPE))
+            .to_http_request();
+        let aws_request = AwsRequest::from_request(Bytes::from("Action=TestAction&one=1&two=2"), &req).unwrap();
+
+        assert_eq!(aws_request.aws_service_target, "TestAction");
+        assert_eq!(aws_request.query_params.get("Action").unwrap(), "TestAction");
+        assert_eq!(aws_request.query_params.get("one").unwrap(), "1");
+        assert_eq!(aws_request.query_params.get("two").unwrap(), "2");
+    }
+
+    #[test]
+    async fn from_request_with_charset_in_content_type_and_query_string_in_body() {
+        let req = test::TestRequest::default()
+            .append_header((http::header::CONTENT_TYPE, FORM_URLENCODED_MEDIA_TYPE.to_string() + "; charset=utf-8"))
             .to_http_request();
         let aws_request = AwsRequest::from_request(Bytes::from("Action=TestAction&one=1&two=2"), &req).unwrap();
 

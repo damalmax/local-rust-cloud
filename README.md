@@ -124,7 +124,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_service_specific_credentials
 - [ ] list_signing_certificates
 - [ ] list_ssh_public_keys
-- [ ] list_user_policies
+- [ ] list_user_policies/home/damal/Documents/projects/local-rust-cloud/README.md
 - [ ] list_user_tags
 - [ ] list_users
 - [ ] list_virtual_mfa_devices
@@ -214,9 +214,9 @@ The `.env` file is the main configuration file if you run Local Rust Cloud appli
 - [SQLite DB](https://www.sqlite.org/index.html) - for storing all services-related data.
 - [etcd](https://etcd.io/) - for storing app configs, shared data, etc.
 - [Docker](https://www.docker.com) - for applications containerization and some tasks execution.
+- [Protobuf compiler](https://grpc.io/docs/protoc-installation/) - Dependency required for project compilation.
 
 # Windows Build prerequisites
-
 Guide Used: https://gist.github.com/zeljic/d8b542788b225b1bcb5fce169ee28c55
 
 ### How to build SQLite3 .lib file on Windows 10

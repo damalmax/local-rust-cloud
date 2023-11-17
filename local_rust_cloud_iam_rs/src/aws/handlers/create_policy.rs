@@ -24,12 +24,14 @@ impl Iam {
 
         let policy_builder = Policy::builder().policy_name(input.policy_name().unwrap());
         let mut tags = vec![];
-        for tag in input.tags().unwrap() {
-            let tag = Tag::builder()
-                .key(tag.key().map(|v| v.to_string()).unwrap_or(String::new()))
-                .value(tag.value().map(|v| v.to_string()).unwrap_or(String::new()))
-                .build();
-            tags.push(tag);
+        if input.tags().is_some() {
+            for tag in input.tags().unwrap() {
+                let tag = Tag::builder()
+                    .key(tag.key().map(|v| v.to_string()).unwrap_or(String::new()))
+                    .value(tag.value().map(|v| v.to_string()).unwrap_or(String::new()))
+                    .build();
+                tags.push(tag);
+            }
         }
         let policy = policy_builder.set_tags(Option::Some(tags)).build();
         let result = CreatePolicyOutput::builder().policy(policy).build();

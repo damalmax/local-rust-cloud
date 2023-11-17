@@ -1,4 +1,4 @@
-use std::net::TcpListener;
+use std::{io::Error, net::TcpListener};
 
 use actix_web::dev::ServerHandle;
 use parking_lot::ReentrantMutex;
@@ -17,9 +17,15 @@ impl TestSuite {
 
     pub async fn create_test_ctx(&self) -> TestContext {
         let guard = self.lock.lock();
-        let test_context = TestContext::new().await;
-        drop(guard);
-        return test_context;
+        loop {
+            match TestContext::new().await {
+                Ok(test_context) => {
+                    drop(guard);
+                    return test_context;
+                }
+                Err(error) => log::error!("{}", error),
+            }
+        }
     }
 }
 
@@ -30,19 +36,24 @@ pub struct TestContext {
 }
 
 impl TestContext {
-    pub async fn new() -> TestContext {
+    pub async fn new() -> Result<TestContext, Error> {
         let port = get_available_port().expect("Failed to bind available port for Test Server");
 
         let db_file_name = Uuid::new_v4();
         let server = crate::create_http_server(|| {
             crate::config::AppConfig::with_params(format!("file:{}?mode=memory&cache=shared", db_file_name), port.clone())
         })
-        .await
-        .expect("Failed to start Test Server");
-        let server_handle = server.handle();
-        actix_rt::spawn(server);
+        .await;
 
-        TestContext { port, server_handle }
+        match server {
+            Ok(server_handler) => {
+                let server_handle = server_handler.handle();
+                actix_rt::spawn(server_handler);
+
+                return Result::Ok(TestContext { port, server_handle });
+            }
+            Err(e) => return Result::Err(Error::new(e.kind(), e)),
+        }
     }
 
     pub async fn stop_server(&mut self) {
