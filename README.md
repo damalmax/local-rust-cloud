@@ -194,9 +194,26 @@ The project is created to help with serverless apps testing on local environment
 # How to contribute
 All services are implemented using [Rust language](https://www.rust-lang.org/).
 
+# How to run
+
+## Setup `etcd`
+The project requires a working etcd cluster. Below you can find a way how to setup the cluster with Docker Compose. The Docker Compose configuration file could be found in the `docker` folder:
+
+```bash
+$ cd docker && docker compose up -d
+```
+The command above will create a new etcd cluster which consists of 3 instances:
+- 127.0.0.1:2379
+- 127.0.0.1:2479
+- 127.0.0.1:2579
+
+## Setup `.env` file
+The `.env` file is the main configuration file if you run Local Rust Cloud applications from the Github repository.
+
 # Third-Party Software used
 - [SQLite DB](https://www.sqlite.org/index.html) - for storing all services-related data.
 - [etcd](https://etcd.io/) - for storing app configs, shared data, etc.
+- [Docker](https://www.docker.com) - for applications containerization and some tasks execution.
 
 # Windows Build prerequisites
 
