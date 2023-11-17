@@ -5,7 +5,7 @@ use super::*;
 
 #[actix_rt::test]
 async fn create_user() {
-    let mut ctx = TestContext::new().await;
+    let mut ctx = TEST_SUITE.create_test_ctx().await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))

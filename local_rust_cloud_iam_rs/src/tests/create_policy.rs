@@ -5,7 +5,7 @@ use super::*;
 
 #[actix_rt::test]
 async fn create_policy() {
-    let mut ctx = TestContext::new().await;
+    let mut ctx = TEST_SUITE.create_test_ctx().await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))
@@ -28,6 +28,7 @@ async fn create_policy() {
         .expect("Failed to create IAM policy");
 
     assert!(response.policy().is_some());
+    assert!(response.policy().unwrap().tags().unwrap().len() > 0);
 
     ctx.stop_server().await;
 }

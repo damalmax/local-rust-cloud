@@ -20,9 +20,18 @@ impl Iam {
     pub async fn create_policy<'a, I: Into<CreatePolicyInput>>(
         db: &Database, request_id: String, input: I,
     ) -> Result<IamCreatePolicyOutput, Error> {
-        let input = input.into();
+        let input: CreatePolicyInput = input.into();
 
-        let policy = Policy::builder().policy_name(input.policy_name.unwrap()).build();
+        let policy_builder = Policy::builder().policy_name(input.policy_name().unwrap());
+        let mut tags = vec![];
+        for tag in input.tags().unwrap() {
+            let tag = Tag::builder()
+                .key(tag.key().map(|v| v.to_string()).unwrap_or(String::new()))
+                .value(tag.value().map(|v| v.to_string()).unwrap_or(String::new()))
+                .build();
+            tags.push(tag);
+        }
+        let policy = policy_builder.set_tags(Option::Some(tags)).build();
         let result = CreatePolicyOutput::builder().policy(policy).build();
         Result::Ok(OutputWrapper::new(result, request_id))
     }
@@ -42,7 +51,7 @@ impl Into<CreatePolicyInput> for QueryReader {
         } else {
             let mut input_tags: Vec<Tag> = vec![];
             for tag in tags.unwrap() {
-                input_tags.push(Tag::builder().key(tag.key).value(tag.value.unwrap_or("".to_string())).build());
+                input_tags.push(Tag::builder().key(tag.key).value(tag.value.unwrap_or(String::new())).build());
             }
             builder.set_tags(Option::Some(input_tags)).build().unwrap()
         }
@@ -81,7 +90,6 @@ impl From<IamCreatePolicyOutput> for String {
             local_rust_cloud_xml::write_tag_with_date_value(&mut policy_tag, "UpdateDate", policy.update_date());
             local_rust_cloud_xml::write_key_value_tags(
                 &mut policy_tag,
-                "Tag",
                 policy.tags(),
                 |t: &Tag| t.key().map(|v| v.to_string()),
                 |t: &Tag| t.value().map(|v| v.to_string()),

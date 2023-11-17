@@ -58,3 +58,4 @@ aws-sdk-sts = "0.26.0"
 aws-credential-types = "0.55.2"
 
 rand = "0.8.5"
+parking_lot = "0.12.1"

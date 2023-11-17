@@ -65,7 +65,7 @@ impl From<IamCreateUserOutput> for String {
                 let mut tags_tag = user_tag.start_el("Tags").finish();
                 let tags = user.tags().unwrap();
                 for tag in tags {
-                    let mut tag_tag = tags_tag.start_el("Tag").finish();
+                    let mut tag_tag = tags_tag.start_el("Tag.member.0").finish();
                     local_rust_cloud_xml::write_tag_with_value(&mut tag_tag, "Key", tag.key());
                     local_rust_cloud_xml::write_tag_with_value(&mut tag_tag, "Value", tag.value());
                     tag_tag.finish();
