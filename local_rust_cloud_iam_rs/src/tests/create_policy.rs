@@ -17,12 +17,12 @@ async fn create_policy() {
     let response = client
         .create_policy()
         .description("policy-description")
-        .path("some-path")
-        .policy_document("some-policy-document")
+        .path("/")
+        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
         .policy_name("some-policy-name")
         .tags(Tag::builder().key("key1").value("value1").build())
         .tags(Tag::builder().key("key2").value("value2").build())
-        .tags(Tag::builder().key("key2").value("value3").build())
+        .tags(Tag::builder().key("key3").value("value3").build())
         .send()
         .await
         .expect("Failed to create IAM policy");

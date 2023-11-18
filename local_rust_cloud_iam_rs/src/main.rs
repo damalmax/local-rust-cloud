@@ -10,7 +10,7 @@ mod config;
 mod error;
 mod handlers;
 mod logger;
-mod models;
+mod types;
 mod repository;
 
 #[cfg(test)]

@@ -2,7 +2,7 @@ use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use local_rust_cloud_common::{request::AwsRequest, service_handler::ServiceHandler};
 use serde::Serialize;
 
-use crate::aws::handlers::action::Iam;
+use crate::aws::actions::action::Iam;
 
 #[derive(Serialize)]
 pub struct Response {

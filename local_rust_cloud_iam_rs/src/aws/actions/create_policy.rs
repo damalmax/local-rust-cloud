@@ -1,13 +1,19 @@
-use std::fmt::Error;
+use chrono::prelude::Utc;
 
 use aws_sdk_iam::{
     operation::create_policy::{CreatePolicyInput, CreatePolicyOutput},
-    types::{Policy, Tag},
+    types::{Policy as IamPolicy, Tag},
 };
 use aws_smithy_xml::encode::XmlWriter;
 use local_rust_cloud_sqlite::Database;
 
-use super::{action::Iam, constants::XMLNS, query::QueryReader, OutputWrapper};
+use crate::{
+    error::IamError,
+    repository::{policy::PolicyRepo, policy_tag::PolicyTagRepo},
+    types::policy::Policy,
+};
+
+use super::{action::Iam, constants::XMLNS, query::QueryReader, validators::create_policy::validate, OutputWrapper};
 
 const PROPERTY_DESCRIPTION: &str = "Description";
 const PROPERTY_PATH: &str = "Path";
@@ -18,11 +24,30 @@ pub type IamCreatePolicyOutput = OutputWrapper<CreatePolicyOutput>;
 
 impl Iam {
     pub async fn create_policy<'a, I: Into<CreatePolicyInput>>(
-        db: &Database, request_id: String, input: I,
-    ) -> Result<IamCreatePolicyOutput, Error> {
+        db: &Database, account_id: i64, request_id: impl Into<String>, input: I,
+    ) -> Result<IamCreatePolicyOutput, IamError> {
         let input: CreatePolicyInput = input.into();
+        // validate request
+        validate(&input)?;
 
-        let policy_builder = Policy::builder().policy_name(input.policy_name().unwrap());
+        let mut tx = db.new_tx().await.expect("failed to BEGIN a new transaction");
+        let policy_repo = PolicyRepo::new();
+        let tag_repo = PolicyTagRepo::new();
+
+        let arn = format!("arn:aws:iam:{:0>12}:policy/{}", account_id, input.policy_name().unwrap());
+        let current_time = Utc::now().timestamp();
+        let mut policy = Policy::builder()
+            .from_policy_input(&input)
+            .account_id(account_id)
+            .arn(arn)
+            .is_attachable(true)
+            .create_date(current_time)
+            .update_date(current_time)
+            .build()?;
+
+        policy_repo.save(&mut tx, &mut policy).await.expect("failed to save policy");
+
+        let response_policy_builder = IamPolicy::builder().policy_name(input.policy_name().unwrap());
         let mut tags = vec![];
         if input.tags().is_some() {
             for tag in input.tags().unwrap() {
@@ -33,9 +58,11 @@ impl Iam {
                 tags.push(tag);
             }
         }
-        let policy = policy_builder.set_tags(Option::Some(tags)).build();
+        let policy = response_policy_builder.set_tags(Option::Some(tags)).build();
         let result = CreatePolicyOutput::builder().policy(policy).build();
-        Result::Ok(OutputWrapper::new(result, request_id))
+
+        tx.commit().await.expect("failed to COMMIT transaction");
+        Result::Ok(OutputWrapper::new(result, request_id.into()))
     }
 }
 

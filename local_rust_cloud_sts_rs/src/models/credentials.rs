@@ -7,7 +7,7 @@ pub struct Credentials {
     pub access_key_id: String,
     pub secret_access_key: String,
     pub session_token: String,
-    pub expiration: i64, // seconds
+    pub expiration: i64, // in seconds
     pub account_id: i64,
     pub region_id: i64,
 }

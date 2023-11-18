@@ -17,12 +17,12 @@ pub type IamCreateUserOutput = OutputWrapper<CreateUserOutput>;
 
 impl Iam {
     pub async fn create_user<'a, I: Into<CreateUserInput>>(
-        db: &Database, request_id: String, input: I,
+        db: &Database, account_id: i64, request_id: impl Into<String>, input: I,
     ) -> Result<IamCreateUserOutput, Error> {
         let input = input.into();
         let user = User::builder().build();
         let result = CreateUserOutput::builder().user(user).build();
-        Result::Ok(OutputWrapper::new(result, request_id))
+        Result::Ok(OutputWrapper::new(result, request_id.into()))
     }
 }
 
@@ -58,8 +58,6 @@ impl From<IamCreateUserOutput> for String {
         if val.inner.user().is_some() {
             let user = val.inner.user().unwrap();
             let mut user_tag = create_user_result_tag.start_el("User").finish();
-            
-            
 
             if user.tags().is_some() {
                 let mut tags_tag = user_tag.start_el("Tags").finish();

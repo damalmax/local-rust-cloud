@@ -12,7 +12,9 @@ use local_rust_cloud_common::service_handler::ServiceHandler;
 use local_rust_cloud_sqlite::Database;
 use uuid::Uuid;
 
-use super::{query::QueryReader, constants::XMLNS};
+use crate::handlers::iam::Response;
+
+use super::{constants::XMLNS, query::QueryReader};
 
 pub enum Iam {
     AddRoleToInstanceProfile,
@@ -360,6 +362,8 @@ fn unsupported() -> HttpResponse {
 impl ServiceHandler for Iam {
     fn handle(self, req: &HttpRequest, params: HashMap<String, String>) -> HttpResponse {
         let request_id = Uuid::new_v4().to_string();
+        // TODO: populate account ID from token
+        let account_id = 1;
 
         let query_reader = QueryReader::new(params);
         let db = req.app_data::<Data<Database>>().expect("failed to get access to DB").as_ref();
@@ -377,8 +381,11 @@ impl ServiceHandler for Iam {
             Iam::CreateLoginProfile => unsupported(),
             Iam::CreateOpenIdConnectProvider => unsupported(),
             Iam::CreatePolicy => {
-                let output = block_on(Iam::create_policy(db, request_id, query_reader)).unwrap();
-                let body: String = output.into();
+                let output = block_on(Iam::create_policy(db, account_id, request_id, query_reader));
+                let body: String = match output {
+                    Ok(output) => output.into(),
+                    Err(err) => err.into(),
+                };
                 HttpResponse::with_body(StatusCode::OK, BoxBody::new(body))
             }
             Iam::CreatePolicyVersion => unsupported(),
@@ -387,7 +394,7 @@ impl ServiceHandler for Iam {
             Iam::CreateServiceLinkedRole => unsupported(),
             Iam::CreateServiceSpecificCredential => unsupported(),
             Iam::CreateUser => {
-                let output = block_on(Iam::create_user(db, request_id, query_reader)).unwrap();
+                let output = block_on(Iam::create_user(db, account_id, request_id, query_reader)).unwrap();
                 let body: String = output.into();
                 HttpResponse::with_body(StatusCode::OK, BoxBody::new(body))
             }
