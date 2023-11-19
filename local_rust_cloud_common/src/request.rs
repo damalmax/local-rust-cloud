@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::io::{Error, ErrorKind};
 
 use actix_web::http::header::HeaderMap;
@@ -56,9 +57,24 @@ impl AwsRequest {
 }
 
 #[derive(Debug, Clone)]
-pub struct Tag {
+pub struct LocalTag {
+    pub tag_index: String,
     pub key: String,
-    pub value: Option<String>,
+    pub value: String,
+}
+
+impl LocalTag {
+    pub fn tag_index(&self) -> &str {
+        &self.tag_index
+    }
+
+    pub fn key(&self) -> &str {
+        &self.key
+    }
+
+    pub fn value(&self) -> &str {
+        &self.value
+    }
 }
 
 #[derive(Debug)]
@@ -88,20 +104,22 @@ impl QueryReader {
         self.get_i32(key).or_else(|| Option::Some(default))
     }
 
-    fn get_tag_value(&self, key: &str) -> Option<String> {
-        let parts: Vec<&str> = key.split('.').collect();
-        let value_tag_key = format!("Tags.member.{}.Value", parts[2]);
+    fn get_tag_value(&self, key_index: &str) -> Option<String> {
+        let value_tag_key = format!("Tags.member.{}.Value", key_index);
         self.params.get(&value_tag_key).map(|v| v.to_string())
     }
 
-    pub fn get_tags(&self) -> Option<Vec<Tag>> {
-        let mut tags: Vec<Tag> = vec![];
+    pub fn get_tags(&self) -> Option<Vec<LocalTag>> {
+        let mut tags: Vec<LocalTag> = vec![];
         for param in &self.params {
             let key = param.0;
             if key.starts_with("Tags.member.") && key.ends_with(".Key") {
-                let tag = Tag {
+                let parts: Vec<&str> = key.split('.').collect();
+                let key_index = parts[2];
+                let tag = LocalTag {
+                    tag_index: key_index.to_string(),
                     key: param.1.to_string(),
-                    value: self.get_tag_value(&key),
+                    value: self.get_tag_value(key_index).unwrap_or(String::new()),
                 };
                 tags.push(tag)
             }

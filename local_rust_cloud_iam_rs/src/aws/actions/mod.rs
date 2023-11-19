@@ -1,7 +1,10 @@
 pub mod action;
 pub mod constants;
-pub mod create_policy;
+pub mod create_policy_action;
+pub mod create_policy_request;
+pub mod create_policy_response;
 pub mod create_user;
+pub mod create_user_response;
 pub mod errors;
 mod query;
 pub mod response;
@@ -19,6 +22,4 @@ impl<T: Sized> OutputWrapper<T> {
             request_id: request_id.into(),
         }
     }
-
-    pub fn write_tags() {}
 }

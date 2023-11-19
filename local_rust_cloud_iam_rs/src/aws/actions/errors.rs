@@ -1,8 +1,9 @@
 use actix_http::StatusCode;
 use aws_sdk_iam::types::Tag;
 use aws_smithy_xml::encode::XmlWriter;
+use local_rust_cloud_common::request::LocalTag;
 
-use super::{constants::XMLNS, response::IamResponse};
+use super::{constants::IAM_XMLNS, response::IamResponse};
 
 #[derive(Debug, Clone)]
 pub enum IamErrorKind {
@@ -58,12 +59,13 @@ impl IamApiError {
         }
     }
 
-    pub fn too_many_tags(request_id: impl Into<String>, tags: &[Tag], param: &str) -> IamApiError {
+    pub fn too_many_tags(request_id: impl Into<String>, tags: &[LocalTag], param: &str) -> IamApiError {
         IamApiError {
             error_code: StatusCode::BAD_REQUEST,
             request_id: request_id.into(),
             response_type: IamErrorResponseType::WrappedSingle,
             kind: IamErrorKind::InvalidInput,
+            
             message: format!("1 validation error detected: Value '{:?}' at '{}' failed to satisfy constraint: Member must have length less than or equal to 50.", tags, param),
         }
     }
@@ -78,13 +80,13 @@ impl IamApiError {
         }
     }
 
-    pub fn tag_value_too_big(request_id: impl Into<String>, tag_value: &str) -> IamApiError {
+    pub fn tag_value_too_big(request_id: impl Into<String>, tag_value: &str, tag_index: &str) -> IamApiError {
         IamApiError {
             error_code: StatusCode::BAD_REQUEST,
             request_id: request_id.into(),
             response_type: IamErrorResponseType::Multiple,
             kind: IamErrorKind::ValidationError,
-            message: format!("1 validation error detected: Value '{}' at 'tags.X.member.value' failed to satisfy constraint: Member must have length less than or equal to 256.", tag_value),
+            message: format!("1 validation error detected: Value '{}' at 'Tags.member.{}.value' failed to satisfy constraint: Member must have length less than or equal to 256.", tag_value, tag_index),
         }
     }
 
@@ -113,7 +115,7 @@ impl From<IamApiError> for IamResponse {
                 error_tag.finish();
             }
             IamErrorResponseType::WrappedSingle => {
-                let mut error_response_tag = doc.start_el("ErrorResponse").write_ns(XMLNS, None).finish();
+                let mut error_response_tag = doc.start_el("ErrorResponse").write_ns(IAM_XMLNS, None).finish();
                 let mut error_tag = error_response_tag.start_el("Error").finish();
                 local_rust_cloud_xml::write_tag_with_value(&mut error_tag, "Code", Option::Some(value.kind));
                 local_rust_cloud_xml::write_tag_with_value(&mut error_tag, "Message", Option::Some(value.message));
@@ -127,7 +129,7 @@ impl From<IamApiError> for IamResponse {
                 error_response_tag.finish();
             }
             IamErrorResponseType::Multiple => {
-                let mut error_response_tag = doc.start_el("ErrorResponse").write_ns(XMLNS, None).finish();
+                let mut error_response_tag = doc.start_el("ErrorResponse").write_ns(IAM_XMLNS, None).finish();
                 let mut errors_tag = error_response_tag.start_el("Errors").finish();
                 let mut error_tag = errors_tag.start_el("Error").finish();
                 local_rust_cloud_xml::write_tag_with_value(&mut error_tag, "Code", Option::Some(value.kind));

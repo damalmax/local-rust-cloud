@@ -2,6 +2,7 @@ use std::{collections::HashMap, ops::Deref};
 
 use local_rust_cloud_common::request::QueryReader as CommonQueryReader;
 
+#[derive(Debug)]
 pub struct QueryReader(CommonQueryReader);
 
 impl QueryReader {

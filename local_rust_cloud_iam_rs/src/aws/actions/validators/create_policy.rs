@@ -1,10 +1,8 @@
-use aws_sdk_iam::operation::create_policy::CreatePolicyInput;
-
-use crate::aws::actions::errors::IamApiError;
+use crate::aws::actions::{create_policy_request::LocalCreatePolicyInput, errors::IamApiError};
 
 use super::tags;
 
-pub fn validate(request_id: &str, input: &CreatePolicyInput) -> Result<(), IamApiError> {
-    tags::validate(request_id, input.tags())?;
+pub fn validate(request_id: &str, input: &LocalCreatePolicyInput) -> Result<(), IamApiError> {
+    tags::validate(request_id, input.local_tags())?;
     Result::Ok(())
 }
