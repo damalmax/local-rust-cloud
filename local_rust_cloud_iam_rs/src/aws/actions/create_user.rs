@@ -48,7 +48,7 @@ impl Into<CreateUserInput> for QueryReader {
 
 impl From<IamCreateUserOutput> for String {
     fn from(val: IamCreateUserOutput) -> Self {
-        let mut out = String::new();
+        let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);
 
         let mut create_user_response_tag = doc.start_el("CreateUserResponse").write_ns(XMLNS, None).finish();

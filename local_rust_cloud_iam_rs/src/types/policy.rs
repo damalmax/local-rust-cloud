@@ -1,7 +1,7 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyInput;
 use sqlx::FromRow;
 
-use crate::error::IamError;
+use crate::aws::actions::errors::IamApiError;
 
 #[derive(Clone, FromRow, Debug)]
 pub struct Policy {
@@ -117,7 +117,7 @@ impl PolicyBuilder {
         self
     }
 
-    pub fn from_policy_input(mut self, input: &CreatePolicyInput) -> Self {
+    pub fn from_policy_input(self, input: &CreatePolicyInput) -> Self {
         self.policy_name(input.policy_name().unwrap_or(""))
             .path(input.path().unwrap_or("/"))
             // `unwrap` is safe because of request input validator
@@ -125,7 +125,7 @@ impl PolicyBuilder {
             .description(input.description().unwrap_or(""))
     }
 
-    pub fn build(self) -> Result<Policy, IamError> {
+    pub fn build(self) -> Result<Policy, IamApiError> {
         Result::Ok(Policy {
             id: self.id,
             account_id: self.account_id.expect("account_id is not set"),

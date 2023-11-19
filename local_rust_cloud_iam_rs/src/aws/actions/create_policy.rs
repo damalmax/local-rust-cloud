@@ -8,12 +8,14 @@ use aws_smithy_xml::encode::XmlWriter;
 use local_rust_cloud_sqlite::Database;
 
 use crate::{
-    error::IamError,
     repository::{policy::PolicyRepo, policy_tag::PolicyTagRepo},
     types::policy::Policy,
 };
 
-use super::{action::Iam, constants::XMLNS, query::QueryReader, validators::create_policy::validate, OutputWrapper};
+use super::{
+    action::Iam, constants::XMLNS, errors::IamApiError, query::QueryReader, response::IamResponse, validators::create_policy::validate,
+    OutputWrapper,
+};
 
 const PROPERTY_DESCRIPTION: &str = "Description";
 const PROPERTY_PATH: &str = "Path";
@@ -25,12 +27,16 @@ pub type IamCreatePolicyOutput = OutputWrapper<CreatePolicyOutput>;
 impl Iam {
     pub async fn create_policy<'a, I: Into<CreatePolicyInput>>(
         db: &Database, account_id: i64, request_id: impl Into<String>, input: I,
-    ) -> Result<IamCreatePolicyOutput, IamError> {
+    ) -> Result<IamCreatePolicyOutput, IamApiError> {
+        let request_id = &request_id.into();
         let input: CreatePolicyInput = input.into();
         // validate request
-        validate(&input)?;
+        validate(&request_id, &input)?;
 
-        let mut tx = db.new_tx().await.expect("failed to BEGIN a new transaction");
+        let mut tx = db
+            .new_tx()
+            .await
+            .map_err(|_| IamApiError::internal_server_error(request_id, "Failed to begin transaction"))?;
         let policy_repo = PolicyRepo::new();
         let tag_repo = PolicyTagRepo::new();
 
@@ -62,7 +68,7 @@ impl Iam {
         let result = CreatePolicyOutput::builder().policy(policy).build();
 
         tx.commit().await.expect("failed to COMMIT transaction");
-        Result::Ok(OutputWrapper::new(result, request_id.into()))
+        Result::Ok(OutputWrapper::new(result, request_id))
     }
 }
 
@@ -87,9 +93,9 @@ impl Into<CreatePolicyInput> for QueryReader {
     }
 }
 
-impl From<IamCreatePolicyOutput> for String {
+impl From<IamCreatePolicyOutput> for IamResponse {
     fn from(val: IamCreatePolicyOutput) -> Self {
-        let mut out = String::new();
+        let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);
 
         let mut create_policy_response_tag = doc.start_el("CreatePolicyResponse").write_ns(XMLNS, None).finish();

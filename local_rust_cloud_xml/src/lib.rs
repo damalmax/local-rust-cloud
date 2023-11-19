@@ -24,16 +24,23 @@ pub fn write_tag_with_date_value(parent_tag: &mut ScopeWriter, child_tag_name: &
     }
 }
 
+pub fn write_request_metadata_tag(
+    parent_tag: &mut ScopeWriter, response_metadata_tag_name: &str, request_id_tag_name: &str, request_id: impl Into<String>,
+) {
+    let mut response_metadata_tag = parent_tag.start_el(response_metadata_tag_name).finish();
+    write_tag_with_value(&mut response_metadata_tag, request_id_tag_name, Option::Some(request_id.into()));
+    response_metadata_tag.finish();
+}
+
 pub fn write_key_value_tags<T>(
-    parent_tag: &mut ScopeWriter, tags: Option<&[T]>, key_mapper: fn(&T) -> Option<String>,
-    value_mapper: fn(&T) -> Option<String>,
+    parent_tag: &mut ScopeWriter, tags: Option<&[T]>, key_mapper: fn(&T) -> Option<String>, value_mapper: fn(&T) -> Option<String>,
 ) {
     if tags.is_some() {
         let tags = tags.unwrap();
         if tags.len() == 0 {
             return;
         }
-    
+
         let mut tags_tag = parent_tag.start_el("Tags").finish();
         for tag in tags {
             let mut tag_tag = tags_tag.start_el("member").finish();

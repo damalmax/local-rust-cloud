@@ -12,9 +12,7 @@ use local_rust_cloud_common::service_handler::ServiceHandler;
 use local_rust_cloud_sqlite::Database;
 use uuid::Uuid;
 
-use crate::handlers::iam::Response;
-
-use super::{constants::XMLNS, query::QueryReader};
+use super::{constants::XMLNS, query::QueryReader, response::IamResponse};
 
 pub enum Iam {
     AddRoleToInstanceProfile,
@@ -382,11 +380,17 @@ impl ServiceHandler for Iam {
             Iam::CreateOpenIdConnectProvider => unsupported(),
             Iam::CreatePolicy => {
                 let output = block_on(Iam::create_policy(db, account_id, request_id, query_reader));
-                let body: String = match output {
-                    Ok(output) => output.into(),
-                    Err(err) => err.into(),
-                };
-                HttpResponse::with_body(StatusCode::OK, BoxBody::new(body))
+                match output {
+                    Ok(output) => {
+                        let body: IamResponse = output.into();
+                        HttpResponse::with_body(StatusCode::OK, BoxBody::new(body))
+                    }
+                    Err(err) => {
+                        let error_code = err.error_code;
+                        let body: IamResponse = err.into();
+                        HttpResponse::with_body(error_code, BoxBody::new(body))
+                    }
+                }
             }
             Iam::CreatePolicyVersion => unsupported(),
             Iam::CreateRole => unsupported(),

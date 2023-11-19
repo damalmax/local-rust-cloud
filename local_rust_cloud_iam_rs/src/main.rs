@@ -7,7 +7,6 @@ use crate::config::AppConfig;
 
 mod aws;
 mod config;
-mod error;
 mod handlers;
 mod logger;
 mod types;
