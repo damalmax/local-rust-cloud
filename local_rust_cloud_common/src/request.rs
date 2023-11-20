@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fmt::Display;
 use std::io::{Error, ErrorKind};
 
 use actix_web::http::header::HeaderMap;

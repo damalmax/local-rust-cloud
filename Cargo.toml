@@ -3,6 +3,7 @@ members = [
     "local_rust_cloud_common",
     "local_rust_cloud_xml",
     "local_rust_cloud_sqlite",
+    "local_rust_cloud_iam_policy_document",
     "local_rust_cloud_iam_rs",
     "local_rust_cloud_sts_rs",
 ]
@@ -35,9 +36,10 @@ futures-util = { version = "0.3.17", default-features = false, features = [
     "std",
 ] }
 log = "0.4"
+
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-uuid = { version = "1", features = ["v4", "serde"] }
+validator = { version = "0.16.1", features = ["derive"] }
 
 sqlx = { version = "0.6.3", features = [
     "runtime-async-std-native-tls",
@@ -57,6 +59,7 @@ aws-sdk-iam = "0.26.0"
 aws-sdk-sts = "0.26.0"
 aws-credential-types = "0.55.2"
 
+uuid = { version = "1", features = ["v4", "serde"] }
 rand = "0.8.5"
 parking_lot = "0.12.1"
 

@@ -13,15 +13,17 @@ chrono.workspace = true
 dotenv.workspace = true
 env_logger.workspace = true
 log.workspace = true
-serde_json.workspace = true
+
 serde.workspace = true
-uuid.workspace = true
+serde_json.workspace = true
+validator.workspace = true
 
 sqlx.workspace = true
 url.workspace = true
 tokio.workspace = true
 futures.workspace = true
 
+uuid.workspace = true
 rand.workspace = true
 parking_lot.workspace = true
 etcd-client.workspace = true
