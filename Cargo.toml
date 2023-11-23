@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "local_rust_cloud_models_gen",
     "local_rust_cloud_common",
     "local_rust_cloud_xml",
     "local_rust_cloud_sqlite",

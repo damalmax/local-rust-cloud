@@ -20,11 +20,11 @@ pub struct Principal {
     #[serde(rename = "AWS")]
     pub aws: Option<FlexiString>,
     #[serde(rename = "CanonicalUser")]
-    pub canonical_user: Option<String>,
+    pub canonical_user: Option<FlexiString>,
     #[serde(rename = "Federated")]
-    pub federated: Option<String>,
+    pub federated: Option<FlexiString>,
     #[serde(rename = "Service")]
-    pub service: Option<Vec<String>>,
+    pub service: Option<FlexiString>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

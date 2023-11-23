@@ -43,8 +43,6 @@ impl Iam {
             .build()?;
 
         policy_repo.save(&mut tx, &mut policy).await.expect("failed to save policy");
-
-        let response_policy_builder = IamPolicy::builder().policy_name(input.policy_name().unwrap());
         let mut tags = vec![];
         if input.tags().is_some() {
             for tag in input.tags().unwrap() {
@@ -55,6 +53,10 @@ impl Iam {
                 tags.push(tag);
             }
         }
+
+        // tag_repo.save_all(&mut tx, tags).await.expect("failed to save policy tags");
+
+        let response_policy_builder = IamPolicy::builder().policy_name(input.policy_name().unwrap());
         let policy = response_policy_builder.set_tags(Option::Some(tags)).build();
         let result = CreatePolicyOutput::builder().policy(policy).build();
 
