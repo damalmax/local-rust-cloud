@@ -1,14 +1,18 @@
-use std::{fs::File, io::Read};
+use std::{
+    fs::{self, File},
+    io::{Error, Read, Write},
+};
 
 use clap::{Arg, ArgAction, Command};
 
-use crate::{input::InputWriter, mod_writer::ModWriter, smithy::{shape::shape::Shape, smithy::Smithy}};
+use crate::{
+    codegen::{visibility::Visibility, writer::CodeWriter},
+    smithy::{shape::shape::Shape, smithy::Smithy},
+};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 mod codegen;
-mod input;
-mod mod_writer;
 mod smithy;
 mod utils;
 
@@ -55,30 +59,53 @@ fn main() -> std::io::Result<()> {
             let target: &str = sync_matches.get_one::<String>("target").expect("target is provided");
             println!("Target path is '{target}'");
 
-            let mut file = File::open(source)?;
-
-            let mut contents = String::new();
-            file.read_to_string(&mut contents)?;
-
-            let smithy: Smithy = serde_json::from_str(&contents)?;
-            println!("{:?}", smithy);
-
-            let input_writer = InputWriter::new();
-            let mod_writer = ModWriter::new();
-
-            let target_module = target.trim_end_matches('/').to_string() + "/src/aws/operations";
-
-            for (key, shape) in &smithy.shapes {
-                match shape {
-                    Shape::Operation(_) => {
-                        input_writer.write_input_for_operation(&target_module, &key, &smithy.shapes)?;
-                        break;
-                    }
-                    _ => continue,
-                }
-            }
+            generate_source_code(source, target)?;
             return Result::Ok(());
         }
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable
+    }
+
+    fn generate_source_code(source: &str, target: &str) -> Result<(), Error> {
+        let mut file = File::open(source)?;
+
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+
+        // read Smithy model
+        let smithy: Smithy = serde_json::from_str(&contents)?;
+
+        let base_path = target.trim_end_matches('/').to_string();
+        let target_module = &format!("{base_path}/src/aws/operations");
+        fs::create_dir_all(target_module)?;
+
+        let mut mod_list = String::new();
+        let mut operations_mod_writer = CodeWriter::new(&mut mod_list);
+        for (key, shape) in &smithy.shapes {
+            match shape {
+                Shape::Operation(operation) => {
+                    let operation_name = &utils::nice_name(key);
+                    operations_mod_writer.new_mod(Visibility::Public, &operation_name).finish();
+                    create_operation_mod_file(target_module, operation_name)?;
+
+                    // let mut shapes_list = String::new();
+                    // let shapes_writer = CodeWriter::new(&mut shapes_list);
+                }
+                _ => continue,
+            }
+        }
+        File::create(format!("{target_module}/mods.rs"))?.write_all(&mod_list.as_bytes())?;
+        Result::Ok(())
+    }
+
+    fn create_operation_mod_file(base_path: &str, operation_name: &str) -> Result<(), Error> {
+        // create folder for operation
+        fs::create_dir_all(format!("{base_path}/{operation_name}"))?;
+
+        let mut operation_mod_list = String::new();
+        let mut operation_mod_writer = CodeWriter::new(&mut operation_mod_list);
+        operation_mod_writer.new_mod(Visibility::Public, "shapes").finish();
+        operation_mod_writer.new_mod(Visibility::Public, "operation").finish();
+        File::create(format!("{base_path}/{operation_name}/mod.rs"))?.write_all(&operation_mod_list.as_bytes())?;
+        Result::Ok(())
     }
 }

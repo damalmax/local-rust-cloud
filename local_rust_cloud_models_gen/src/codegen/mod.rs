@@ -1,2 +1,4 @@
 pub mod structs;
-pub mod encode;
+pub mod writer;
+pub mod module;
+pub mod visibility;

@@ -1,6 +1,7 @@
 use std::fs;
 use std::{collections::HashMap, io::Error};
 
+use crate::codegen::encode::{CodeWriter, Visibility};
 use crate::smithy::shape::shape::Shape;
 use crate::utils;
 
@@ -17,6 +18,12 @@ impl InputWriter {
     ) -> Result<(), Error> {
         match shapes.get(operation_name).unwrap() {
             Shape::Operation(operation) => {
+                let operation_name = utils::nice_name(operation_name);
+
+                let mut source_code = String::new();
+                let mut writer = CodeWriter::new(&mut source_code);
+                writer.new_mod(Visibility::Public, &operation_name);
+
                 let target_module: String = target.into();
 
                 let operation_dir = target_module + "/" + utils::nice_name(operation_name).as_ref();
