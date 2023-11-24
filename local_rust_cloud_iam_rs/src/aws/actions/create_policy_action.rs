@@ -1,7 +1,7 @@
 use chrono::prelude::Utc;
 
 use aws_sdk_iam::{
-    operation::create_policy::{CreatePolicyInput, CreatePolicyOutput},
+    operation::create_policy::CreatePolicyOutput,
     types::{Policy as IamPolicy, Tag},
 };
 use local_rust_cloud_sqlite::Database;
@@ -12,9 +12,9 @@ use crate::{
 };
 
 use super::{
-    action::Iam, errors::IamApiError, validators::create_policy::validate, OutputWrapper, create_policy_response::LocalCreatePolicyOutput, create_policy_request::LocalCreatePolicyInput,
+    action::Iam, create_policy_request::LocalCreatePolicyInput, create_policy_response::LocalCreatePolicyOutput, errors::IamApiError,
+    validators::create_policy::validate, OutputWrapper,
 };
-
 
 impl Iam {
     pub async fn create_policy<I: Into<LocalCreatePolicyInput>>(
@@ -29,7 +29,7 @@ impl Iam {
             .await
             .map_err(|_| IamApiError::internal_server_error(request_id, "Failed to BEGIN transaction"))?;
         let policy_repo = PolicyRepo::new();
-        let tag_repo = PolicyTagRepo::new();
+        // let tag_repo = PolicyTagRepo::new();
 
         let arn = format!("arn:aws:iam:{:0>12}:policy/{}", account_id, input.policy_name().unwrap());
         let current_time = Utc::now().timestamp();

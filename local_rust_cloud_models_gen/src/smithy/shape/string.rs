@@ -1,8 +1,17 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StringShape {
     pub traits: Option<StringTraits>,
+}
+
+impl StringShape {
+    pub fn is_required(&self) -> bool {
+        if let Some(traits) = &self.traits {
+            return traits.sensitive.is_some();
+        }
+        return false;
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

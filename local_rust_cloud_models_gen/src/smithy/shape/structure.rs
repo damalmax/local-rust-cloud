@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StructureShape {
@@ -36,6 +36,19 @@ pub struct StructureTraits {
     pub http_error: Option<i16>,
     #[serde(rename = "smithy.api#retryable")]
     pub retryable: Option<StructureTraitsRetryable>,
+}
+
+impl StructureShape {
+    pub fn documentation(&self) -> Option<String> {
+        if self.traits.is_none() {
+            return Option::None;
+        }
+        let traits = self.traits.as_ref().unwrap();
+        if let Some(docs) = &traits.documentation {
+            return Option::Some(docs.to_string());
+        }
+        return Option::None;
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
