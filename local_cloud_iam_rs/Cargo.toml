@@ -1,0 +1,40 @@
+[package]
+name = "local_cloud_iam_rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-http.workspace = true
+actix-service.workspace = true
+actix-web.workspace = true
+actix-utils.workspace = true
+actix-rt = "*"
+chrono.workspace = true
+derive_builder.workspace = true
+dotenv.workspace = true
+env_logger.workspace = true
+log.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+validator.workspace = true
+
+sqlx.workspace = true
+url.workspace = true
+tokio.workspace = true
+futures.workspace = true
+
+uuid.workspace = true
+rand.workspace = true
+parking_lot.workspace = true
+etcd-client.workspace = true
+
+aws-config.workspace = true
+aws-smithy-xml.workspace = true
+aws-smithy-types.workspace = true
+aws-sdk-iam.workspace = true
+aws-credential-types.workspace = true
+
+local_cloud_common = { path = "../local_cloud_common" }
+local_cloud_xml = { path = "../local_cloud_xml" }
+local_cloud_db = { path = "../local_cloud_db" }
