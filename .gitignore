@@ -1,4 +1,11 @@
 .vscode/
 
 target/
+
+aws-models/
+
+# DB files
 *.session.sql
+*.db
+*.db-shm
+*.db-wal

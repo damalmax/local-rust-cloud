@@ -1,9 +1,12 @@
 [workspace]
 members = [
-    "local_rust_cloud_common",
-    "local_rust_cloud_xml",
-    "local_rust_cloud_sqlite",
-    "local_rust_cloud_sts_rs",
+    "local_cloud_smithy_gen",
+    "local_cloud_common",
+    "local_cloud_xml",
+    "local_cloud_db",
+    "local_cloud_iam_policy_document",
+    "local_cloud_iam_rs",
+    "local_cloud_sts_rs",
 ]
 resolver = "2"
 
@@ -13,11 +16,8 @@ actix-broker = "0.4"
 actix-codec = "0.5"
 actix-http = "3"
 actix-service = "2"
-actix-identity = "0.5"
 actix-multipart = "0.6"
 actix-multipart-derive = "0.6"
-actix-protobuf = "0.9"
-actix-session = "0.7"
 actix-test = "0.1"
 actix-tls = "3"
 actix-utils = "3"
@@ -27,6 +27,7 @@ actix-ws = "0.2.5"
 awc = "3"
 
 derive_more = "0.99.7"
+derive_builder = "0.12.0"
 dotenv = "0.15"
 env_logger = "0.10"
 futures = "*"
@@ -34,11 +35,12 @@ futures-util = { version = "0.3.17", default-features = false, features = [
     "std",
 ] }
 log = "0.4"
+
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-uuid = { version = "1", features = ["v4", "serde"] }
+validator = { version = "0.16.1", features = ["derive"] }
 
-sqlx = { version = "0.6.3", features = [
+sqlx = { version = "0.7.3", features = [
     "runtime-async-std-native-tls",
     "sqlite",
     "chrono",
@@ -49,11 +51,15 @@ url = "2.3.1"
 
 chrono = { version = "0.4.24", features = ["serde"] }
 
-aws-config = "0.55.1"
-aws-smithy-xml = "0.55.1"
-aws-smithy-types = "0.55.1"
-aws-sdk-iam = "0.26.0"
-aws-sdk-sts = "0.26.0"
-aws-credential-types = "0.55.2"
+aws-config = "1.1.1"
+aws-smithy-xml = "0.60.1"
+aws-smithy-types = "1.1.1"
+aws-sdk-iam = "1.9.0"
+aws-sdk-sts = "1.9.0"
+aws-credential-types = "1.1.1"
 
+uuid = { version = "1", features = ["v4", "serde"] }
 rand = "0.8.5"
+parking_lot = "0.12.1"
+
+etcd-client = "0.12.1"
