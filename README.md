@@ -1,6 +1,8 @@
 # Local Rust Cloud DEV
 The project is created to help with serverless apps testing on local environment.
 
+**NOTE:** it is not ready for use yet.
+
 # Services supported
 
 ## AWS
