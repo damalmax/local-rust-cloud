@@ -3,7 +3,7 @@ use std::str::FromStr;
 use log::info;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{migrate::Migrator, Acquire, Pool, Sqlite, SqlitePool, Transaction};
+use sqlx::{migrate::Migrator, Pool, Sqlite, SqlitePool, Transaction};
 
 #[derive(Debug, Clone)]
 pub enum Database {

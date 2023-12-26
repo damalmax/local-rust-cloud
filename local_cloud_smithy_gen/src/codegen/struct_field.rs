@@ -17,10 +17,10 @@ impl StructFieldWriter {
         StructFieldBuilder {
             name: name.into(),
             field_type: field_type.into(),
-            visibility: Option::None,
-            documentation: Option::None,
+            visibility: None,
+            documentation: None,
             custom_attributes: vec![],
-            is_optional: Option::None,
+            is_optional: None,
         }
     }
 
@@ -91,7 +91,7 @@ impl StructFieldBuilder {
     }
 
     pub fn with_visibility(mut self, visibility: Visibility) -> StructFieldBuilder {
-        self.visibility = Option::Some(visibility);
+        self.visibility = Some(visibility);
         self
     }
 
