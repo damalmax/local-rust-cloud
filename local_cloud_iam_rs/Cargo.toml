@@ -8,9 +8,11 @@ actix-http.workspace = true
 actix-server.workspace = true
 actix-service.workspace = true
 actix-web.workspace = true
+actix-utils.workspace = true
 
 chrono.workspace = true
 derive_builder.workspace = true
+derive_more.workspace = true
 dotenv.workspace = true
 env_logger.workspace = true
 log.workspace = true
@@ -23,10 +25,12 @@ sqlx.workspace = true
 url.workspace = true
 tokio.workspace = true
 futures.workspace = true
+futures-util.workspace = true
 
 uuid.workspace = true
 rand.workspace = true
 parking_lot.workspace = true
+regex.workspace = true
 etcd-client.workspace = true
 
 aws-config.workspace = true
@@ -38,6 +42,10 @@ aws-credential-types.workspace = true
 local_cloud_common = { path = "../local_cloud_common" }
 local_cloud_xml = { path = "../local_cloud_xml" }
 local_cloud_db = { path = "../local_cloud_db" }
+local_cloud_iam_policy_document = { path = "../local_cloud_iam_policy_document" }
+local_cloud_actix = { path = "../local_cloud_actix" }
+lazy_static = "1.4"
+encoding_rs = "0.8"
 
 [dev-dependencies]
-actix-rt = "*"
+actix-rt = "2.9"

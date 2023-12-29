@@ -1,29 +1,50 @@
+use actix_web::http::StatusCode;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
-use serde::Serialize;
 
-use local_cloud_common::request::AwsRequest;
+use serde::Deserialize;
+
+use local_cloud_actix::local;
+use local_cloud_actix::local::web::XmlResponse;
 use local_cloud_common::service_handler::ServiceHandler;
+use local_cloud_db::Database;
 
-use crate::aws::actions::action::Iam;
+use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
+use crate::http::aws::iam::actions::create_user::LocalCreateUser;
+use crate::http::aws::iam::actions::error::IamApiError;
 
-pub(crate) mod types;
+pub(crate) mod actions;
+pub(crate) mod constants;
+pub(crate) mod repository;
+mod types;
 
-#[derive(Serialize)]
-pub struct Response {
-    pub message: String,
+#[derive(Deserialize, Debug)]
+#[serde(tag = "Action")]
+pub(crate) enum LocalAwsRequest {
+    #[serde(rename = "CreatePolicy")]
+    CreatePolicy(LocalCreatePolicy),
+    #[serde(rename = "CreateUser")]
+    CreateUser(LocalCreateUser),
 }
 
-pub(crate) async fn handle(body_bytes: web::Bytes, req: HttpRequest) -> impl Responder {
-    let aws_request = AwsRequest::from_request(body_bytes, &req);
-    return match aws_request {
-        Ok(aws_request) => {
-            let action_name = aws_request.aws_service_target;
-            let action = Iam::from_str(&action_name);
-            return action.handle(&req, aws_request.query_params);
+pub(crate) async fn handle(
+    req: HttpRequest, aws_query: local::web::AwsQuery<LocalAwsRequest>, db: web::Data<Database>,
+) -> impl Responder {
+    // TODO: populate account ID from token
+    let acc_id = 1i64;
+    let aws_request = aws_query.into_inner();
+    let output: Result<XmlResponse, IamApiError> = match aws_request {
+        LocalAwsRequest::CreatePolicy(create_policy) => {
+            create_policy.execute(acc_id, db.as_ref()).map(|out| out.into())
         }
-        Err(e) => {
-            let response = Response { message: e.to_string() };
-            HttpResponse::BadRequest().json(response)
+        LocalAwsRequest::CreateUser(create_user) => create_user.execute(acc_id, db.as_ref()).map(|out| out.into()),
+    };
+
+    return match output {
+        Ok(body) => HttpResponse::with_body(StatusCode::OK, body),
+        Err(err) => {
+            let error_code = err.error_code;
+            let body: XmlResponse = err.into();
+            HttpResponse::with_body(error_code, body)
         }
     };
 }

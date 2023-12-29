@@ -1,8 +1,7 @@
+use crate::tests::{credentials_provider, TEST_SUITE};
 use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_sdk_iam::{config::Region, types::Tag};
-
-use super::*;
 
 #[actix_rt::test]
 async fn create_user() {

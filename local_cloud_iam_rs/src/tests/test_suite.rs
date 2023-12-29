@@ -1,4 +1,4 @@
-use std::{io::Error, net::TcpListener};
+use std::io::Error;
 
 use actix_web::dev::ServerHandle;
 use parking_lot::ReentrantMutex;
@@ -50,7 +50,8 @@ impl AppConfigFactory for TestAppConfigFactory {
 
 impl TestContext {
     pub async fn new() -> Result<TestContext, Error> {
-        let port = get_available_port().expect("Failed to bind available port for Test Server");
+        let port =
+            local_cloud_common::network::get_available_port().expect("Failed to bind available port for Test Server");
 
         let db_file_name = Uuid::new_v4();
         let config_factory = TestAppConfigFactory {
@@ -73,15 +74,4 @@ impl TestContext {
     pub async fn stop_server(&mut self) {
         self.server_handle.stop(false).await;
     }
-}
-
-pub fn get_available_port() -> Option<u16> {
-    return (4500..4600).find(|port| is_port_available(*port));
-}
-
-fn is_port_available(port: u16) -> bool {
-    return match TcpListener::bind(("127.0.0.1", port)) {
-        Ok(_) => true,
-        Err(_) => false,
-    };
 }

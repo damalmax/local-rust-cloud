@@ -1,13 +1,9 @@
 use dotenv::dotenv;
 use log::LevelFilter;
 
-mod aws;
 mod config;
-mod logger;
-mod repository;
-mod types;
-
 mod http;
+mod logger;
 #[cfg(test)]
 mod tests;
 
