@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 sqlx.workspace = true
+futures.workspace = true
 log.workspace = true

@@ -32,3 +32,21 @@ impl AppConfig {
         }
     }
 }
+
+pub(crate) trait AppConfigFactory {
+    fn get_config(&self) -> AppConfig;
+}
+
+pub(crate) struct EnvironmentAppConfigFactory {}
+
+impl EnvironmentAppConfigFactory {
+    pub(crate) fn new() -> Self {
+        EnvironmentAppConfigFactory {}
+    }
+}
+
+impl AppConfigFactory for EnvironmentAppConfigFactory {
+    fn get_config(&self) -> AppConfig {
+        AppConfig::parse()
+    }
+}

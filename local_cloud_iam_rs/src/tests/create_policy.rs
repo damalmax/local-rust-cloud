@@ -1,8 +1,7 @@
+use crate::tests::{credentials_provider, TEST_SUITE};
 use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_sdk_iam::{config::Region, types::Tag};
-
-use super::*;
 
 #[actix_rt::test]
 async fn create_policy() {
@@ -78,7 +77,7 @@ async fn create_policy_too_many_tags() {
         .meta()
         .message()
         .unwrap()
-        .starts_with("1 validation error detected:"));
+        .eq("The number of submitted tags is larger (51 tags) than allowed (limit: 50 tags)."));
 
     ctx.stop_server().await;
 }

@@ -32,6 +32,7 @@ aws-smithy-types.workspace = true
 aws-sdk-sts.workspace = true
 aws-credential-types.workspace = true
 
+local_cloud_actix = { path = "../local_cloud_actix" }
 local_cloud_common = { path = "../local_cloud_common" }
 local_cloud_xml = { path = "../local_cloud_xml" }
 local_cloud_db = { path = "../local_cloud_db" }

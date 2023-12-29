@@ -9,7 +9,7 @@ const DEFAULT_DATABASE_URL: &str = "sqlite://iam.db";
 const DEFAULT_SERVICE_PORT: u16 = 4502;
 
 #[derive(Debug)]
-pub struct AppConfig {
+pub(crate) struct AppConfig {
     pub database_url: String,
     pub etcd_enabled: bool,
     pub etcd_endpoints: String,
@@ -17,7 +17,7 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    pub fn init() -> Self {
+    pub fn parse() -> Self {
         log::info!("Reading IAM configurations...");
 
         let database_url = config::get_string_env_with_default(ENV_DATABASE_URL, DEFAULT_DATABASE_URL).into();
@@ -40,5 +40,23 @@ impl AppConfig {
             etcd_endpoints: String::from(""),
             service_port: port,
         }
+    }
+}
+
+pub(crate) trait AppConfigFactory {
+    fn get_config(&self) -> AppConfig;
+}
+
+pub(crate) struct EnvironmentAppConfigFactory {}
+
+impl EnvironmentAppConfigFactory {
+    pub(crate) fn new() -> Self {
+        EnvironmentAppConfigFactory {}
+    }
+}
+
+impl AppConfigFactory for EnvironmentAppConfigFactory {
+    fn get_config(&self) -> AppConfig {
+        AppConfig::parse()
     }
 }

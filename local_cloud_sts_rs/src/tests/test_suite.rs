@@ -1,5 +1,6 @@
 use std::{io::Error, net::TcpListener};
 
+use crate::config::{AppConfig, AppConfigFactory};
 use actix_web::dev::ServerHandle;
 use parking_lot::ReentrantMutex;
 use uuid::Uuid;
@@ -35,15 +36,27 @@ pub struct TestContext {
     pub server_handle: ServerHandle,
 }
 
+struct TestAppConfigFactory {
+    database_url: String,
+    port: u16,
+}
+
+impl AppConfigFactory for TestAppConfigFactory {
+    fn get_config(&self) -> AppConfig {
+        AppConfig::with_params(&self.database_url, self.port)
+    }
+}
+
 impl TestContext {
     pub async fn new() -> Result<TestContext, Error> {
         let port = get_available_port().expect("Failed to bind available port for Test Server");
 
         let db_file_name = Uuid::new_v4();
-        let server = crate::create_http_server(|| {
-            crate::config::AppConfig::with_params(format!("file:{}?mode=memory&cache=shared", db_file_name), port.clone())
-        })
-        .await;
+        let config_factory = TestAppConfigFactory {
+            database_url: format!("file:{}?mode=memory&cache=shared", db_file_name),
+            port,
+        };
+        let server = crate::http::server::start(config_factory).await;
 
         match server {
             Ok(server_handler) => {

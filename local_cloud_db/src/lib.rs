@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
+use futures::executor::block_on;
 use log::info;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{migrate::Migrator, Acquire, Pool, Sqlite, SqlitePool, Transaction};
+use sqlx::{migrate::Migrator, Pool, Sqlite, SqlitePool, Transaction};
 
 #[derive(Debug, Clone)]
 pub enum Database {
@@ -29,9 +30,9 @@ impl Database {
         Ok(Database::Sqlite(db_pool))
     }
 
-    pub async fn new_tx(&self) -> Result<Transaction<Sqlite>, sqlx::Error> {
+    pub fn new_tx(&self) -> Result<Transaction<Sqlite>, sqlx::Error> {
         match self {
-            Database::Sqlite(pool) => pool.begin().await,
+            Database::Sqlite(pool) => block_on(async { pool.begin().await }),
         }
     }
 }
