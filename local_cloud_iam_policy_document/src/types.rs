@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-
 // A trait that the Validate derive will impl
 use validator::{Validate, ValidationError};
 
@@ -17,13 +16,13 @@ pub enum FlexiString {
 
 #[derive(Debug, Validate, Deserialize, Serialize)]
 pub struct Principal {
-    #[serde(rename = "AWS")]
+    #[serde(rename = "AWS", skip_serializing_if = "Option::is_none")]
     pub aws: Option<FlexiString>,
-    #[serde(rename = "CanonicalUser")]
+    #[serde(rename = "CanonicalUser", skip_serializing_if = "Option::is_none")]
     pub canonical_user: Option<FlexiString>,
-    #[serde(rename = "Federated")]
+    #[serde(rename = "Federated", skip_serializing_if = "Option::is_none")]
     pub federated: Option<FlexiString>,
-    #[serde(rename = "Service")]
+    #[serde(rename = "Service", skip_serializing_if = "Option::is_none")]
     pub service: Option<FlexiString>,
 }
 
@@ -34,116 +33,115 @@ pub enum PrincipalData {
     Principal(Principal),
 }
 
-
-#[derive(Debug, Validate, Deserialize)]
+#[derive(Debug, Validate, Serialize, Deserialize)]
 pub struct Condition {
-    #[serde(rename = "StringEquals")]
+    #[serde(rename = "StringEquals", skip_serializing_if = "Option::is_none")]
     pub string_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "StringNotEquals")]
+    #[serde(rename = "StringNotEquals", skip_serializing_if = "Option::is_none")]
     pub string_not_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "StringEqualsIgnoreCase")]
+    #[serde(rename = "StringEqualsIgnoreCase", skip_serializing_if = "Option::is_none")]
     pub string_equals_ignore_case: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "StringNotEqualsIgnoreCase")]
+    #[serde(rename = "StringNotEqualsIgnoreCase", skip_serializing_if = "Option::is_none")]
     pub string_not_equals_ignore_case: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "StringLike")]
+    #[serde(rename = "StringLike", skip_serializing_if = "Option::is_none")]
     pub string_like: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "StringNotLike")]
+    #[serde(rename = "StringNotLike", skip_serializing_if = "Option::is_none")]
     pub string_not_like: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NumericEquals")]
+    #[serde(rename = "NumericEquals", skip_serializing_if = "Option::is_none")]
     pub numeric_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NumericNotEquals")]
+    #[serde(rename = "NumericNotEquals", skip_serializing_if = "Option::is_none")]
     pub numeric_not_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NumericLessThan")]
+    #[serde(rename = "NumericLessThan", skip_serializing_if = "Option::is_none")]
     pub numeric_less_than: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NumericLessThanEquals")]
+    #[serde(rename = "NumericLessThanEquals", skip_serializing_if = "Option::is_none")]
     pub numeric_less_than_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NumericGreaterThan")]
+    #[serde(rename = "NumericGreaterThan", skip_serializing_if = "Option::is_none")]
     pub numeric_greater_than: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NumericGreaterThanEquals")]
+    #[serde(rename = "NumericGreaterThanEquals", skip_serializing_if = "Option::is_none")]
     pub numeric_greater_than_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "DateEquals")]
+    #[serde(rename = "DateEquals", skip_serializing_if = "Option::is_none")]
     pub date_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "DateNotEquals")]
+    #[serde(rename = "DateNotEquals", skip_serializing_if = "Option::is_none")]
     pub date_not_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "DateLessThan")]
+    #[serde(rename = "DateLessThan", skip_serializing_if = "Option::is_none")]
     pub date_less_than: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "DateLessThanEquals")]
+    #[serde(rename = "DateLessThanEquals", skip_serializing_if = "Option::is_none")]
     pub date_less_than_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "DateGreaterThan")]
+    #[serde(rename = "DateGreaterThan", skip_serializing_if = "Option::is_none")]
     pub date_greater_than: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "DateGreaterThanEquals")]
+    #[serde(rename = "DateGreaterThanEquals", skip_serializing_if = "Option::is_none")]
     pub date_greater_than_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "Bool")]
+    #[serde(rename = "Bool", skip_serializing_if = "Option::is_none")]
     pub bool: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "BinaryEquals")]
+    #[serde(rename = "BinaryEquals", skip_serializing_if = "Option::is_none")]
     pub binary_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "IpAddress")]
+    #[serde(rename = "IpAddress", skip_serializing_if = "Option::is_none")]
     pub ip_address: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "NotIpAddress")]
+    #[serde(rename = "NotIpAddress", skip_serializing_if = "Option::is_none")]
     pub not_ip_address: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "ArnEquals")]
+    #[serde(rename = "ArnEquals", skip_serializing_if = "Option::is_none")]
     pub arn_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "ArnLike")]
+    #[serde(rename = "ArnLike", skip_serializing_if = "Option::is_none")]
     pub arn_like: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "ArnNotEquals")]
+    #[serde(rename = "ArnNotEquals", skip_serializing_if = "Option::is_none")]
     pub arn_not_equals: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "ArnNotLike")]
+    #[serde(rename = "ArnNotLike", skip_serializing_if = "Option::is_none")]
     pub arn_not_like: Option<HashMap<String, FlexiString>>,
-    #[serde(rename = "Null")]
+    #[serde(rename = "Null", skip_serializing_if = "Option::is_none")]
     pub null: Option<HashMap<String, FlexiString>>,
 }
 
-#[derive(Debug, Validate, Deserialize)]
+#[derive(Debug, Validate, Serialize, Deserialize)]
 pub struct Statement {
-    #[serde(rename = "Sid")]
+    #[serde(rename = "Sid", skip_serializing_if = "Option::is_none")]
     pub sid: Option<String>,
     #[validate(custom = "validate_principal")]
-    #[serde(rename = "Principal")]
+    #[serde(rename = "Principal", skip_serializing_if = "Option::is_none")]
     pub principal: Option<PrincipalData>,
-    #[serde(rename = "NotPrincipal")]
+    #[serde(rename = "NotPrincipal", skip_serializing_if = "Option::is_none")]
     pub not_principal: Option<PrincipalData>,
-    #[serde(rename = "Condition")]
+    #[serde(rename = "Condition", skip_serializing_if = "Option::is_none")]
     pub condition: Option<Condition>,
     #[validate(length(min = 1), custom = "validate_effect")]
     #[serde(rename = "Effect")]
     pub effect: String,
-    #[serde(rename = "Action")]
+    #[serde(rename = "Action", skip_serializing_if = "Option::is_none")]
     pub action: Option<FlexiString>,
-    #[serde(rename = "NotAction")]
+    #[serde(rename = "NotAction", skip_serializing_if = "Option::is_none")]
     pub not_action: Option<FlexiString>,
     #[validate(custom = "validate_resource")]
-    #[serde(rename = "Resource")]
+    #[serde(rename = "Resource", skip_serializing_if = "Option::is_none")]
     pub resource: Option<FlexiString>,
-    #[serde(rename = "NotResource")]
+    #[serde(rename = "NotResource", skip_serializing_if = "Option::is_none")]
     pub not_resource: Option<FlexiString>,
 }
 
-#[derive(Debug, Validate, Deserialize)]
+#[derive(Debug, Validate, Serialize, Deserialize)]
 pub struct LocalPolicyDocument {
     #[validate(length(min = 1), custom = "validate_version")]
     #[serde(rename = "Version")]
     pub version: String,
-    #[serde(rename = "Id")]
+    #[serde(rename = "Id", skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     #[validate]
     #[serde(rename = "Statement")]
     pub statement: Vec<Statement>,
     #[validate]
-    #[serde(rename = "Conditions")]
+    #[serde(rename = "Conditions", skip_serializing_if = "Option::is_none")]
     pub conditions: Option<Vec<Condition>>,
 }
 
 fn validate_effect(effect: &str) -> Result<(), ValidationError> {
     if effect == "Allow" || effect == "Deny" {
-        return Result::Ok(());
+        Ok(())
+    } else {
+        Err(ValidationError::new("Unsupported Effect. Supported values: 'Allow', 'Deny'."))
     }
-
-    return Err(ValidationError::new("Unsupported Effect. Supported values: 'Allow', 'Deny'."));
 }
 
 fn validate_version(version: &str) -> Result<(), ValidationError> {
     if version == "2008-10-17" || version == "2012-10-17" {
-        return Result::Ok(());
+        return Ok(());
     }
 
     return Err(ValidationError::new("Unsupported Version. Supported values: '2008-10-17', '2012-10-17'."));

@@ -4,14 +4,16 @@ use aws_sdk_iam::operation::create_user::CreateUserOutput;
 use aws_sdk_iam::types::User;
 use aws_smithy_types::DateTime;
 
-use local_cloud_db::Database;
+use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_user::LocalCreateUser;
 use crate::http::aws::iam::actions::error::IamError;
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
 
 impl LocalCreateUser {
-    pub fn execute(&self, _account_id: i64, _db: &Database) -> Result<OutputWrapper<CreateUserOutput>, IamError> {
+    pub async fn execute(
+        &self, _account_id: i64, aws_request_id: &str, _db: &LocalDb,
+    ) -> Result<OutputWrapper<CreateUserOutput>, IamError> {
         let user = User::builder()
             .path("/")
             .arn("")
@@ -21,6 +23,6 @@ impl LocalCreateUser {
             .build()
             .unwrap();
         let result = CreateUserOutput::builder().user(user).build();
-        Ok(OutputWrapper::new(result, self.aws_request_id()))
+        Ok(OutputWrapper::new(result, aws_request_id))
     }
 }

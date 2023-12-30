@@ -12,20 +12,14 @@ resolver = "2"
 
 [workspace.dependencies]
 actix = "0.13"
-actix-broker = "0.4"
 actix-codec = "0.5"
 actix-http = "3"
 actix-server = "2.3"
 actix-service = "2"
-actix-multipart = "0.6"
-actix-multipart-derive = "0.6"
 actix-test = "0.1"
-actix-tls = "3"
 actix-utils = "3"
 actix-web = { version = "4.4", features = ["__compress"] }
-actix-web-actors = "4.1"
 actix-ws = "0.2"
-awc = "3"
 
 derive_more = "0.99"
 derive_builder = "0.12"
@@ -34,9 +28,7 @@ dotenv = "0.15"
 env_logger = "0.10"
 futures = "*"
 futures-core = "0.3"
-futures-util = { version = "0.3", default-features = false, features = [
-    "std",
-] }
+futures-util = "0.3"
 log = "0.4"
 
 serde = { version = "1.0", features = ["derive"] }

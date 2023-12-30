@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::http::aws::iam::actions::validate::{IamValidator, ValidationError};
+use crate::http::aws::iam::actions::validate::{ValidationError};
 use crate::http::aws::iam::constants;
 
 #[derive(Debug, Deserialize)]

@@ -1,5 +1,5 @@
 use aws_smithy_xml::encode::XmlWriter;
-use aws_types::request_id::RequestId;
+
 
 use local_cloud_actix::local::web::XmlResponse;
 

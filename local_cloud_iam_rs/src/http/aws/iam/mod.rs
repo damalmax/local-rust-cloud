@@ -1,11 +1,12 @@
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
+use uuid::Uuid;
 
 use local_cloud_actix::local;
 use local_cloud_actix::local::web::XmlResponse;
-use local_cloud_common::service_handler::ServiceHandler;
-use local_cloud_db::Database;
+
+use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
 use crate::http::aws::iam::actions::create_user::LocalCreateUser;
@@ -26,16 +27,21 @@ pub(crate) enum LocalAwsRequest {
 }
 
 pub(crate) async fn handle(
-    req: HttpRequest, aws_query: local::web::AwsQuery<LocalAwsRequest>, db: web::Data<Database>,
+    _req: HttpRequest, aws_query: local::web::AwsQuery<LocalAwsRequest>, db: web::Data<LocalDb>,
 ) -> impl Responder {
     // TODO: populate account ID from token
     let acc_id = 1i64;
     let aws_request = aws_query.into_inner();
+    let aws_request_id = Uuid::new_v4().to_string();
     let output: Result<XmlResponse, IamError> = match aws_request {
-        LocalAwsRequest::CreatePolicy(create_policy) => {
-            create_policy.execute(acc_id, db.as_ref()).map(|out| out.into())
-        }
-        LocalAwsRequest::CreateUser(create_user) => create_user.execute(acc_id, db.as_ref()).map(|out| out.into()),
+        LocalAwsRequest::CreatePolicy(create_policy) => create_policy
+            .execute(acc_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreateUser(create_user) => create_user
+            .execute(acc_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
     };
 
     return match output {

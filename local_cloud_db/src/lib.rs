@@ -1,17 +1,14 @@
 use std::str::FromStr;
 
-use futures::executor::block_on;
 use log::info;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{migrate::Migrator, Pool, Sqlite, SqlitePool, Transaction};
 
 #[derive(Debug, Clone)]
-pub enum Database {
-    Sqlite(Pool<Sqlite>),
-}
+pub struct LocalDb(Pool<Sqlite>);
 
-impl Database {
+impl LocalDb {
     pub async fn new(database_url: &str, migrator: &Migrator) -> Result<Self, sqlx::Error> {
         if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
             info!("No Database file found... Creating Database {}", &database_url);
@@ -27,12 +24,10 @@ impl Database {
         let db_pool = SqlitePool::connect_with(pool_options).await?;
         migrator.run(&db_pool).await.expect("Failed to apply migrations to DB");
 
-        Ok(Database::Sqlite(db_pool))
+        Ok(LocalDb(db_pool))
     }
 
-    pub fn new_tx(&self) -> Result<Transaction<Sqlite>, sqlx::Error> {
-        match self {
-            Database::Sqlite(pool) => block_on(async { pool.begin().await }),
-        }
+    pub async fn new_tx(&self) -> Result<Transaction<Sqlite>, sqlx::Error> {
+        self.0.begin().await
     }
 }

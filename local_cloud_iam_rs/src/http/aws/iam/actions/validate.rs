@@ -6,7 +6,7 @@ use crate::http::aws::iam::actions::error::IamError;
 /// it must implement this trait.
 /// The intention of the validator is to use Fail-Fast approach.
 pub(crate) trait IamValidator {
-    fn validate(&self) -> Result<(), IamError>;
+    fn validate(&self, aws_request_id: &str) -> Result<(), IamError>;
 }
 
 #[derive(Debug, Display, Error)]

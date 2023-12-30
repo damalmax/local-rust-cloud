@@ -2,20 +2,21 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use aws_sdk_sts::operation::assume_role::AssumeRoleOutput;
 use aws_sdk_sts::types::AssumedRoleUser;
-use futures::executor::block_on;
 
-use local_cloud_db::Database;
+use local_cloud_db::LocalDb;
 
 use crate::http::aws::sts::actions::assume_role::LocalAssumeRole;
-use crate::http::aws::sts::actions::error::StsApiError;
+use crate::http::aws::sts::actions::error::{StsApiError, StsErrorKind};
 use crate::http::aws::sts::actions::types::wrapper::OutputWrapper;
 use crate::http::aws::sts::repository;
 use crate::http::aws::sts::types::credentials::DbCredentials;
 use crate::secure;
 
 impl LocalAssumeRole {
-    pub fn execute(&self, account_id: i64, db: &Database) -> Result<OutputWrapper<AssumeRoleOutput>, StsApiError> {
-        let mut tx = db.new_tx().expect("failed to BEGIN a new transaction");
+    pub async fn execute(
+        &self, account_id: i64, aws_request_id: &str, db: &LocalDb,
+    ) -> Result<OutputWrapper<AssumeRoleOutput>, StsApiError> {
+        let mut tx = db.new_tx().await.expect("failed to BEGIN a new transaction");
         // todo: get role by ARN from IAM
 
         let assumed_role_user = AssumedRoleUser::builder()
@@ -39,7 +40,14 @@ impl LocalAssumeRole {
             .region_id(1)
             .build();
 
-        repository::credentials::create(&mut tx, &mut credentials);
+        repository::credentials::create(&mut tx, &mut credentials)
+            .await
+            .map_err(|err| StsApiError {
+                error_code: Default::default(),
+                kind: StsErrorKind::InvalidInput,
+                request_id: aws_request_id.to_owned(),
+                message: "Failed to save credentials".to_owned(),
+            })?;
         log::info!("credentials: {:?}", &credentials);
 
         let result = AssumeRoleOutput::builder()
@@ -48,8 +56,8 @@ impl LocalAssumeRole {
             .set_packed_policy_size(None)
             .source_identity(self.source_identity().unwrap_or(""))
             .build();
-        block_on(async { tx.commit().await }).expect("failed to COMMIT transaction");
+        tx.commit().await.expect("failed to COMMIT transaction");
 
-        Ok(OutputWrapper::new(result, self.sts_request_id()))
+        Ok(OutputWrapper::new(result, aws_request_id))
     }
 }

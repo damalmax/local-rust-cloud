@@ -1,11 +1,9 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::types::{Policy, Tag};
-use aws_smithy_types::error::ErrorMetadata;
 use chrono::Utc;
-use futures::executor::block_on;
 use log::error;
 
-use local_cloud_db::Database;
+use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
 use crate::http::aws::iam::actions::error::IamError;
@@ -16,12 +14,14 @@ use crate::http::aws::iam::repository;
 use crate::http::aws::iam::types::policy::DbPolicy;
 
 impl LocalCreatePolicy {
-    pub fn execute(&self, account_id: i64, db: &Database) -> Result<OutputWrapper<CreatePolicyOutput>, IamError> {
-        self.validate()?;
+    pub async fn execute(
+        &self, account_id: i64, aws_request_id: &str, db: &LocalDb,
+    ) -> Result<OutputWrapper<CreatePolicyOutput>, IamError> {
+        self.validate(aws_request_id)?;
         let policy_name = self.policy_name().unwrap_or("").trim();
-        let mut tx = db.new_tx().map_err(|err| {
+        let mut tx = db.new_tx().await.map_err(|err| {
             error!("Failed to BEGIN transaction. Error: {err}");
-            IamError::new(ServiceFailure, "Failed to BEGIN transaction", self.aws_request_id())
+            IamError::new(ServiceFailure, "Failed to BEGIN transaction", aws_request_id)
         })?;
 
         let arn = format!("arn:aws:iam:{:0>12}:policy/{}", account_id, policy_name);
@@ -37,7 +37,9 @@ impl LocalCreatePolicy {
             .update_date(current_time)
             .build()?;
 
-        repository::policy::save(&mut tx, &mut policy).expect("failed to save policy");
+        repository::policy::save(&mut tx, &mut policy)
+            .await
+            .expect("failed to save policy");
         let mut tags = vec![];
 
         let input_tags = self.tags();
@@ -58,16 +60,10 @@ impl LocalCreatePolicy {
         let policy = response_policy_builder.build();
         let result = CreatePolicyOutput::builder().policy(policy).build();
 
-        block_on(async { tx.commit().await }).map_err(|err| {
+        tx.commit().await.map_err(|err| {
             error!("Failed to commit transaction. Error: {err}");
-            IamError::new(ServiceFailure, "Failed to COMMIT transaction", self.aws_request_id())
+            IamError::new(ServiceFailure, "Failed to COMMIT transaction", aws_request_id)
         })?;
-        Ok(OutputWrapper::new(result, self.aws_request_id()))
-    }
-
-    pub(crate) fn error_metadata(&self) -> ErrorMetadata {
-        ErrorMetadata::builder()
-            .custom("aws_request_id", self.aws_request_id())
-            .build()
+        Ok(OutputWrapper::new(result, aws_request_id))
     }
 }

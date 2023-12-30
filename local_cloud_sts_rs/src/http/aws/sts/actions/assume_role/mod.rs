@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-use local_cloud_actix::local::web::RequestId;
-
 use crate::http::aws::sts::actions::types::tag::LocalTag;
 
 pub(crate) mod action;
@@ -40,8 +38,6 @@ pub struct LocalAssumeRole {
     pub source_identity: Option<String>,
     #[serde(rename = "ProvidedContexts")]
     pub provided_contexts: Option<Vec<LocalProvidedContext>>,
-    #[serde(default = "RequestId::default")]
-    pub(crate) sts_request_id: RequestId,
 }
 
 impl LocalAssumeRole {
@@ -87,9 +83,5 @@ impl LocalAssumeRole {
 
     pub fn provided_contexts(&self) -> Option<&[LocalProvidedContext]> {
         self.provided_contexts.as_deref()
-    }
-
-    pub fn sts_request_id(&self) -> &str {
-        self.sts_request_id.0.as_str()
     }
 }
