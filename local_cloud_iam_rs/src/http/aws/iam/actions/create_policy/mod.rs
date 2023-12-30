@@ -1,5 +1,6 @@
-use local_cloud_actix::local::web::RequestId;
 use serde::Deserialize;
+
+use local_cloud_actix::local::web::RequestId;
 
 use crate::http::aws::iam::actions::tag::LocalTag;
 
@@ -20,7 +21,7 @@ pub(crate) struct LocalCreatePolicy {
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<LocalTag>>,
     #[serde(default = "RequestId::default")]
-    pub(crate) iam_request_id: RequestId,
+    pub(crate) aws_request_id: RequestId,
 }
 
 impl LocalCreatePolicy {
@@ -44,7 +45,7 @@ impl LocalCreatePolicy {
         self.tags.as_deref()
     }
 
-    pub fn iam_request_id(&self) -> &str {
-        self.iam_request_id.0.as_str()
+    pub fn aws_request_id(&self) -> &str {
+        self.aws_request_id.0.as_str()
     }
 }

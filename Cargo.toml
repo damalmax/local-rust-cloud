@@ -55,12 +55,13 @@ url = "2.3.1"
 
 chrono = { version = "0.4.24", features = ["serde"] }
 
-aws-config = "1.1.1"
-aws-smithy-xml = "0.60.1"
-aws-smithy-types = "1.1.1"
-aws-sdk-iam = "1.9.0"
-aws-sdk-sts = "1.9.0"
-aws-credential-types = "1.1.1"
+aws-config = "1.1"
+aws-smithy-xml = "0.60"
+aws-smithy-types = "1.1"
+aws-types = "1.1"
+aws-sdk-iam = "1.9"
+aws-sdk-sts = "1.9"
+aws-credential-types = "1.1"
 
 uuid = { version = "1", features = ["v4", "serde"] }
 rand = "0.8.5"

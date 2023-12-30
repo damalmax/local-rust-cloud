@@ -1,12 +1,12 @@
 use derive_more::{Display, Error};
 
-use crate::http::aws::iam::actions::error::IamApiError;
+use crate::http::aws::iam::actions::error::IamError;
 
 /// The trait provides base API for source validation. If structure needs to be validate,
 /// it must implement this trait.
 /// The intention of the validator is to use Fail-Fast approach.
 pub(crate) trait IamValidator {
-    fn validate(&self) -> Result<(), IamApiError>;
+    fn validate(&self) -> Result<(), IamError>;
 }
 
 #[derive(Debug, Display, Error)]
@@ -49,4 +49,34 @@ pub(crate) enum ValidationError {
         max
     )]
     TooManyTags { count: usize, max: usize },
+}
+
+impl ValidationError {
+    pub(crate) fn too_many_tags(count: usize, max: usize) -> Self {
+        Self::TooManyTags { count, max }
+    }
+
+    pub(crate) fn tag_no_key(at: String) -> Self {
+        Self::TagNoKey { at: at.to_owned() }
+    }
+
+    pub(crate) fn tag_no_value(at: String) -> Self {
+        Self::TagNoValue { at: at.to_owned() }
+    }
+
+    pub(crate) fn tag_key_min_length(size: usize, min: usize, at: String) -> Self {
+        Self::TagKeyMinLength { size, min, at }
+    }
+
+    pub(crate) fn tag_key_max_length(size: usize, max: usize, at: String) -> Self {
+        Self::TagKeyMaxLength { size, max, at }
+    }
+
+    pub(crate) fn tag_value_min_length(size: usize, min: usize, at: String) -> Self {
+        Self::TagValueMinLength { size, min, at }
+    }
+
+    pub(crate) fn tag_value_max_length(size: usize, max: usize, at: String) -> Self {
+        Self::TagValueMaxLength { size, max, at }
+    }
 }

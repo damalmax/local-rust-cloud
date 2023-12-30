@@ -1,6 +1,7 @@
-use crate::http::aws::iam::actions::error::IamApiError;
 use aws_sdk_iam::operation::create_policy::CreatePolicyInput;
 use sqlx::FromRow;
+
+use crate::http::aws::iam::actions::error::IamError;
 
 #[derive(Clone, FromRow, Debug)]
 pub struct DbPolicy {
@@ -124,8 +125,8 @@ impl PolicyBuilder {
             .description(input.description().unwrap_or(""))
     }
 
-    pub fn build(self) -> Result<DbPolicy, IamApiError> {
-        Result::Ok(DbPolicy {
+    pub fn build(self) -> Result<DbPolicy, IamError> {
+        Ok(DbPolicy {
             id: self.id,
             account_id: self.account_id.expect("account_id is not set"),
             policy_name: self.policy_name,
