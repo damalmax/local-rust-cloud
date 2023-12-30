@@ -24,17 +24,17 @@ actix-tls = "3"
 actix-utils = "3"
 actix-web = { version = "4.4", features = ["__compress"] }
 actix-web-actors = "4.1"
-actix-ws = "0.2.5"
+actix-ws = "0.2"
 awc = "3"
 
-derive_more = "0.99.7"
-derive_builder = "0.12.0"
+derive_more = "0.99"
+derive_builder = "0.12"
 encoding_rs = "0.8"
 dotenv = "0.15"
 env_logger = "0.10"
 futures = "*"
 futures-core = "0.3"
-futures-util = { version = "0.3.17", default-features = false, features = [
+futures-util = { version = "0.3", default-features = false, features = [
     "std",
 ] }
 log = "0.4"
@@ -64,7 +64,7 @@ aws-sdk-sts = "1.9"
 aws-credential-types = "1.1"
 
 uuid = { version = "1", features = ["v4", "serde"] }
-rand = "0.8.5"
+rand = "0.8"
 parking_lot = "0.12"
 regex = "1.10"
 
