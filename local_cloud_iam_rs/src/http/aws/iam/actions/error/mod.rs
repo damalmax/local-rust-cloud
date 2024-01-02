@@ -5,19 +5,21 @@ use std::fmt::Display;
 use actix_web::http::StatusCode;
 use derive_more::Display;
 
+use crate::http::aws::iam::validate::error::{ValidationError, ValidationErrorKind};
+
 pub(crate) mod output;
 
 #[derive(Debug)]
-pub(crate) struct IamError {
-    pub(crate) kind: IamErrorKind,
+pub(crate) struct ApiError {
+    pub(crate) kind: ApiErrorKind,
     pub(crate) message: Option<String>,
     pub(crate) aws_request_id: String,
     pub(crate) extras: Option<HashMap<&'static str, String>>,
 }
 
-impl IamError {
-    pub(crate) fn new(kind: IamErrorKind, message: &str, aws_request_id: &str) -> Self {
-        IamError {
+impl ApiError {
+    pub(crate) fn new(kind: ApiErrorKind, message: &str, aws_request_id: &str) -> Self {
+        ApiError {
             kind,
             message: Some(message.to_owned()),
             aws_request_id: aws_request_id.to_owned(),
@@ -25,10 +27,25 @@ impl IamError {
         }
     }
 
+    pub(crate) fn from_validation_error(error: &ValidationError, aws_request_id: &str) -> Self {
+        let kind = match error.kind {
+            ValidationErrorKind::InvalidInput => ApiErrorKind::InvalidInput,
+            ValidationErrorKind::MalformedPolicyDocument => ApiErrorKind::MalformedPolicyDocument,
+            ValidationErrorKind::ServiceFailure => ApiErrorKind::ServiceFailure,
+        };
+
+        ApiError {
+            kind,
+            message: Some(error.message.to_owned()),
+            aws_request_id: aws_request_id.to_owned(),
+            extras: None,
+        }
+    }
+
     pub(crate) fn new_with_extras(
-        kind: IamErrorKind, message: &str, aws_request_id: &str, extras: HashMap<&'static str, String>,
+        kind: ApiErrorKind, message: &str, aws_request_id: &str, extras: HashMap<&'static str, String>,
     ) -> Self {
-        IamError {
+        ApiError {
             kind,
             message: Some(message.to_owned()),
             aws_request_id: aws_request_id.to_owned(),
@@ -38,7 +55,7 @@ impl IamError {
 }
 
 #[derive(Debug, Display)]
-pub enum IamErrorKind {
+pub enum ApiErrorKind {
     ConcurrentModification,
     CredentialReportExpired,
     CredentialReportNotPresent,
@@ -68,52 +85,52 @@ pub enum IamErrorKind {
     UnrecognizedPublicKeyEncoding,
 }
 
-impl IamErrorKind {
+impl ApiErrorKind {
     pub(crate) fn status_code(&self) -> StatusCode {
         match self {
-            IamErrorKind::ServiceFailure => StatusCode::INTERNAL_SERVER_ERROR,
-            IamErrorKind::ServiceNotSupported => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiErrorKind::ServiceFailure => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiErrorKind::ServiceNotSupported => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::BAD_REQUEST,
         }
     }
 
     pub(crate) fn as_str(&self) -> &str {
         match self {
-            IamErrorKind::ConcurrentModification => "ConcurrentModification",
-            IamErrorKind::CredentialReportExpired => "CredentialReportExpired",
-            IamErrorKind::CredentialReportNotPresent => "CredentialReportNotPresent",
-            IamErrorKind::CredentialReportNotReady => "CredentialReportNotReady",
-            IamErrorKind::DeleteConflict => "DeleteConflict",
-            IamErrorKind::DuplicateCertificate => "DuplicateCertificate",
-            IamErrorKind::DuplicateSshPublicKey => "DuplicateSshPublicKey",
-            IamErrorKind::EntityAlreadyExists => "EntityAlreadyExists",
-            IamErrorKind::EntityTemporarilyUnmodifiable => "EntityTemporarilyUnmodifiable",
-            IamErrorKind::InvalidAuthenticationCode => "InvalidAuthenticationCode",
-            IamErrorKind::InvalidCertificate => "InvalidCertificate",
-            IamErrorKind::InvalidInput => "InvalidInput",
-            IamErrorKind::InvalidPublicKey => "InvalidPublicKey",
-            IamErrorKind::InvalidUserType => "InvalidUserType",
-            IamErrorKind::KeyPairMismatch => "KeyPairMismatch",
-            IamErrorKind::LimitExceeded => "LimitExceeded",
-            IamErrorKind::MalformedCertificate => "MalformedCertificate",
-            IamErrorKind::MalformedPolicyDocument => "MalformedPolicyDocument",
-            IamErrorKind::NoSuchEntity => "NoSuchEntity",
-            IamErrorKind::PasswordPolicyViolation => "PasswordPolicyViolation",
-            IamErrorKind::PolicyEvaluation => "PolicyEvaluation",
-            IamErrorKind::PolicyNotAttachable => "PolicyNotAttachable",
-            IamErrorKind::ReportGenerationLimitExceeded => "ReportGenerationLimitExceeded",
-            IamErrorKind::ServiceFailure => "ServiceFailure",
-            IamErrorKind::ServiceNotSupported => "ServiceNotSupported",
-            IamErrorKind::UnmodifiableEntity => "UnmodifiableEntity",
-            IamErrorKind::UnrecognizedPublicKeyEncoding => "UnrecognizedPublicKeyEncoding",
+            ApiErrorKind::ConcurrentModification => "ConcurrentModification",
+            ApiErrorKind::CredentialReportExpired => "CredentialReportExpired",
+            ApiErrorKind::CredentialReportNotPresent => "CredentialReportNotPresent",
+            ApiErrorKind::CredentialReportNotReady => "CredentialReportNotReady",
+            ApiErrorKind::DeleteConflict => "DeleteConflict",
+            ApiErrorKind::DuplicateCertificate => "DuplicateCertificate",
+            ApiErrorKind::DuplicateSshPublicKey => "DuplicateSshPublicKey",
+            ApiErrorKind::EntityAlreadyExists => "EntityAlreadyExists",
+            ApiErrorKind::EntityTemporarilyUnmodifiable => "EntityTemporarilyUnmodifiable",
+            ApiErrorKind::InvalidAuthenticationCode => "InvalidAuthenticationCode",
+            ApiErrorKind::InvalidCertificate => "InvalidCertificate",
+            ApiErrorKind::InvalidInput => "InvalidInput",
+            ApiErrorKind::InvalidPublicKey => "InvalidPublicKey",
+            ApiErrorKind::InvalidUserType => "InvalidUserType",
+            ApiErrorKind::KeyPairMismatch => "KeyPairMismatch",
+            ApiErrorKind::LimitExceeded => "LimitExceeded",
+            ApiErrorKind::MalformedCertificate => "MalformedCertificate",
+            ApiErrorKind::MalformedPolicyDocument => "MalformedPolicyDocument",
+            ApiErrorKind::NoSuchEntity => "NoSuchEntity",
+            ApiErrorKind::PasswordPolicyViolation => "PasswordPolicyViolation",
+            ApiErrorKind::PolicyEvaluation => "PolicyEvaluation",
+            ApiErrorKind::PolicyNotAttachable => "PolicyNotAttachable",
+            ApiErrorKind::ReportGenerationLimitExceeded => "ReportGenerationLimitExceeded",
+            ApiErrorKind::ServiceFailure => "ServiceFailure",
+            ApiErrorKind::ServiceNotSupported => "ServiceNotSupported",
+            ApiErrorKind::UnmodifiableEntity => "UnmodifiableEntity",
+            ApiErrorKind::UnrecognizedPublicKeyEncoding => "UnrecognizedPublicKeyEncoding",
         }
     }
 }
 
-impl Display for IamError {
+impl Display for ApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}: {})", self.kind.as_str(), self.message.as_deref().unwrap_or(""))
     }
 }
 
-impl Error for IamError {}
+impl Error for ApiError {}

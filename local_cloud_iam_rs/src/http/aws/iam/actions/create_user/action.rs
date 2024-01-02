@@ -7,13 +7,13 @@ use aws_smithy_types::DateTime;
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_user::LocalCreateUser;
-use crate::http::aws::iam::actions::error::IamError;
+use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
 
 impl LocalCreateUser {
     pub async fn execute(
         &self, _account_id: i64, aws_request_id: &str, _db: &LocalDb,
-    ) -> Result<OutputWrapper<CreateUserOutput>, IamError> {
+    ) -> Result<OutputWrapper<CreateUserOutput>, ApiError> {
         let user = User::builder()
             .path("/")
             .arn("")

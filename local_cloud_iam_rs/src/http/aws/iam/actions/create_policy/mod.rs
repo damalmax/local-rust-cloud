@@ -2,10 +2,8 @@ use serde::Deserialize;
 
 use crate::http::aws::iam::actions::tag::LocalTag;
 
-
 pub(crate) mod action;
-mod output;
-pub(crate) mod validate;
+pub(crate) mod output;
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct LocalCreatePolicy {
@@ -19,6 +17,8 @@ pub(crate) struct LocalCreatePolicy {
     pub(crate) description: Option<String>,
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<LocalTag>>,
+    #[serde(rename = "IsAttachable")]
+    pub(crate) attachable: Option<bool>,
 }
 
 impl LocalCreatePolicy {
@@ -40,5 +40,9 @@ impl LocalCreatePolicy {
 
     pub fn tags(&self) -> Option<&[LocalTag]> {
         self.tags.as_deref()
+    }
+
+    pub fn attachable(&self) -> Option<bool> {
+        self.attachable
     }
 }

@@ -1,12 +1,11 @@
 use aws_smithy_xml::encode::XmlWriter;
 
-
 use local_cloud_actix::local::web::XmlResponse;
 
-use crate::http::aws::iam::actions::error::IamError;
+use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::constants;
 
-impl Into<XmlResponse> for IamError {
+impl Into<XmlResponse> for ApiError {
     fn into(self) -> XmlResponse {
         let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);

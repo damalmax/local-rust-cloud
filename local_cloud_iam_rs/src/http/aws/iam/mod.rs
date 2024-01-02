@@ -5,17 +5,17 @@ use uuid::Uuid;
 
 use local_cloud_actix::local;
 use local_cloud_actix::local::web::XmlResponse;
-
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
 use crate::http::aws::iam::actions::create_user::LocalCreateUser;
-use crate::http::aws::iam::actions::error::IamError;
+use crate::http::aws::iam::actions::error::ApiError;
 
 pub(crate) mod actions;
 pub(crate) mod constants;
-pub(crate) mod repository;
-mod types;
+pub(crate) mod db;
+pub(crate) mod operations;
+pub(crate) mod validate;
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
@@ -33,7 +33,7 @@ pub(crate) async fn handle(
     let acc_id = 1i64;
     let aws_request = aws_query.into_inner();
     let aws_request_id = Uuid::new_v4().to_string();
-    let output: Result<XmlResponse, IamError> = match aws_request {
+    let output: Result<XmlResponse, ApiError> = match aws_request {
         LocalAwsRequest::CreatePolicy(create_policy) => create_policy
             .execute(acc_id, &aws_request_id, db.as_ref())
             .await

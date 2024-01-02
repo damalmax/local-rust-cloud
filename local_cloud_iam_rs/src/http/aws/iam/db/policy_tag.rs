@@ -1,7 +1,7 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::types::policy_tag::DbPolicyTag;
+use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 
 pub async fn find_by_policy<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<Vec<DbPolicyTag>, Error> {
     sqlx::query("SELECT id, policy_id, key, value FROM policy_tags WHERE policy_id=$1")
@@ -15,7 +15,7 @@ pub async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbPolicyTag) -
     let result = sqlx::query(
         r#"INSERT INTO policy_tags
                 (policy_id, key, value)
-                VALUES ($1, $2, $3) 
+                VALUES ($1, $2, $3)
                 ON CONFLICT(policy_id, key) DO UPDATE SET value=$3
                 RETURNING id"#,
     )

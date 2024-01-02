@@ -10,6 +10,8 @@ pub(crate) mod account {
 pub(crate) mod policy {
     use std::time::Duration;
 
+    pub const MANAGED_POLICY_PREFIX: &str = "ANPA";
+
     pub const INLINE_USER_POLICY_MAX_SIZE: usize = 2048;
     pub const INLINE_ROLE_POLICY_MAX_SIZE: usize = 10240;
     pub const INLINE_GROUP_POLICY_MAX_SIZE: usize = 5120;
