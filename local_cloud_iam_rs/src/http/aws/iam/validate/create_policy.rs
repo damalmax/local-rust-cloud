@@ -34,8 +34,8 @@ fn validate_tags(value: &LocalCreatePolicy) -> Result<(), ValidationError> {
 }
 
 fn validate_policy_name(value: &LocalCreatePolicy) -> Result<(), ValidationError> {
-    let policy_name = value.policy_name().unwrap_or("");
-    if policy_name.trim().len() > 1 {
+    let policy_name = value.policy_name().unwrap_or("").trim();
+    if policy_name.len() > 1 {
         return Ok(());
     }
 

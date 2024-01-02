@@ -80,13 +80,14 @@ CREATE TABLE IF NOT EXISTS policies
 
 CREATE TABLE IF NOT EXISTS policy_versions
 (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    account_id      INTEGER REFERENCES accounts (id)  NOT NULL,
-    policy_id       INTEGER REFERENCES policies (id)  NOT NULL,
-    policy_document VARCHAR2(6144)                    NOT NULL,
-    version         INTEGER                           NOT NULL,
-    create_date     INTEGER                           NOT NULL,
-    "default"       BOOLEAN                           NOT NULL
+    id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id        INTEGER REFERENCES accounts (id)  NOT NULL,
+    policy_id         INTEGER REFERENCES policies (id)  NOT NULL,
+    policy_version_id VARCHAR2(21)                      NOT NULL,
+    policy_document   VARCHAR2(6144)                    NOT NULL,
+    version           INTEGER                           NOT NULL,
+    create_date       INTEGER                           NOT NULL,
+    is_default        BOOLEAN                           NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS policy_tags
@@ -96,4 +97,12 @@ CREATE TABLE IF NOT EXISTS policy_tags
     key       VARCHAR2(100)                     NOT NULL,
     value     VARCHAR2(100)                     NOT NULL,
     UNIQUE (policy_id, key)
+);
+
+CREATE TABLE IF NOT EXISTS unique_identifiers
+(
+    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    unique_id     VARCHAR2(21)                      NOT NULL,
+    resource_type INTEGER                           NOT NULL,
+    UNIQUE (unique_id)
 );

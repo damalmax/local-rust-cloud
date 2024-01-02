@@ -1,6 +1,7 @@
+use derive_builder::Builder;
 use sqlx::FromRow;
 
-#[derive(Clone, FromRow, Debug)]
+#[derive(Clone, FromRow, Debug, Builder)]
 pub struct DbPolicyTag {
     pub id: Option<i64>,
     pub policy_id: i64,

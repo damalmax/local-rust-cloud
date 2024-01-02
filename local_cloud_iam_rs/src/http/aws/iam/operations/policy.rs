@@ -1,13 +1,20 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::types::{Policy, Tag};
 use chrono::Utc;
+use sqlx::{Sqlite, Transaction};
 
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
+use crate::http::aws::iam::actions::tag::LocalTag;
 use crate::http::aws::iam::db::types::policy::{InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError};
+use crate::http::aws::iam::db::types::policy_tag::{DbPolicyTag, DbPolicyTagBuilder};
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
+use crate::http::aws::iam::db::types::policy_version::{
+    InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError,
+};
+use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, ResourceType};
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::validate;
@@ -22,33 +29,29 @@ pub async fn create_policy(
     let policy_document =
         validate::policy_document::validate_and_minify_managed(policy_input.policy_document().unwrap())?;
 
-    // TODO: all IDs should be unique across account
-    let policy_id = local_cloud_common::naming::generate_id(constants::policy::MANAGED_POLICY_PREFIX, 21)
-        .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
-
-    let mut policy: InsertPolicy = prepare_policy_for_insert(ctx, policy_input, &policy_id)
-        .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
-
     let mut tx = db.new_tx().await?;
-    db::policy::save(&mut tx, &mut policy).await?;
-    let mut tags = vec![];
+    let policy_id = create_resource_id(&mut tx, constants::policy::MANAGED_POLICY_PREFIX, ResourceType::Policy).await?;
+    let current_time = Utc::now().timestamp();
+    let mut policy: InsertPolicy = prepare_policy_for_insert(ctx, policy_input, &policy_id, current_time)
+        .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
-    let input_tags = policy_input.tags();
-    if input_tags.is_some() {
-        for local_tag in input_tags.unwrap() {
-            let tag = Tag::builder()
-                .key(local_tag.key().unwrap())
-                .value(local_tag.value().unwrap())
-                .build()
-                .unwrap();
-            tags.push(tag);
-        }
-    }
-    // db::policy_tag::save_all(&mut tx)
-    //     .as_mut()
-    //     .expect("failed to save policy tags");
+    db::policy::create(&mut tx, &mut policy).await?;
 
-    let response_policy_builder = Policy::builder().set_tags(Some(tags)).policy_name(&policy.policy_name);
+    let policy_version_id =
+        create_resource_id(&mut tx, constants::policy_version::POLICY_VERSION_PREFIX, ResourceType::PolicyVersion)
+            .await?;
+    let mut policy_version =
+        prepare_policy_version_for_insert(ctx, policy_document, policy.id.unwrap(), policy_version_id, current_time)
+            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+    db::policy_version::create(&mut tx, &mut policy_version).await?;
+
+    let mut policy_tags = prepare_tags_for_insert(policy_input.tags(), policy.id.unwrap());
+
+    db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
+
+    let response_policy_builder = Policy::builder()
+        .set_tags(prepare_tags_for_output(policy_tags))
+        .policy_name(&policy.policy_name);
     let policy = response_policy_builder.build();
     let output = CreatePolicyOutput::builder().policy(policy).build();
 
@@ -57,10 +60,23 @@ pub async fn create_policy(
     Ok(output)
 }
 
+async fn create_resource_id<'a>(
+    tx: &mut Transaction<'a, Sqlite>, prefix: &str, resource_type: ResourceType,
+) -> Result<String, OperationError> {
+    loop {
+        let id = local_cloud_common::naming::generate_id(prefix, 21)
+            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+
+        let mut resource_identifier = ResourceIdentifier::new(&id, resource_type);
+        if let Ok(()) = db::resource_identifier::create(tx, &mut resource_identifier).await {
+            return Ok(id);
+        }
+    }
+}
+
 fn prepare_policy_for_insert(
-    ctx: &OperationCtx, policy_input: &LocalCreatePolicy, policy_id: &str,
+    ctx: &OperationCtx, policy_input: &LocalCreatePolicy, policy_id: &str, current_time: i64,
 ) -> Result<InsertPolicy, InsertPolicyBuilderError> {
-    let current_time = Utc::now().timestamp();
     let policy_name = policy_input.policy_name().unwrap().trim();
     let arn = format!("arn:aws:iam:{:0>12}:policy/{}", ctx.account_id, policy_name);
     InsertPolicyBuilder::default()
@@ -78,4 +94,51 @@ fn prepare_policy_for_insert(
         .create_date(current_time)
         .update_date(current_time)
         .build()
+}
+
+fn prepare_policy_version_for_insert(
+    ctx: &OperationCtx, policy_document: String, policy_id: i64, policy_version_id: String, current_time: i64,
+) -> Result<InsertPolicyVersion, InsertPolicyVersionBuilderError> {
+    InsertPolicyVersionBuilder::default()
+        .id(None)
+        .is_default(true)
+        .policy_id(policy_id)
+        .policy_document(policy_document)
+        .policy_version_id(policy_version_id)
+        .version(1)
+        .account_id(ctx.account_id)
+        .create_date(current_time)
+        .build()
+}
+
+fn prepare_tags_for_insert(tags: Option<&[LocalTag]>, policy_id: i64) -> Vec<DbPolicyTag> {
+    match tags {
+        None => vec![],
+        Some(tags) => {
+            let mut policy_tags = vec![];
+            for tag in tags {
+                let policy_tag = DbPolicyTagBuilder::default()
+                    .id(None)
+                    .key(tag.key().unwrap().to_owned())
+                    .value(tag.value().unwrap().to_owned())
+                    .policy_id(policy_id)
+                    .build()
+                    .unwrap();
+                policy_tags.push(policy_tag);
+            }
+            policy_tags
+        }
+    }
+}
+
+fn prepare_tags_for_output(tags: Vec<DbPolicyTag>) -> Option<Vec<Tag>> {
+    if tags.len() == 0 {
+        None
+    } else {
+        Some(
+            tags.iter()
+                .map(|tag| Tag::builder().key(&tag.key).value(&tag.value).build().unwrap())
+                .collect(),
+        )
+    }
 }

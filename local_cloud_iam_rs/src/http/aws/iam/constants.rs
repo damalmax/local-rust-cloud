@@ -7,6 +7,10 @@ pub(crate) mod account {
     pub const ACCOUNT_ALIAS_MAX_SIZE: usize = 63;
 }
 
+pub(crate) mod policy_version {
+    pub const POLICY_VERSION_PREFIX: &str = "ANVA";
+}
+
 pub(crate) mod policy {
     use std::time::Duration;
 
