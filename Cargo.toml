@@ -61,3 +61,6 @@ parking_lot = "0.12"
 regex = "1.10"
 
 etcd-client = "0.12"
+
+# Testing
+rstest = "0.18.2"

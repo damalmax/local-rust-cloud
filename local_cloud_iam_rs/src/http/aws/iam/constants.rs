@@ -24,6 +24,8 @@ pub(crate) mod policy {
     pub const MANAGED_POLICIES_PER_SESSION_MAX_COUNT: usize = 10;
 
     pub const POLICY_NAME_MAX_SIZE: usize = 128;
+    pub const POLICY_NAME_MIN_SIZE: usize = 1;
+    pub const POLICY_DESCRIPTION_MAX_SIZE: usize = 1000;
     pub const PATH_MAX_SIZE: usize = 512;
     pub const ROLE_NAME_MAX_SIZE: usize = 64;
 
@@ -47,7 +49,6 @@ pub(crate) mod tag {
     pub const TAG_KEY_MIN_SIZE: usize = 1;
     pub const TAG_KEY_MAX_SIZE: usize = 128;
 
-    pub const TAG_VALUE_MIN_SIZE: usize = 0;
     pub const TAG_VALUE_MAX_SIZE: usize = 256;
 
     pub const SESSION_TAGS_MAX_COUNT: usize = 50;

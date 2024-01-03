@@ -18,7 +18,6 @@ use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, 
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::validate;
-use crate::http::aws::iam::validate::IamValidator;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_policy(

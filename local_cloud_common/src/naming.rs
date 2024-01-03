@@ -2,9 +2,9 @@ use std::io::{Error, ErrorKind};
 
 use rand::Rng;
 
-const ALPHANUMERIC_CAPITALIZED_CHARSET: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+pub const ALPHANUMERIC_CAPITALIZED_CHARSET: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-fn generate_char_sequence(charset: &[u8], length: usize) -> String {
+pub fn generate_char_sequence(charset: &[u8], length: usize) -> String {
     let mut rng = rand::thread_rng();
     (0..length)
         .map(|_| {

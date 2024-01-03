@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ValidationErrorKind {
     /// Type of an error thrown because of invalid request data submitted to the service.
     InvalidInput,
@@ -11,7 +11,7 @@ pub enum ValidationErrorKind {
     ServiceFailure,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct ValidationError {
     pub(crate) kind: ValidationErrorKind,
     pub(crate) message: String,
