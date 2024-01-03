@@ -19,8 +19,8 @@ pub async fn create<'a>(
     .bind(resource_type)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
-    .await;
+    .await?;
 
-    resource_identifier.id = Some(result.unwrap());
+    resource_identifier.id = Some(result);
     Ok(())
 }

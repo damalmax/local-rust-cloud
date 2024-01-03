@@ -28,8 +28,8 @@ pub async fn create<'a>(
     .bind(&policy_version.is_default)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
-    .await;
+    .await?;
 
-    policy_version.id = Some(result.unwrap());
+    policy_version.id = Some(result);
     Ok(())
 }

@@ -24,9 +24,9 @@ pub async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbPolicyTag) -
     .bind(&tag.value)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
-    .await;
+    .await?;
 
-    tag.id = Some(result.unwrap());
+    tag.id = Some(result);
     Ok(())
 }
 
