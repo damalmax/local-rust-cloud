@@ -14,6 +14,23 @@ pub(crate) mod policy_version {
 pub(crate) mod policy {
     use std::time::Duration;
 
+    use lazy_static::lazy_static;
+    use regex::Regex;
+
+    lazy_static! {
+        pub static ref POLICY_PATH_REGEX: Regex = Regex::new(r"^((/[A-Za-z0-9\.,\+@=_-]+)*)/$").unwrap();
+        pub static ref POLICY_NAME_VALID_CHARACTERS: Vec<char> =
+            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+=,.@-_"
+                .chars()
+                .into_iter()
+                .collect();
+        pub static ref POLICY_DESCRIPTION_VALID_CHARACTERS: Vec<char> =
+            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+=,.@-_ "
+                .chars()
+                .into_iter()
+                .collect();
+    }
+
     pub const MANAGED_POLICY_PREFIX: &str = "ANPA";
 
     pub const INLINE_USER_POLICY_MAX_SIZE: usize = 2048;

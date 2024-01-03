@@ -85,7 +85,7 @@ mod tests {
         11,
         "Tag key must follow the following RegExp: '^[\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]+$', Location: 'Tags.member.11.key'."
     )]
-    fn test_validate_key__invalid_characters(
+    fn test_validate_key_invalid_characters(
         #[case] tag_key: Option<&str>, #[case] index: usize, #[case] expected_error: &str,
     ) {
         let error = ValidationError::new(ValidationErrorKind::InvalidInput, expected_error);
@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_key__invalid_length() {
+    fn test_validate_key_invalid_length() {
         let error = ValidationError::new(ValidationErrorKind::InvalidInput, "Tag key length is greater (129 characters) than allowed (max: 128 characters). Location: 'Tags.member.3.key'.");
 
         let tag_key_text = generate_char_sequence(&local_cloud_common::naming::ALPHANUMERIC_CAPITALIZED_CHARSET, 129);
@@ -114,7 +114,7 @@ mod tests {
     11,
     "Tag value must follow the following RegExp: '^[\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*$', Location: 'Tags.member.11.value'."
     )]
-    fn test_validate_value__invalid_characters(
+    fn test_validate_value_invalid_characters(
         #[case] tag_value: Option<&str>, #[case] index: usize, #[case] expected_error: &str,
     ) {
         let error = ValidationError::new(ValidationErrorKind::InvalidInput, expected_error);
@@ -125,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_value__invalid_length() {
+    fn test_validate_value_invalid_length() {
         let error = ValidationError::new(ValidationErrorKind::InvalidInput, "Tag value length is greater (257 characters) than allowed (max: 256 characters). Location: 'Tags.member.3.value'.");
 
         let tag_value_text = generate_char_sequence(&local_cloud_common::naming::ALPHANUMERIC_CAPITALIZED_CHARSET, 257);
