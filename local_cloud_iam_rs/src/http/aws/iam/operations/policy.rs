@@ -1,4 +1,5 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
+use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
 use aws_sdk_iam::types::{Policy, Tag};
 use chrono::Utc;
 use sqlx::{Sqlite, Transaction};
@@ -6,6 +7,7 @@ use sqlx::{Sqlite, Transaction};
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
+use crate::http::aws::iam::actions::create_policy_version::LocalCreatePolicyVersion;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::actions::tag::LocalTag;
 use crate::http::aws::iam::db::types::policy::{InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError};
@@ -55,6 +57,14 @@ pub async fn create_policy(
     let output = CreatePolicyOutput::builder().policy(policy).build();
 
     tx.commit().await?;
+
+    Ok(output)
+}
+
+pub async fn create_policy_version(
+    ctx: &OperationCtx, policy_version_input: &LocalCreatePolicyVersion, db: &LocalDb,
+) -> Result<CreatePolicyVersionOutput, OperationError> {
+    let output = CreatePolicyVersionOutput::builder().build();
 
     Ok(output)
 }

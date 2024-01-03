@@ -65,17 +65,19 @@ VALUES ('Admin', '/', 'LOCALCLOUDRS101ADMIN', 1, 2),
 -- Policy
 CREATE TABLE IF NOT EXISTS policies
 (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    account_id    INTEGER REFERENCES accounts (id)  NOT NULL,
-    policy_name   VARCHAR2(128)                     NOT NULL,
-    policy_id     VARCHAR2(21),
-    arn           VARCHAR2(100),
-    path          VARCHAR2(100),
-    is_attachable BOOLEAN,
-    description   VARCHAR2(200),
-    create_date   INTEGER                           NOT NULL,
-    update_date   INTEGER                           NOT NULL,
-    UNIQUE (arn)
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id         INTEGER REFERENCES accounts (id)  NOT NULL,
+    policy_name        VARCHAR2(128)                     NOT NULL,
+    unique_policy_name VARCHAR2(128)                     NOT NULL,
+    policy_id          VARCHAR2(21),
+    arn                VARCHAR2(100),
+    path               VARCHAR2(100),
+    is_attachable      BOOLEAN,
+    description        VARCHAR2(200),
+    create_date        INTEGER                           NOT NULL,
+    update_date        INTEGER                           NOT NULL,
+    UNIQUE (arn) ON CONFLICT FAIL,
+    UNIQUE (unique_policy_name) ON CONFLICT FAIL
 );
 
 CREATE TABLE IF NOT EXISTS policy_versions

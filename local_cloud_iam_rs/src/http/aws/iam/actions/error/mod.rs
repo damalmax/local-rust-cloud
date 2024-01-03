@@ -54,7 +54,7 @@ impl ApiError {
     }
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug, Display, PartialEq)]
 pub enum ApiErrorKind {
     ConcurrentModification,
     CredentialReportExpired,

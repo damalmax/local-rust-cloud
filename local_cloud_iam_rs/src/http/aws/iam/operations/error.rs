@@ -39,10 +39,25 @@ impl From<ValidationError> for OperationError {
 }
 
 impl From<sqlx::Error> for OperationError {
-    fn from(value: sqlx::Error) -> Self {
-        OperationError::Service {
-            kind: ApiErrorKind::ServiceFailure,
-            msg: value.to_string(),
+    fn from(error: sqlx::Error) -> Self {
+        match error {
+            sqlx::Error::Database(ref db_error) => {
+                if db_error.kind() == sqlx::error::ErrorKind::UniqueViolation {
+                    OperationError::Service {
+                        kind: ApiErrorKind::EntityAlreadyExists,
+                        msg: error.to_string(),
+                    }
+                } else {
+                    OperationError::Service {
+                        kind: ApiErrorKind::ServiceFailure,
+                        msg: error.to_string(),
+                    }
+                }
+            }
+            _ => OperationError::Service {
+                kind: ApiErrorKind::ServiceFailure,
+                msg: error.to_string(),
+            },
         }
     }
 }
