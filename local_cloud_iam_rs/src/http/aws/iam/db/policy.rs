@@ -3,17 +3,17 @@ use sqlx::{Error, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::policy::InsertPolicy;
 
-pub async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut InsertPolicy) -> Result<(), Error> {
+pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut InsertPolicy) -> Result<(), Error> {
     let result = sqlx::query(
         r#"INSERT INTO policies (
                         account_id,
-                        policy_name, 
-                        unique_policy_name, 
+                        policy_name,
+                        unique_policy_name,
                         policy_id,
-                        arn, 
+                        arn,
                         path,
                         is_attachable,
-                        description, 
+                        description,
                         create_date,
                         update_date
                 )

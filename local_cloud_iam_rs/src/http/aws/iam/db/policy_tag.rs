@@ -3,7 +3,9 @@ use sqlx::{Error, FromRow, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 
-pub async fn find_by_policy<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<Vec<DbPolicyTag>, Error> {
+pub(crate) async fn find_by_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
+) -> Result<Vec<DbPolicyTag>, Error> {
     sqlx::query("SELECT id, policy_id, key, value FROM policy_tags WHERE policy_id=$1")
         .bind(policy_id)
         .map(|row: SqliteRow| DbPolicyTag::from_row(&row).unwrap())
@@ -11,7 +13,7 @@ pub async fn find_by_policy<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64
         .await
 }
 
-pub async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbPolicyTag) -> Result<(), Error> {
+pub(crate) async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbPolicyTag) -> Result<(), Error> {
     let result = sqlx::query(
         r#"INSERT INTO policy_tags
                 (policy_id, key, value)
@@ -30,14 +32,14 @@ pub async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbPolicyTag) -
     Ok(())
 }
 
-pub async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Vec<DbPolicyTag>) -> Result<(), Error> {
+pub(crate) async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Vec<DbPolicyTag>) -> Result<(), Error> {
     for tag in tags {
         save(tx, tag).await?;
     }
     return Ok(());
 }
 
-pub async fn delete_by_policy<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<(), Error> {
+pub(crate) async fn delete_by_policy<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<(), Error> {
     sqlx::query("DELETE * FROM policy_tags WHERE policy_id=$1")
         .bind(policy_id)
         .execute(tx.as_mut())

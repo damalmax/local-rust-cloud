@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-pub enum PolicyType {
+pub(crate) enum PolicyType {
     LocalCloudManaged, // alternative for 'AWS Managed'
     CustomerManaged,
 }

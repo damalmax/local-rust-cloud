@@ -2,11 +2,11 @@ use derive_builder::Builder;
 use sqlx::FromRow;
 
 #[derive(Clone, FromRow, Debug, Builder)]
-pub struct DbPolicyTag {
-    pub id: Option<i64>,
-    pub policy_id: i64,
-    pub key: String,
-    pub value: String,
+pub(crate) struct DbPolicyTag {
+    pub(crate) id: Option<i64>,
+    pub(crate) policy_id: i64,
+    pub(crate) key: String,
+    pub(crate) value: String,
 }
 
 impl Into<aws_sdk_iam::types::Tag> for DbPolicyTag {

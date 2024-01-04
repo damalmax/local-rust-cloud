@@ -29,7 +29,14 @@ async fn create_policy() {
         .expect("Failed to create IAM policy");
 
     assert!(response.policy().is_some());
-    assert!(response.policy().unwrap().tags().len() > 0);
+    let policy = response.policy().unwrap();
+    assert!(policy.tags().len() > 0);
+    assert_eq!(policy.default_version_id.as_deref().unwrap(), "v1");
+    assert!(policy.create_date.is_some());
+    assert_eq!(policy.attachment_count.unwrap(), 0); // new policy is not attached to any user/role/group
+    assert_eq!(policy.permissions_boundary_usage_count.unwrap(), 0); // new policy is not attached to any user/role/group
+    assert!(policy.path().is_some());
+    assert_eq!(policy.is_attachable(), true);
 
     ctx.stop_server().await;
 }

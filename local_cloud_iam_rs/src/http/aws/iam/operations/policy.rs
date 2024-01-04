@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
-use aws_sdk_iam::types::{Policy, Tag};
+use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
+use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Sqlite, Transaction};
 
@@ -51,7 +52,17 @@ pub async fn create_policy(
     db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
 
     let response_policy_builder = Policy::builder()
+        .arn(policy.arn)
+        .create_date(DateTime::from_secs(policy.create_date))
+        .update_date(DateTime::from_secs(policy.update_date))
+        .path(policy.path)
+        .policy_id(policy.policy_id)
+        .is_attachable(policy.attachable)
+        .set_description(policy.description)
+        .attachment_count(0)
+        .permissions_boundary_usage_count(0)
         .set_tags(prepare_tags_for_output(policy_tags))
+        .set_default_version_id(Some(format!("v{}", policy_version.version.unwrap())))
         .policy_name(&policy.policy_name);
     let policy = response_policy_builder.build();
     let output = CreatePolicyOutput::builder().policy(policy).build();
@@ -62,9 +73,27 @@ pub async fn create_policy(
 }
 
 pub async fn create_policy_version(
-    ctx: &OperationCtx, policy_version_input: &LocalCreatePolicyVersion, db: &LocalDb,
+    _ctx: &OperationCtx, policy_version_input: &LocalCreatePolicyVersion, db: &LocalDb,
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
-    let output = CreatePolicyVersionOutput::builder().build();
+    validate::create_policy_version::validate(policy_version_input)?;
+    // The presence of the policy document is already validated with general validate call above
+    let _policy_document =
+        validate::policy_document::validate_and_minify_managed(policy_version_input.policy_document().unwrap())?;
+
+    let mut tx = db.new_tx().await?;
+
+    let default_version = policy_version_input.default_version().unwrap_or(true);
+    let current_time = Utc::now().timestamp();
+
+    let policy_version = PolicyVersion::builder()
+        .is_default_version(default_version)
+        .create_date(DateTime::from_secs(current_time))
+        .version_id("v2")
+        .build();
+    let output = CreatePolicyVersionOutput::builder()
+        .policy_version(policy_version)
+        .build();
+    tx.commit().await?;
 
     Ok(output)
 }
@@ -114,7 +143,7 @@ fn prepare_policy_version_for_insert(
         .policy_id(policy_id)
         .policy_document(policy_document)
         .policy_version_id(policy_version_id)
-        .version(1)
+        .version(None)
         .account_id(ctx.account_id)
         .create_date(current_time)
         .build()

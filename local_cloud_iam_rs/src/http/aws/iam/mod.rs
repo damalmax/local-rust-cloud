@@ -8,6 +8,7 @@ use local_cloud_actix::local::web::XmlResponse;
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
+use crate::http::aws::iam::actions::create_policy_version::LocalCreatePolicyVersion;
 use crate::http::aws::iam::actions::create_user::LocalCreateUser;
 use crate::http::aws::iam::actions::error::ApiError;
 
@@ -22,6 +23,8 @@ pub(crate) mod validate;
 pub(crate) enum LocalAwsRequest {
     #[serde(rename = "CreatePolicy")]
     CreatePolicy(LocalCreatePolicy),
+    #[serde(rename = "CreatePolicyVersion")]
+    CreatePolicyVersion(LocalCreatePolicyVersion),
     #[serde(rename = "CreateUser")]
     CreateUser(LocalCreateUser),
 }
@@ -35,6 +38,10 @@ pub(crate) async fn handle(
     let aws_request_id = Uuid::new_v4().to_string();
     let output: Result<XmlResponse, ApiError> = match aws_request {
         LocalAwsRequest::CreatePolicy(create_policy) => create_policy
+            .execute(acc_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreatePolicyVersion(create_policy_version) => create_policy_version
             .execute(acc_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

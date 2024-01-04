@@ -87,10 +87,22 @@ CREATE TABLE IF NOT EXISTS policy_versions
     policy_id         INTEGER REFERENCES policies (id)  NOT NULL,
     policy_version_id VARCHAR2(21)                      NOT NULL,
     policy_document   VARCHAR2(6144)                    NOT NULL,
-    version           INTEGER                           NOT NULL,
+    version           INTEGER, -- there in no constraint on the column since it will be auto-populated by trigger
     create_date       INTEGER                           NOT NULL,
     is_default        BOOLEAN                           NOT NULL
 );
+
+CREATE TRIGGER IF NOT EXISTS auto_increment_policy_version
+    AFTER INSERT
+    ON policy_versions
+    WHEN new.version IS NULL
+BEGIN
+    UPDATE policy_versions
+    SET version = (SELECT IFNULL(MAX(version), 0) + 1
+                   FROM policy_versions
+                   WHERE account_id = new.account_id AND policy_id = new.policy_id)
+    WHERE id = new.id;
+END;
 
 CREATE TABLE IF NOT EXISTS policy_tags
 (

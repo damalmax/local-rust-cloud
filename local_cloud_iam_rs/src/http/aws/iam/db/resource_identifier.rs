@@ -3,7 +3,7 @@ use sqlx::{Error, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::resource_identifier::ResourceIdentifier;
 
-pub async fn create<'a>(
+pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, resource_identifier: &mut ResourceIdentifier,
 ) -> Result<(), Error> {
     let resource_type: i16 = resource_identifier.resource_type.into();

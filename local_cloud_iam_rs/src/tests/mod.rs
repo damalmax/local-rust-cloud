@@ -7,6 +7,8 @@ mod test_suite;
 #[cfg(test)]
 mod create_policy;
 #[cfg(test)]
+mod create_policy_version;
+#[cfg(test)]
 mod create_user;
 
 pub(crate) const TEST_SUITE: TestSuite = TestSuite::new();
