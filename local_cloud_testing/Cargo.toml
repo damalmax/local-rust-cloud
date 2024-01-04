@@ -1,0 +1,12 @@
+[package]
+name = "local_cloud_testing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web.workspace = true
+actix-rt.workspace = true
+parking_lot.workspace = true
+uuid.workspace = true
+log.workspace = true
+local_cloud_common = { path = "../local_cloud_common" }

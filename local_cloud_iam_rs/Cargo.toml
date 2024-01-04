@@ -49,5 +49,6 @@ lazy_static = "1.4"
 encoding_rs = "0.8"
 
 [dev-dependencies]
-actix-rt = "2.9"
+actix-rt.workspace = true
 rstest.workspace = true
+local_cloud_testing = { path = "../local_cloud_testing" }

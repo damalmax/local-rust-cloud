@@ -6,7 +6,7 @@ use super::*;
 
 #[actix_rt::test]
 async fn assume_role() {
-    let mut ctx = TEST_SUITE.create_test_ctx().await;
+    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))

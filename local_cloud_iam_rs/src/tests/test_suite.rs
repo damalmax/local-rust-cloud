@@ -1,77 +1,22 @@
-use std::io::Error;
-
-use actix_web::dev::ServerHandle;
-use parking_lot::ReentrantMutex;
-use uuid::Uuid;
-
 use crate::config::{AppConfig, AppConfigFactory};
+use actix_server::Server;
+use local_cloud_testing::suite::TestAppConfig;
 
-pub struct TestSuite {
-    lock: ReentrantMutex<()>,
-}
-
-impl TestSuite {
-    pub const fn new() -> TestSuite {
-        TestSuite {
-            lock: ReentrantMutex::new(()),
-        }
-    }
-
-    pub async fn create_test_ctx(&self) -> TestContext {
-        let guard = self.lock.lock();
-        loop {
-            match TestContext::new().await {
-                Ok(test_context) => {
-                    drop(guard);
-                    return test_context;
-                }
-                Err(error) => log::error!("{}", error),
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct TestContext {
-    pub port: u16,
-    pub server_handle: ServerHandle,
-}
-
-struct TestAppConfigFactory {
-    database_url: String,
-    port: u16,
+pub(crate) struct TestAppConfigFactory {
+    config: TestAppConfig,
 }
 
 impl AppConfigFactory for TestAppConfigFactory {
     fn get_config(&self) -> AppConfig {
-        AppConfig::with_params(&self.database_url, self.port)
+        AppConfig {
+            database_url: self.config.database_url.to_owned(),
+            etcd_enabled: false,
+            etcd_endpoints: "".to_owned(),
+            service_port: self.config.port,
+        }
     }
 }
 
-impl TestContext {
-    pub async fn new() -> Result<TestContext, Error> {
-        let port =
-            local_cloud_common::network::get_available_port().expect("Failed to bind available port for Test Server");
-
-        let db_file_name = Uuid::new_v4();
-        let config_factory = TestAppConfigFactory {
-            database_url: format!("file:{}?mode=memory&cache=shared", db_file_name),
-            port,
-        };
-        let server = crate::http::server::start(config_factory).await;
-
-        return match server {
-            Ok(server_handler) => {
-                let server_handle = server_handler.handle();
-                actix_rt::spawn(server_handler);
-
-                Ok(TestContext { port, server_handle })
-            }
-            Err(e) => Err(Error::new(e.kind(), e)),
-        };
-    }
-
-    pub async fn stop_server(&mut self) {
-        self.server_handle.stop(false).await;
-    }
+pub(crate) async fn start_server(config: TestAppConfig) -> std::io::Result<Server> {
+    crate::http::server::start(TestAppConfigFactory { config }).await
 }

@@ -1,6 +1,6 @@
 use aws_credential_types::provider::ProvideCredentials;
 
-use self::test_suite::TestSuite;
+use crate::config::AppConfigFactory;
 
 mod test_suite;
 
@@ -10,8 +10,6 @@ mod create_policy;
 mod create_policy_version;
 #[cfg(test)]
 mod create_user;
-
-pub(crate) const TEST_SUITE: TestSuite = TestSuite::new();
 
 pub fn credentials_provider() -> impl ProvideCredentials {
     aws_credential_types::Credentials::new("AKIAIOSFODNN201ADMIN", "secret_access_key", None, None, "provider_name")

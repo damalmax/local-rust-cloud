@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct OperationCtx {
     pub(crate) account_id: i64,
     pub(crate) aws_request_id: String,

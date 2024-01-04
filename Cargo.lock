@@ -1851,6 +1851,7 @@ dependencies = [
  "local_cloud_common",
  "local_cloud_db",
  "local_cloud_iam_policy_document",
+ "local_cloud_testing",
  "local_cloud_xml",
  "log",
  "parking_lot",
@@ -1872,6 +1873,7 @@ version = "0.1.0"
 dependencies = [
  "actix-http",
  "actix-rt",
+ "actix-server",
  "actix-service",
  "actix-utils",
  "actix-web",
@@ -1887,6 +1889,7 @@ dependencies = [
  "local_cloud_actix",
  "local_cloud_common",
  "local_cloud_db",
+ "local_cloud_testing",
  "local_cloud_xml",
  "log",
  "parking_lot",
@@ -1896,6 +1899,18 @@ dependencies = [
  "sqlx",
  "tokio",
  "url",
+ "uuid",
+]
+
+[[package]]
+name = "local_cloud_testing"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "local_cloud_common",
+ "log",
+ "parking_lot",
  "uuid",
 ]
 

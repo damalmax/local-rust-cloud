@@ -2,6 +2,7 @@
 members = [
     "local_cloud_actix",
     "local_cloud_common",
+    "local_cloud_testing",
     "local_cloud_xml",
     "local_cloud_db",
     "local_cloud_iam_policy_document",
@@ -20,6 +21,7 @@ actix-test = "0.1"
 actix-utils = "3"
 actix-web = { version = "4.4", features = ["__compress"] }
 actix-ws = "0.2"
+actix-rt = "2.9"
 
 derive_more = "0.99"
 derive_builder = "0.12"

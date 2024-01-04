@@ -1,11 +1,12 @@
-use crate::tests::{credentials_provider, TEST_SUITE};
+use crate::tests::credentials_provider;
 use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_sdk_iam::{config::Region, types::Tag};
+use local_cloud_testing::assertions::assert_not_empty;
 
 #[actix_rt::test]
 async fn create_policy() {
-    let mut ctx = TEST_SUITE.create_test_ctx().await;
+    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))
@@ -35,7 +36,8 @@ async fn create_policy() {
     assert!(policy.create_date.is_some());
     assert_eq!(policy.attachment_count.unwrap(), 0); // new policy is not attached to any user/role/group
     assert_eq!(policy.permissions_boundary_usage_count.unwrap(), 0); // new policy is not attached to any user/role/group
-    assert!(policy.path().is_some());
+    assert_not_empty(policy.path());
+    assert_not_empty(policy.policy_name());
     assert_eq!(policy.is_attachable(), true);
 
     ctx.stop_server().await;
@@ -43,7 +45,7 @@ async fn create_policy() {
 
 #[actix_rt::test]
 async fn create_policy_too_many_tags() {
-    let mut ctx = TEST_SUITE.create_test_ctx().await;
+    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))

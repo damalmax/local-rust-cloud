@@ -1,11 +1,11 @@
-use crate::tests::{credentials_provider, TEST_SUITE};
+use crate::tests::credentials_provider;
 use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_sdk_iam::{config::Region, types::Tag};
 
 #[actix_rt::test]
 async fn create_policy_version() {
-    let mut ctx = TEST_SUITE.create_test_ctx().await;
+    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))
