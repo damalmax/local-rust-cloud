@@ -3,6 +3,7 @@ members = [
     "local_cloud_actix",
     "local_cloud_common",
     "local_cloud_testing",
+    "local_cloud_validate",
     "local_cloud_xml",
     "local_cloud_db",
     "local_cloud_iam_policy_document",

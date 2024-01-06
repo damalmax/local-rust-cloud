@@ -1,20 +1,20 @@
-use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
+use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam;
 use crate::http::aws::iam::actions::error::ApiError;
-use crate::http::aws::iam::actions::types::create_policy_version::CreatePolicyVersionType;
+use crate::http::aws::iam::actions::list_policies::LocalListPolicies;
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 
-impl CreatePolicyVersionType {
+impl LocalListPolicies {
     pub async fn execute(
         &self, account_id: i64, aws_request_id: &str, db: &LocalDb,
-    ) -> Result<OutputWrapper<CreatePolicyVersionOutput>, ApiError> {
+    ) -> Result<OutputWrapper<ListPoliciesOutput>, ApiError> {
         let ctx = OperationCtx::new(account_id, aws_request_id);
-        let output = iam::operations::policy::create_policy_version(&ctx, self, db)
+        let output = iam::operations::policy::list_policies(&ctx, self, db)
             .await
             .map_err(|error| match error {
                 OperationError::Service { kind, msg } => ApiError::new(kind, &msg, aws_request_id),

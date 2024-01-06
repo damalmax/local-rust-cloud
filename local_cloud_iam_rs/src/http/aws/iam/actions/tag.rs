@@ -1,11 +1,14 @@
 use serde::Deserialize;
 
+use crate::http::aws::iam::actions::types::tag_key::TagKeyType;
+use crate::http::aws::iam::actions::types::tag_value::TagValueType;
+
 #[derive(Debug, Deserialize)]
 pub(crate) struct LocalTag {
     #[serde(rename = "Key")]
-    pub key: Option<String>,
+    pub key: Option<TagKeyType>,
     #[serde(rename = "Value")]
-    pub value: Option<String>,
+    pub value: Option<TagValueType>,
 }
 
 impl LocalTag {

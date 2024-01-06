@@ -41,6 +41,7 @@ aws-sdk-iam.workspace = true
 aws-credential-types.workspace = true
 
 local_cloud_common = { path = "../local_cloud_common" }
+local_cloud_validate = { path = "../local_cloud_validate" }
 local_cloud_xml = { path = "../local_cloud_xml" }
 local_cloud_db = { path = "../local_cloud_db" }
 local_cloud_iam_policy_document = { path = "../local_cloud_iam_policy_document" }

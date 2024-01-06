@@ -5,7 +5,7 @@ use std::fmt::Display;
 use actix_web::http::StatusCode;
 use derive_more::Display;
 
-use crate::http::aws::iam::validate::error::{ValidationError, ValidationErrorKind};
+use local_cloud_validate::ValidationError;
 
 pub(crate) mod output;
 
@@ -29,9 +29,7 @@ impl ApiError {
 
     pub(crate) fn from_validation_error(error: &ValidationError, aws_request_id: &str) -> Self {
         let kind = match error.kind {
-            ValidationErrorKind::InvalidInput => ApiErrorKind::InvalidInput,
-            ValidationErrorKind::MalformedPolicyDocument => ApiErrorKind::MalformedPolicyDocument,
-            ValidationErrorKind::ServiceFailure => ApiErrorKind::ServiceFailure,
+            _ => ApiErrorKind::InvalidInput,
         };
 
         ApiError {

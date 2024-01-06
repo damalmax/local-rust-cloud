@@ -1852,6 +1852,7 @@ dependencies = [
  "local_cloud_db",
  "local_cloud_iam_policy_document",
  "local_cloud_testing",
+ "local_cloud_validate",
  "local_cloud_xml",
  "log",
  "parking_lot",
@@ -1912,6 +1913,14 @@ dependencies = [
  "log",
  "parking_lot",
  "uuid",
+]
+
+[[package]]
+name = "local_cloud_validate"
+version = "0.1.0"
+dependencies = [
+ "num-traits",
+ "regex",
 ]
 
 [[package]]

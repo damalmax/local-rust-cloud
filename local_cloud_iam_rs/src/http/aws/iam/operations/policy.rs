@@ -1,16 +1,19 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
+use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Sqlite, Transaction};
 
 use local_cloud_db::LocalDb;
+use local_cloud_validate::Validator;
 
-use crate::http::aws::iam::actions::create_policy::LocalCreatePolicy;
-use crate::http::aws::iam::actions::create_policy_version::LocalCreatePolicyVersion;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::actions::tag::LocalTag;
+use crate::http::aws::iam::actions::list_policies::LocalListPolicies;
+use crate::http::aws::iam::actions::types::create_policy::CreatePolicyType;
+use crate::http::aws::iam::actions::types::create_policy_version::CreatePolicyVersionType;
+use crate::http::aws::iam::actions::types::tag::TagType;
 use crate::http::aws::iam::db::types::policy::{InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError};
 use crate::http::aws::iam::db::types::policy_tag::{DbPolicyTag, DbPolicyTagBuilder};
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
@@ -24,9 +27,11 @@ use crate::http::aws::iam::validate;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_policy(
-    ctx: &OperationCtx, policy_input: &LocalCreatePolicy, db: &LocalDb,
+    ctx: &OperationCtx, policy_input: &CreatePolicyType, db: &LocalDb,
 ) -> Result<CreatePolicyOutput, OperationError> {
-    validate::create_policy::validate(policy_input)?;
+    policy_input
+        .validate()
+        .map_err(|err| OperationError::new(ApiErrorKind::InvalidInput, err.message.as_str()))?;
     // The presence of the policy document is already validated with general validate call above
     let policy_document =
         validate::policy_document::validate_and_minify_managed(policy_input.policy_document().unwrap())?;
@@ -73,9 +78,11 @@ pub async fn create_policy(
 }
 
 pub async fn create_policy_version(
-    _ctx: &OperationCtx, policy_version_input: &LocalCreatePolicyVersion, db: &LocalDb,
+    _ctx: &OperationCtx, policy_version_input: &CreatePolicyVersionType, db: &LocalDb,
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
-    validate::create_policy_version::validate(policy_version_input)?;
+    policy_version_input
+        .validate()
+        .map_err(|err| OperationError::new(ApiErrorKind::InvalidInput, err.message.as_str()))?;
     // The presence of the policy document is already validated with general validate call above
     let _policy_document =
         validate::policy_document::validate_and_minify_managed(policy_version_input.policy_document().unwrap())?;
@@ -98,6 +105,14 @@ pub async fn create_policy_version(
     Ok(output)
 }
 
+pub async fn list_policies(
+    _ctx: &OperationCtx, list_policies_input: &LocalListPolicies, db: &LocalDb,
+) -> Result<ListPoliciesOutput, OperationError> {
+    let output = ListPoliciesOutput::builder().build();
+
+    Ok(output)
+}
+
 async fn create_resource_id<'a>(
     tx: &mut Transaction<'a, Sqlite>, prefix: &str, resource_type: ResourceType,
 ) -> Result<String, OperationError> {
@@ -113,7 +128,7 @@ async fn create_resource_id<'a>(
 }
 
 fn prepare_policy_for_insert(
-    ctx: &OperationCtx, policy_input: &LocalCreatePolicy, policy_id: &str, current_time: i64,
+    ctx: &OperationCtx, policy_input: &CreatePolicyType, policy_id: &str, current_time: i64,
 ) -> Result<InsertPolicy, InsertPolicyBuilderError> {
     let policy_name = policy_input.policy_name().unwrap().trim();
     let arn = format!("arn:aws:iam:{:0>12}:policy/{}", ctx.account_id, policy_name);
@@ -149,7 +164,7 @@ fn prepare_policy_version_for_insert(
         .build()
 }
 
-fn prepare_tags_for_insert(tags: Option<&[LocalTag]>, policy_id: i64) -> Vec<DbPolicyTag> {
+fn prepare_tags_for_insert(tags: Option<&[TagType]>, policy_id: i64) -> Vec<DbPolicyTag> {
     match tags {
         None => vec![],
         Some(tags) => {
