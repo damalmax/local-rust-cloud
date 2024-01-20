@@ -244,16 +244,16 @@ where
                     }
                 }
 
-                if encoding == UTF_8 {
-                    serde_aws_query_ce::from_bytes::<T>(&body).map_err(AwsQueryEncodedError::Parse)
-                } else {
-                    let body = encoding
-                        .decode_without_bom_handling_and_without_replacement(&body)
-                        .map(Cow::into_owned)
-                        .ok_or(AwsQueryEncodedError::Encoding)?;
+                // if encoding == UTF_8 {
+                //     serde_aws_query_ce::from_bytes::<T>(&body).map_err(AwsQueryEncodedError::Parse)
+                // } else {
+                let body = encoding
+                    .decode_without_bom_handling_and_without_replacement(&body)
+                    .map(Cow::into_owned)
+                    .ok_or(AwsQueryEncodedError::Encoding)?;
 
-                    serde_aws_query_ce::from_str::<T>(&body).map_err(AwsQueryEncodedError::Parse)
-                }
+                serde_aws_query_ce::from_str::<T>(&body).map_err(AwsQueryEncodedError::Parse)
+                // }
             }
             .boxed_local(),
         );

@@ -3,8 +3,4 @@ pub(crate) mod create_policy_version;
 pub(crate) mod create_user;
 pub(crate) mod error;
 pub(crate) mod list_policies;
-pub(crate) mod policy_scope;
-pub(crate) mod policy_usage;
-pub(crate) mod tag;
-pub(crate) mod types;
 pub(crate) mod wrapper;

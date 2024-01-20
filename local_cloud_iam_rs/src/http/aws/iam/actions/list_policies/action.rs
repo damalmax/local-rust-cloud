@@ -4,12 +4,12 @@ use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam;
 use crate::http::aws::iam::actions::error::ApiError;
-use crate::http::aws::iam::actions::list_policies::LocalListPolicies;
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 
-impl LocalListPolicies {
+impl ListPoliciesRequest {
     pub async fn execute(
         &self, account_id: i64, aws_request_id: &str, db: &LocalDb,
     ) -> Result<OutputWrapper<ListPoliciesOutput>, ApiError> {

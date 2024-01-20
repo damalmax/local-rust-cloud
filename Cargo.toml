@@ -8,7 +8,7 @@ members = [
     "local_cloud_db",
     "local_cloud_iam_policy_document",
     "local_cloud_iam_rs",
-    "local_cloud_sts_rs"
+    "local_cloud_sts_rs",
 ]
 resolver = "2"
 
@@ -54,8 +54,8 @@ aws-config = "1.1"
 aws-smithy-xml = "0.60"
 aws-smithy-types = "1.1"
 aws-types = "1.1"
-aws-sdk-iam = "1.9"
-aws-sdk-sts = "1.9"
+aws-sdk-iam = "1.10"
+aws-sdk-sts = "1.10"
 aws-credential-types = "1.1"
 
 uuid = { version = "1", features = ["v4", "serde"] }

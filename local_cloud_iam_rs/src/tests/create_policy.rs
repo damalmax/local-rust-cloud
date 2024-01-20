@@ -82,7 +82,7 @@ async fn create_policy_too_many_tags() {
     assert!(error.is_invalid_input_exception());
     assert_eq!("InvalidInput", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
-    assert_eq!(error.meta().message().unwrap(), "Number of Tags cannot be greater than 50.");
+    assert_eq!(error.meta().message().unwrap(), "Number of '$.Tags' cannot be greater than 50.");
 
     ctx.stop_server().await;
 }

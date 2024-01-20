@@ -7,13 +7,9 @@ use chrono::Utc;
 use sqlx::{Sqlite, Transaction};
 
 use local_cloud_db::LocalDb;
-use local_cloud_validate::Validator;
+use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::actions::list_policies::LocalListPolicies;
-use crate::http::aws::iam::actions::types::create_policy::CreatePolicyType;
-use crate::http::aws::iam::actions::types::create_policy_version::CreatePolicyVersionType;
-use crate::http::aws::iam::actions::types::tag::TagType;
 use crate::http::aws::iam::db::types::policy::{InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError};
 use crate::http::aws::iam::db::types::policy_tag::{DbPolicyTag, DbPolicyTagBuilder};
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
@@ -23,14 +19,17 @@ use crate::http::aws::iam::db::types::policy_version::{
 use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, ResourceType};
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
+use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
+use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::validate;
-use crate::http::aws::iam::{constants, db};
+use crate::http::aws::iam::{constants, db, types};
 
 pub async fn create_policy(
-    ctx: &OperationCtx, policy_input: &CreatePolicyType, db: &LocalDb,
+    ctx: &OperationCtx, policy_input: &CreatePolicyRequest, db: &LocalDb,
 ) -> Result<CreatePolicyOutput, OperationError> {
     policy_input
-        .validate()
+        .validate("$")
         .map_err(|err| OperationError::new(ApiErrorKind::InvalidInput, err.message.as_str()))?;
     // The presence of the policy document is already validated with general validate call above
     let policy_document =
@@ -78,10 +77,10 @@ pub async fn create_policy(
 }
 
 pub async fn create_policy_version(
-    _ctx: &OperationCtx, policy_version_input: &CreatePolicyVersionType, db: &LocalDb,
+    _ctx: &OperationCtx, policy_version_input: &CreatePolicyVersionRequest, db: &LocalDb,
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
     policy_version_input
-        .validate()
+        .validate("$")
         .map_err(|err| OperationError::new(ApiErrorKind::InvalidInput, err.message.as_str()))?;
     // The presence of the policy document is already validated with general validate call above
     let _policy_document =
@@ -89,7 +88,10 @@ pub async fn create_policy_version(
 
     let mut tx = db.new_tx().await?;
 
-    let default_version = policy_version_input.default_version().unwrap_or(true);
+    let default_version = policy_version_input
+        .set_as_default()
+        .map(|v| v.as_bool())
+        .unwrap_or(true);
     let current_time = Utc::now().timestamp();
 
     let policy_version = PolicyVersion::builder()
@@ -106,7 +108,7 @@ pub async fn create_policy_version(
 }
 
 pub async fn list_policies(
-    _ctx: &OperationCtx, list_policies_input: &LocalListPolicies, db: &LocalDb,
+    _ctx: &OperationCtx, _list_policies_input: &ListPoliciesRequest, _db: &LocalDb,
 ) -> Result<ListPoliciesOutput, OperationError> {
     let output = ListPoliciesOutput::builder().build();
 
@@ -128,7 +130,7 @@ async fn create_resource_id<'a>(
 }
 
 fn prepare_policy_for_insert(
-    ctx: &OperationCtx, policy_input: &CreatePolicyType, policy_id: &str, current_time: i64,
+    ctx: &OperationCtx, policy_input: &CreatePolicyRequest, policy_id: &str, current_time: i64,
 ) -> Result<InsertPolicy, InsertPolicyBuilderError> {
     let policy_name = policy_input.policy_name().unwrap().trim();
     let arn = format!("arn:aws:iam:{:0>12}:policy/{}", ctx.account_id, policy_name);
@@ -142,7 +144,7 @@ fn prepare_policy_for_insert(
         .policy_id(policy_id.to_owned())
         .policy_name(policy_name.to_owned())
         // 'IsAttachable' should be 'true' by default
-        .attachable(policy_input.attachable().unwrap_or(true))
+        .attachable(policy_input.is_attachable().map(|a| a.as_bool()).unwrap_or(true))
         .policy_type(PolicyType::CustomerManaged)
         .create_date(current_time)
         .update_date(current_time)
@@ -164,7 +166,7 @@ fn prepare_policy_version_for_insert(
         .build()
 }
 
-fn prepare_tags_for_insert(tags: Option<&[TagType]>, policy_id: i64) -> Vec<DbPolicyTag> {
+fn prepare_tags_for_insert(tags: Option<&[types::tag::Tag]>, policy_id: i64) -> Vec<DbPolicyTag> {
     match tags {
         None => vec![],
         Some(tags) => {

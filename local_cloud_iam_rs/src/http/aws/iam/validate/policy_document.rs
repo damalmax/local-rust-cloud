@@ -3,7 +3,6 @@ use validator::Validate;
 use local_cloud_iam_policy_document::types::LocalPolicyDocument;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::constants;
 use crate::http::aws::iam::operations::error::OperationError;
 
 pub(crate) fn validate(policy_document_str: &str) -> Result<String, OperationError> {
@@ -20,17 +19,5 @@ pub(crate) fn validate(policy_document_str: &str) -> Result<String, OperationErr
 
 pub(crate) fn validate_and_minify_managed(policy_document: &str) -> Result<String, OperationError> {
     let json = validate(policy_document)?;
-
-    let length = json.chars().count();
-    if json.chars().count() > constants::policy::MANAGED_POLICY_MAX_SIZE {
-        return Err(OperationError::new(
-            ApiErrorKind::MalformedPolicyDocument,
-            format!(
-                "Managed Policy Document length is greater ({length} characters) than allowed (max: {} characters)",
-                constants::policy::MANAGED_POLICY_MAX_SIZE
-            )
-            .as_str(),
-        ));
-    }
     Ok(json)
 }

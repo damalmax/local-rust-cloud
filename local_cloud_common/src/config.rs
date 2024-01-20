@@ -9,10 +9,12 @@ pub fn get_string_env_with_default(env_key: &str, default_value: &str) -> impl I
 /// Retrieves environment variable bool value for the given key. If the environment variable is not set, default value will be used.
 /// If the value is not a valid boolean, `false` value will be used by default.
 pub fn get_bool_env_with_default(env_key: &str, default_value: bool) -> impl Into<bool> {
-    return std::env::var(env_key).map(|v| String::from("true").eq(&v)).unwrap_or_else(|_| {
-        log::warn!("{} env variable is not set. Using default value: {}", env_key, default_value);
-        default_value
-    });
+    return std::env::var(env_key)
+        .map(|v| String::from("true").eq(&v))
+        .unwrap_or_else(|_| {
+            log::warn!("{} env variable is not set. Using default value: {}", env_key, default_value);
+            default_value
+        });
 }
 
 /// Retrieves environment variable u16 value for the given key. If the environment variable is not set, default value will be used.

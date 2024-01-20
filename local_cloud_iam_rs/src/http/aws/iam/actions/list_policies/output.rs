@@ -18,7 +18,7 @@ impl From<LocalListPoliciesOutput> for XmlResponse {
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut create_policy_result_tag = create_policy_response_tag.start_el("ListPoliciesResult").finish();
+        let create_policy_result_tag = create_policy_response_tag.start_el("ListPoliciesResult").finish();
 
         create_policy_result_tag.finish();
 

@@ -4,12 +4,12 @@ use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam;
 use crate::http::aws::iam::actions::error::ApiError;
-use crate::http::aws::iam::actions::types::create_policy_version::CreatePolicyVersionType;
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 
-impl CreatePolicyVersionType {
+impl CreatePolicyVersionRequest {
     pub async fn execute(
         &self, account_id: i64, aws_request_id: &str, db: &LocalDb,
     ) -> Result<OutputWrapper<CreatePolicyVersionOutput>, ApiError> {

@@ -7,29 +7,30 @@ use local_cloud_actix::local;
 use local_cloud_actix::local::web::XmlResponse;
 use local_cloud_db::LocalDb;
 
-use crate::http::aws::iam::actions::create_user::LocalCreateUser;
 use crate::http::aws::iam::actions::error::ApiError;
-use crate::http::aws::iam::actions::list_policies::LocalListPolicies;
-use crate::http::aws::iam::actions::types::create_policy::CreatePolicyType;
-use crate::http::aws::iam::actions::types::create_policy_version::CreatePolicyVersionType;
+use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
+use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
+use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
+use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 
 pub(crate) mod actions;
 pub(crate) mod constants;
 pub(crate) mod db;
 pub(crate) mod operations;
+pub(crate) mod types;
 pub(crate) mod validate;
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
 pub(crate) enum LocalAwsRequest {
     #[serde(rename = "CreatePolicy")]
-    CreatePolicy(CreatePolicyType),
+    CreatePolicy(CreatePolicyRequest),
     #[serde(rename = "ListPolicies")]
-    ListPolicies(LocalListPolicies),
+    ListPolicies(ListPoliciesRequest),
     #[serde(rename = "CreatePolicyVersion")]
-    CreatePolicyVersion(CreatePolicyVersionType),
+    CreatePolicyVersion(CreatePolicyVersionRequest),
     #[serde(rename = "CreateUser")]
-    CreateUser(LocalCreateUser),
+    CreateUser(CreateUserRequest),
 }
 
 pub(crate) async fn handle(

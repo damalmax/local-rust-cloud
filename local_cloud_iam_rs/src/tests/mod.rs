@@ -1,7 +1,5 @@
 use aws_credential_types::provider::ProvideCredentials;
 
-use crate::config::AppConfigFactory;
-
 mod test_suite;
 
 #[cfg(test)]
