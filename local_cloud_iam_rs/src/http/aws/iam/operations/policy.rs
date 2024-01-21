@@ -26,19 +26,18 @@ use crate::http::aws::iam::validate;
 use crate::http::aws::iam::{constants, db, types};
 
 pub async fn create_policy(
-    ctx: &OperationCtx, policy_input: &CreatePolicyRequest, db: &LocalDb,
+    ctx: &OperationCtx, input: &CreatePolicyRequest, db: &LocalDb,
 ) -> Result<CreatePolicyOutput, OperationError> {
-    policy_input
-        .validate("$")
-        .map_err(|err| OperationError::new(ApiErrorKind::InvalidInput, err.message.as_str()))?;
-    // The presence of the policy document is already validated with general validate call above
-    let policy_document =
-        validate::policy_document::validate_and_minify_managed(policy_input.policy_document().unwrap())?;
+    // validate
+    input.validate("$")?;
+    let policy_document = validate::policy_document::validate_and_minify_managed(input.policy_document())?;
 
+    // init transaction
     let mut tx = db.new_tx().await?;
+
     let policy_id = create_resource_id(&mut tx, constants::policy::MANAGED_POLICY_PREFIX, ResourceType::Policy).await?;
     let current_time = Utc::now().timestamp();
-    let mut policy: InsertPolicy = prepare_policy_for_insert(ctx, policy_input, &policy_id, current_time)
+    let mut policy: InsertPolicy = prepare_policy_for_insert(ctx, input, &policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
     db::policy::create(&mut tx, &mut policy).await?;
@@ -51,7 +50,7 @@ pub async fn create_policy(
             .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
     db::policy_version::create(&mut tx, &mut policy_version).await?;
 
-    let mut policy_tags = prepare_tags_for_insert(policy_input.tags(), policy.id.unwrap());
+    let mut policy_tags = prepare_tags_for_insert(input.tags(), policy.id.unwrap());
 
     db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
 
@@ -77,34 +76,72 @@ pub async fn create_policy(
 }
 
 pub async fn create_policy_version(
-    _ctx: &OperationCtx, policy_version_input: &CreatePolicyVersionRequest, db: &LocalDb,
+    ctx: &OperationCtx, input: &CreatePolicyVersionRequest, db: &LocalDb,
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
-    policy_version_input
-        .validate("$")
-        .map_err(|err| OperationError::new(ApiErrorKind::InvalidInput, err.message.as_str()))?;
-    // The presence of the policy document is already validated with general validate call above
-    let _policy_document =
-        validate::policy_document::validate_and_minify_managed(policy_version_input.policy_document().unwrap())?;
+    // validate
+    input.validate("$")?;
+    let policy_document = validate::policy_document::validate_and_minify_managed(input.policy_document())?;
 
+    // init transaction
     let mut tx = db.new_tx().await?;
 
-    let default_version = policy_version_input
-        .set_as_default()
-        .map(|v| v.as_bool())
-        .unwrap_or(true);
-    let current_time = Utc::now().timestamp();
+    let policy_id = db::policy::find_id_by_arn(&mut tx, input.policy_arn().unwrap()).await?;
+    if policy_id.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
+        ));
+    }
 
+    let policy_id = policy_id.unwrap();
+    check_policy_version_count(&mut tx, policy_id).await?;
+
+    // check whether new policy version should be set as default. True by default
+    let set_as_default = input.set_as_default().map(|v| v.as_bool()).unwrap_or(true);
+    if set_as_default {
+        // find and disable previous default policy version
+        db::policy_version::disable_default_by_policy_id(&mut tx, policy_id).await?;
+    }
+
+    let current_time = Utc::now().timestamp();
     let policy_version = PolicyVersion::builder()
-        .is_default_version(default_version)
+        .is_default_version(set_as_default)
         .create_date(DateTime::from_secs(current_time))
         .version_id("v2")
         .build();
+
+    let policy_version_id =
+        create_resource_id(&mut tx, constants::policy_version::POLICY_VERSION_PREFIX, ResourceType::PolicyVersion)
+            .await?;
+    let mut insert_policy_version =
+        prepare_policy_version_for_insert(ctx, policy_document, policy_id, policy_version_id, current_time)
+            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+    db::policy_version::create(&mut tx, &mut insert_policy_version).await?;
+
     let output = CreatePolicyVersionOutput::builder()
         .policy_version(policy_version)
         .build();
     tx.commit().await?;
 
     Ok(output)
+}
+
+async fn check_policy_version_count<'a>(
+    tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
+) -> Result<(), OperationError> {
+    let policy_version_count = db::policy_version::count_by_policy_id(tx, policy_id).await?;
+    if policy_version_count >= constants::policy_version::POLICY_VERSION_MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!(
+                "Number of Policy Versions cannot be greater than '{}'. Actual count: '{}'.",
+                constants::policy_version::POLICY_VERSION_MAX_COUNT,
+                policy_version_count
+            )
+            .as_str(),
+        ));
+    }
+    Ok(())
 }
 
 pub async fn list_policies(

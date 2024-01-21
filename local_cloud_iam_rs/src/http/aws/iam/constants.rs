@@ -4,6 +4,7 @@ pub(crate) mod xml {
 
 pub(crate) mod policy_version {
     pub(crate) const POLICY_VERSION_PREFIX: &str = "ANVA";
+    pub(crate) const POLICY_VERSION_MAX_COUNT: usize = 5;
 }
 
 pub(crate) mod policy {

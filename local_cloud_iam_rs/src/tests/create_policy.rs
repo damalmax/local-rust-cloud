@@ -1,19 +1,11 @@
-use crate::tests::credentials_provider;
-use aws_config::BehaviorVersion;
-use aws_credential_types::provider::SharedCredentialsProvider;
-use aws_sdk_iam::{config::Region, types::Tag};
+use aws_sdk_iam::types::Tag;
 use local_cloud_testing::assertions::assert_not_empty;
 
 #[actix_rt::test]
 async fn create_policy() {
     let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
-    let config = aws_config::SdkConfig::builder()
-        .region(Some(Region::new("eu-local-1")))
-        .endpoint_url(format!("http://localhost:{}/iam", port))
-        .credentials_provider(SharedCredentialsProvider::new(credentials_provider()))
-        .behavior_version(BehaviorVersion::latest())
-        .build();
+    let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
     let response = client
@@ -47,12 +39,7 @@ async fn create_policy() {
 async fn create_policy_too_many_tags() {
     let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
-    let config = aws_config::SdkConfig::builder()
-        .region(Some(Region::new("eu-local-1")))
-        .endpoint_url(format!("http://localhost:{}/iam", port))
-        .credentials_provider(SharedCredentialsProvider::new(credentials_provider()))
-        .behavior_version(BehaviorVersion::latest())
-        .build();
+    let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
     let tags = (0..51)

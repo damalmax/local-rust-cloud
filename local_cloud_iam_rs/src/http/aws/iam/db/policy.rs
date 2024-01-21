@@ -38,6 +38,17 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut In
     Ok(())
 }
 
+pub(crate) async fn find_id_by_arn<'a>(
+    tx: &mut Transaction<'a, Sqlite>, policy_arn: &str,
+) -> Result<Option<i64>, Error> {
+    let result = sqlx::query("SELECT id FROM policies WHERE arn = $1")
+        .bind(policy_arn)
+        .map(|row: SqliteRow| row.get::<i64, &str>("id"))
+        .fetch_optional(tx.as_mut())
+        .await?;
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use core::fmt;

@@ -17,7 +17,7 @@ pub(crate) fn validate(policy_document_str: &str) -> Result<String, OperationErr
     Ok(json)
 }
 
-pub(crate) fn validate_and_minify_managed(policy_document: &str) -> Result<String, OperationError> {
-    let json = validate(policy_document)?;
+pub(crate) fn validate_and_minify_managed(policy_document: Option<&str>) -> Result<String, OperationError> {
+    let json = validate(policy_document.unwrap())?;
     Ok(json)
 }

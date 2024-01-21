@@ -38,3 +38,22 @@ pub(crate) async fn create<'a>(
     policy_version.version = Some(version);
     Ok(())
 }
+
+pub(crate) async fn count_by_policy_id<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<usize, Error> {
+    let result = sqlx::query("SELECT count(*) as items_count FROM policy_versions WHERE policy_id = $1")
+        .bind(policy_id)
+        .map(|row: SqliteRow| row.get::<i16, &str>("items_count"))
+        .fetch_one(tx.as_mut())
+        .await?;
+    Ok(result as usize)
+}
+
+pub(crate) async fn disable_default_by_policy_id<'a>(
+    tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
+) -> Result<(), Error> {
+    sqlx::query("UPDATE policy_versions SET is_default=false WHERE policy_id=$1 AND is_default=true")
+        .bind(policy_id)
+        .execute(tx.as_mut())
+        .await?;
+    Ok(())
+}
