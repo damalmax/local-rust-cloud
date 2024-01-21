@@ -11,14 +11,8 @@ impl DeletePolicyRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeletePolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.policy_arn(),
-            format!("{at}.{}", "PolicyArn").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.policy_arn.as_ref(),
-            format!("{at}.{}", "PolicyArn").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;
+        local_cloud_validate::validate_named(self.policy_arn.as_ref(), format!("{at}.{}", "PolicyArn").as_str())?;
         Ok(())
     }
 }

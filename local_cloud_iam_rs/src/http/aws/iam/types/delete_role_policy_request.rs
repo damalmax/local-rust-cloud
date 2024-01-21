@@ -16,22 +16,10 @@ impl DeleteRolePolicyRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteRolePolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.role_name(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.role_name.as_ref(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.policy_name(),
-            format!("{at}.{}", "PolicyName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.policy_name.as_ref(),
-            format!("{at}.{}", "PolicyName").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_named(self.role_name.as_ref(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_required(self.policy_name(), format!("{at}.{}", "PolicyName").as_str())?;
+        local_cloud_validate::validate_named(self.policy_name.as_ref(), format!("{at}.{}", "PolicyName").as_str())?;
         Ok(())
     }
 }

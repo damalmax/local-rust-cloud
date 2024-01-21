@@ -16,22 +16,10 @@ impl AttachUserPolicyRequest {
 }
 impl local_cloud_validate::NamedValidator for &AttachUserPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.user_name(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.policy_arn(),
-            format!("{at}.{}", "PolicyArn").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.policy_arn.as_ref(),
-            format!("{at}.{}", "PolicyArn").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;
+        local_cloud_validate::validate_named(self.policy_arn.as_ref(), format!("{at}.{}", "PolicyArn").as_str())?;
         Ok(())
     }
 }

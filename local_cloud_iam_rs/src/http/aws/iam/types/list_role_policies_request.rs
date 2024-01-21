@@ -21,22 +21,10 @@ impl ListRolePoliciesRequest {
 }
 impl local_cloud_validate::NamedValidator for &ListRolePoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.role_name(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.role_name.as_ref(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.marker.as_ref(),
-            format!("{at}.{}", "Marker").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.max_items.as_ref(),
-            format!("{at}.{}", "MaxItems").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_named(self.role_name.as_ref(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
+        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
         Ok(())
     }
 }

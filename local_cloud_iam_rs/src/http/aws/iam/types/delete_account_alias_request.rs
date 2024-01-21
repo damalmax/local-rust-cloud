@@ -11,14 +11,8 @@ impl DeleteAccountAliasRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteAccountAliasRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.account_alias(),
-            format!("{at}.{}", "AccountAlias").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.account_alias.as_ref(),
-            format!("{at}.{}", "AccountAlias").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.account_alias(), format!("{at}.{}", "AccountAlias").as_str())?;
+        local_cloud_validate::validate_named(self.account_alias.as_ref(), format!("{at}.{}", "AccountAlias").as_str())?;
         Ok(())
     }
 }

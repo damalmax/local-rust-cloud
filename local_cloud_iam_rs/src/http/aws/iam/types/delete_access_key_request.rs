@@ -16,18 +16,9 @@ impl DeleteAccessKeyRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteAccessKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.access_key_id(),
-            format!("{at}.{}", "AccessKeyId").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.access_key_id.as_ref(),
-            format!("{at}.{}", "AccessKeyId").as_str(),
-        )?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_required(self.access_key_id(), format!("{at}.{}", "AccessKeyId").as_str())?;
+        local_cloud_validate::validate_named(self.access_key_id.as_ref(), format!("{at}.{}", "AccessKeyId").as_str())?;
         Ok(())
     }
 }

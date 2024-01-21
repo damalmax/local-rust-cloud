@@ -16,22 +16,10 @@ impl UpdateRoleDescriptionRequest {
 }
 impl local_cloud_validate::NamedValidator for &UpdateRoleDescriptionRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.role_name(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.role_name.as_ref(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.description(),
-            format!("{at}.{}", "Description").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.description.as_ref(),
-            format!("{at}.{}", "Description").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_named(self.role_name.as_ref(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_required(self.description(), format!("{at}.{}", "Description").as_str())?;
+        local_cloud_validate::validate_named(self.description.as_ref(), format!("{at}.{}", "Description").as_str())?;
         Ok(())
     }
 }

@@ -2,9 +2,7 @@ use crate::http::aws::iam::types;
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetServerCertificateRequest {
     #[serde(rename = "ServerCertificateName")]
-    pub(crate) server_certificate_name: Option<
-        types::server_certificate_name_type::ServerCertificateNameType,
-    >,
+    pub(crate) server_certificate_name: Option<types::server_certificate_name_type::ServerCertificateNameType>,
 }
 impl GetServerCertificateRequest {
     pub(crate) fn server_certificate_name(&self) -> Option<&str> {

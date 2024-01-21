@@ -16,14 +16,8 @@ impl DeleteSshPublicKeyRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteSshPublicKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.user_name(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
         local_cloud_validate::validate_required(
             self.ssh_public_key_id(),
             format!("{at}.{}", "SSHPublicKeyId").as_str(),

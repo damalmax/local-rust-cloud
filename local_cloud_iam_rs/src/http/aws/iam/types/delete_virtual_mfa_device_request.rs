@@ -11,14 +11,8 @@ impl DeleteVirtualMfaDeviceRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteVirtualMfaDeviceRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.serial_number(),
-            format!("{at}.{}", "SerialNumber").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.serial_number.as_ref(),
-            format!("{at}.{}", "SerialNumber").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.serial_number(), format!("{at}.{}", "SerialNumber").as_str())?;
+        local_cloud_validate::validate_named(self.serial_number.as_ref(), format!("{at}.{}", "SerialNumber").as_str())?;
         Ok(())
     }
 }

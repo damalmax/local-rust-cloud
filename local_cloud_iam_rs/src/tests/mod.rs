@@ -11,6 +11,8 @@ mod create_policy;
 mod create_policy_version;
 #[cfg(test)]
 mod create_user;
+#[cfg(test)]
+mod list_policies;
 
 pub fn credentials_provider() -> impl ProvideCredentials {
     aws_credential_types::Credentials::new("AKIAIOSFODNN201ADMIN", "secret_access_key", None, None, "provider_name")

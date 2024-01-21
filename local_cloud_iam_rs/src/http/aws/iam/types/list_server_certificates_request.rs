@@ -21,18 +21,9 @@ impl ListServerCertificatesRequest {
 }
 impl local_cloud_validate::NamedValidator for &ListServerCertificatesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_named(
-            self.max_items.as_ref(),
-            format!("{at}.{}", "MaxItems").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.path_prefix.as_ref(),
-            format!("{at}.{}", "PathPrefix").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.marker.as_ref(),
-            format!("{at}.{}", "Marker").as_str(),
-        )?;
+        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
+        local_cloud_validate::validate_named(self.path_prefix.as_ref(), format!("{at}.{}", "PathPrefix").as_str())?;
+        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
         Ok(())
     }
 }

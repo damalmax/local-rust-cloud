@@ -20,8 +20,7 @@ impl From<LocalCreatePolicyOutput> for XmlResponse {
             .finish();
 
         let mut create_policy_result_tag = create_policy_response_tag.start_el("CreatePolicyResult").finish();
-        if val.inner.policy().is_some() {
-            let policy = val.inner.policy().unwrap();
+        if let Some(policy) = val.inner.policy() {
             let mut policy_tag = create_policy_result_tag.start_el("Policy").finish();
             local_cloud_xml::write_tag_with_value(&mut policy_tag, "PolicyName", policy.policy_name());
             local_cloud_xml::write_tag_with_value(&mut policy_tag, "PolicyId", policy.policy_id());

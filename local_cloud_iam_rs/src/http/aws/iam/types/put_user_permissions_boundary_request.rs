@@ -24,14 +24,8 @@ impl local_cloud_validate::NamedValidator for &PutUserPermissionsBoundaryRequest
             self.permissions_boundary.as_ref(),
             format!("{at}.{}", "PermissionsBoundary").as_str(),
         )?;
-        local_cloud_validate::validate_required(
-            self.user_name(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
         Ok(())
     }
 }

@@ -97,7 +97,7 @@ pub async fn create_policy_version(
     check_policy_version_count(&mut tx, policy_id).await?;
 
     // check whether new policy version should be set as default. True by default
-    let set_as_default = input.set_as_default().map(|v| v.as_bool()).unwrap_or(true);
+    let set_as_default = input.set_as_default().unwrap_or(true);
     if set_as_default {
         // find and disable previous default policy version
         db::policy_version::disable_default_by_policy_id(&mut tx, policy_id).await?;
@@ -145,8 +145,10 @@ async fn check_policy_version_count<'a>(
 }
 
 pub async fn list_policies(
-    _ctx: &OperationCtx, _list_policies_input: &ListPoliciesRequest, _db: &LocalDb,
+    _ctx: &OperationCtx, input: &ListPoliciesRequest, _db: &LocalDb,
 ) -> Result<ListPoliciesOutput, OperationError> {
+    input.validate("$")?;
+
     let output = ListPoliciesOutput::builder().build();
 
     Ok(output)
@@ -181,7 +183,7 @@ fn prepare_policy_for_insert(
         .policy_id(policy_id.to_owned())
         .policy_name(policy_name.to_owned())
         // 'IsAttachable' should be 'true' by default
-        .attachable(policy_input.is_attachable().map(|a| a.as_bool()).unwrap_or(true))
+        .attachable(policy_input.is_attachable().unwrap_or(true))
         .policy_type(PolicyType::CustomerManaged)
         .create_date(current_time)
         .update_date(current_time)

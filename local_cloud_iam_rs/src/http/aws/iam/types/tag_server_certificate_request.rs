@@ -2,9 +2,7 @@ use crate::http::aws::iam::types;
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct TagServerCertificateRequest {
     #[serde(rename = "ServerCertificateName")]
-    pub(crate) server_certificate_name: Option<
-        types::server_certificate_name_type::ServerCertificateNameType,
-    >,
+    pub(crate) server_certificate_name: Option<types::server_certificate_name_type::ServerCertificateNameType>,
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<types::tag::Tag>>,
 }
@@ -26,26 +24,12 @@ impl local_cloud_validate::NamedValidator for &TagServerCertificateRequest {
             self.server_certificate_name.as_ref(),
             format!("{at}.{}", "ServerCertificateName").as_str(),
         )?;
-        local_cloud_validate::validate_required(
-            self.tags(),
-            format!("{at}.{}", "Tags").as_str(),
-        )?;
-        local_cloud_validate::validate_array_size_min(
-            self.tags(),
-            0usize,
-            format!("{at}.{}", "Tags").as_str(),
-        )?;
-        local_cloud_validate::validate_array_size_max(
-            self.tags(),
-            50usize,
-            format!("{at}.{}", "Tags").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.tags(), format!("{at}.{}", "Tags").as_str())?;
+        local_cloud_validate::validate_array_size_min(self.tags(), 0usize, format!("{at}.{}", "Tags").as_str())?;
+        local_cloud_validate::validate_array_size_max(self.tags(), 50usize, format!("{at}.{}", "Tags").as_str())?;
         if let Some(tags) = self.tags() {
             for (id, member) in tags.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "Tags").as_str(),
-                )?;
+                local_cloud_validate::validate_named(Some(member), format!("{at}.{}.member.{id}", "Tags").as_str())?;
             }
         }
         Ok(())

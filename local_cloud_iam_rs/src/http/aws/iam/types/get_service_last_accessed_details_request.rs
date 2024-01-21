@@ -21,22 +21,10 @@ impl GetServiceLastAccessedDetailsRequest {
 }
 impl local_cloud_validate::NamedValidator for &GetServiceLastAccessedDetailsRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_named(
-            self.max_items.as_ref(),
-            format!("{at}.{}", "MaxItems").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.marker.as_ref(),
-            format!("{at}.{}", "Marker").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.job_id(),
-            format!("{at}.{}", "JobId").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.job_id.as_ref(),
-            format!("{at}.{}", "JobId").as_str(),
-        )?;
+        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
+        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
+        local_cloud_validate::validate_required(self.job_id(), format!("{at}.{}", "JobId").as_str())?;
+        local_cloud_validate::validate_named(self.job_id.as_ref(), format!("{at}.{}", "JobId").as_str())?;
         Ok(())
     }
 }

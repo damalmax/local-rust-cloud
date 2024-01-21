@@ -4,17 +4,13 @@ pub(crate) struct GetContextKeysForPrincipalPolicyRequest {
     #[serde(rename = "PolicySourceArn")]
     pub(crate) policy_source_arn: Option<types::arn_type::ArnType>,
     #[serde(rename = "PolicyInputList")]
-    pub(crate) policy_input_list: Option<
-        Vec<types::policy_document_type::PolicyDocumentType>,
-    >,
+    pub(crate) policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
 }
 impl GetContextKeysForPrincipalPolicyRequest {
     pub(crate) fn policy_source_arn(&self) -> Option<&str> {
         self.policy_source_arn.as_deref()
     }
-    pub(crate) fn policy_input_list(
-        &self,
-    ) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
+    pub(crate) fn policy_input_list(&self) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
         self.policy_input_list.as_deref()
     }
 }

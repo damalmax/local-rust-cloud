@@ -16,22 +16,10 @@ impl CreateServiceSpecificCredentialRequest {
 }
 impl local_cloud_validate::NamedValidator for &CreateServiceSpecificCredentialRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.user_name(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.service_name(),
-            format!("{at}.{}", "ServiceName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.service_name.as_ref(),
-            format!("{at}.{}", "ServiceName").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_required(self.service_name(), format!("{at}.{}", "ServiceName").as_str())?;
+        local_cloud_validate::validate_named(self.service_name.as_ref(), format!("{at}.{}", "ServiceName").as_str())?;
         Ok(())
     }
 }

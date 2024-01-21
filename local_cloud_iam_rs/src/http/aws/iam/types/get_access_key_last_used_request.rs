@@ -11,14 +11,8 @@ impl GetAccessKeyLastUsedRequest {
 }
 impl local_cloud_validate::NamedValidator for &GetAccessKeyLastUsedRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.access_key_id(),
-            format!("{at}.{}", "AccessKeyId").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.access_key_id.as_ref(),
-            format!("{at}.{}", "AccessKeyId").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.access_key_id(), format!("{at}.{}", "AccessKeyId").as_str())?;
+        local_cloud_validate::validate_named(self.access_key_id.as_ref(), format!("{at}.{}", "AccessKeyId").as_str())?;
         Ok(())
     }
 }

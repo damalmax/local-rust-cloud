@@ -16,22 +16,10 @@ impl ChangePasswordRequest {
 }
 impl local_cloud_validate::NamedValidator for &ChangePasswordRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.old_password(),
-            format!("{at}.{}", "OldPassword").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.old_password.as_ref(),
-            format!("{at}.{}", "OldPassword").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.new_password(),
-            format!("{at}.{}", "NewPassword").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.new_password.as_ref(),
-            format!("{at}.{}", "NewPassword").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.old_password(), format!("{at}.{}", "OldPassword").as_str())?;
+        local_cloud_validate::validate_named(self.old_password.as_ref(), format!("{at}.{}", "OldPassword").as_str())?;
+        local_cloud_validate::validate_required(self.new_password(), format!("{at}.{}", "NewPassword").as_str())?;
+        local_cloud_validate::validate_named(self.new_password.as_ref(), format!("{at}.{}", "NewPassword").as_str())?;
         Ok(())
     }
 }

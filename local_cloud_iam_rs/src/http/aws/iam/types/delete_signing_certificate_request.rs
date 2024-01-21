@@ -16,14 +16,8 @@ impl DeleteSigningCertificateRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteSigningCertificateRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.certificate_id(),
-            format!("{at}.{}", "CertificateId").as_str(),
-        )?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_required(self.certificate_id(), format!("{at}.{}", "CertificateId").as_str())?;
         local_cloud_validate::validate_named(
             self.certificate_id.as_ref(),
             format!("{at}.{}", "CertificateId").as_str(),

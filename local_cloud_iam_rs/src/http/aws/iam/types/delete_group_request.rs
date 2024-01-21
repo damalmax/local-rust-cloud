@@ -11,14 +11,8 @@ impl DeleteGroupRequest {
 }
 impl local_cloud_validate::NamedValidator for &DeleteGroupRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.group_name(),
-            format!("{at}.{}", "GroupName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.group_name.as_ref(),
-            format!("{at}.{}", "GroupName").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.group_name(), format!("{at}.{}", "GroupName").as_str())?;
+        local_cloud_validate::validate_named(self.group_name.as_ref(), format!("{at}.{}", "GroupName").as_str())?;
         Ok(())
     }
 }

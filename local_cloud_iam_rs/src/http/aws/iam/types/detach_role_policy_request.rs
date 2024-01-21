@@ -16,22 +16,10 @@ impl DetachRolePolicyRequest {
 }
 impl local_cloud_validate::NamedValidator for &DetachRolePolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.role_name(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.role_name.as_ref(),
-            format!("{at}.{}", "RoleName").as_str(),
-        )?;
-        local_cloud_validate::validate_required(
-            self.policy_arn(),
-            format!("{at}.{}", "PolicyArn").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.policy_arn.as_ref(),
-            format!("{at}.{}", "PolicyArn").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_named(self.role_name.as_ref(), format!("{at}.{}", "RoleName").as_str())?;
+        local_cloud_validate::validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;
+        local_cloud_validate::validate_named(self.policy_arn.as_ref(), format!("{at}.{}", "PolicyArn").as_str())?;
         Ok(())
     }
 }

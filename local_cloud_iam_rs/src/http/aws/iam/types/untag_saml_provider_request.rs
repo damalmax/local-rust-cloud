@@ -24,15 +24,8 @@ impl local_cloud_validate::NamedValidator for &UntagSamlProviderRequest {
             self.saml_provider_arn.as_ref(),
             format!("{at}.{}", "SAMLProviderArn").as_str(),
         )?;
-        local_cloud_validate::validate_required(
-            self.tag_keys(),
-            format!("{at}.{}", "TagKeys").as_str(),
-        )?;
-        local_cloud_validate::validate_array_size_min(
-            self.tag_keys(),
-            0usize,
-            format!("{at}.{}", "TagKeys").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.tag_keys(), format!("{at}.{}", "TagKeys").as_str())?;
+        local_cloud_validate::validate_array_size_min(self.tag_keys(), 0usize, format!("{at}.{}", "TagKeys").as_str())?;
         local_cloud_validate::validate_array_size_max(
             self.tag_keys(),
             50usize,
@@ -40,10 +33,7 @@ impl local_cloud_validate::NamedValidator for &UntagSamlProviderRequest {
         )?;
         if let Some(tag_keys) = self.tag_keys() {
             for (id, member) in tag_keys.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "TagKeys").as_str(),
-                )?;
+                local_cloud_validate::validate_named(Some(member), format!("{at}.{}.member.{id}", "TagKeys").as_str())?;
             }
         }
         Ok(())

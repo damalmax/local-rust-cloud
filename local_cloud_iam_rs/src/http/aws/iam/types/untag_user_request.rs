@@ -16,15 +16,8 @@ impl UntagUserRequest {
 }
 impl local_cloud_validate::NamedValidator for &UntagUserRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.tag_keys(),
-            format!("{at}.{}", "TagKeys").as_str(),
-        )?;
-        local_cloud_validate::validate_array_size_min(
-            self.tag_keys(),
-            0usize,
-            format!("{at}.{}", "TagKeys").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.tag_keys(), format!("{at}.{}", "TagKeys").as_str())?;
+        local_cloud_validate::validate_array_size_min(self.tag_keys(), 0usize, format!("{at}.{}", "TagKeys").as_str())?;
         local_cloud_validate::validate_array_size_max(
             self.tag_keys(),
             50usize,
@@ -32,20 +25,11 @@ impl local_cloud_validate::NamedValidator for &UntagUserRequest {
         )?;
         if let Some(tag_keys) = self.tag_keys() {
             for (id, member) in tag_keys.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "TagKeys").as_str(),
-                )?;
+                local_cloud_validate::validate_named(Some(member), format!("{at}.{}.member.{id}", "TagKeys").as_str())?;
             }
         }
-        local_cloud_validate::validate_required(
-            self.user_name(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.user_name.as_ref(),
-            format!("{at}.{}", "UserName").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
         Ok(())
     }
 }

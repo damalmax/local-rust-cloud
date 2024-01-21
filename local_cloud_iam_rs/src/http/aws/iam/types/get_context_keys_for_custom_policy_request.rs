@@ -2,14 +2,10 @@ use crate::http::aws::iam::types;
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetContextKeysForCustomPolicyRequest {
     #[serde(rename = "PolicyInputList")]
-    pub(crate) policy_input_list: Option<
-        Vec<types::policy_document_type::PolicyDocumentType>,
-    >,
+    pub(crate) policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
 }
 impl GetContextKeysForCustomPolicyRequest {
-    pub(crate) fn policy_input_list(
-        &self,
-    ) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
+    pub(crate) fn policy_input_list(&self) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
         self.policy_input_list.as_deref()
     }
 }

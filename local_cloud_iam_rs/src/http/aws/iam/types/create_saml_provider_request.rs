@@ -1,10 +1,9 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct CreateSamlProviderRequest {
     #[serde(rename = "SAMLMetadataDocument")]
-    pub(crate) saml_metadata_document: Option<
-        types::saml_metadata_document_type::SamlMetadataDocumentType,
-    >,
+    pub(crate) saml_metadata_document: Option<types::saml_metadata_document_type::SamlMetadataDocumentType>,
     #[serde(rename = "Name")]
     pub(crate) name: Option<types::saml_provider_name_type::SamlProviderNameType>,
     #[serde(rename = "Tags")]
@@ -31,30 +30,13 @@ impl local_cloud_validate::NamedValidator for &CreateSamlProviderRequest {
             self.saml_metadata_document.as_ref(),
             format!("{at}.{}", "SAMLMetadataDocument").as_str(),
         )?;
-        local_cloud_validate::validate_required(
-            self.name(),
-            format!("{at}.{}", "Name").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.name.as_ref(),
-            format!("{at}.{}", "Name").as_str(),
-        )?;
-        local_cloud_validate::validate_array_size_min(
-            self.tags(),
-            0usize,
-            format!("{at}.{}", "Tags").as_str(),
-        )?;
-        local_cloud_validate::validate_array_size_max(
-            self.tags(),
-            50usize,
-            format!("{at}.{}", "Tags").as_str(),
-        )?;
+        local_cloud_validate::validate_required(self.name(), format!("{at}.{}", "Name").as_str())?;
+        local_cloud_validate::validate_named(self.name.as_ref(), format!("{at}.{}", "Name").as_str())?;
+        local_cloud_validate::validate_array_size_min(self.tags(), 0usize, format!("{at}.{}", "Tags").as_str())?;
+        local_cloud_validate::validate_array_size_max(self.tags(), 50usize, format!("{at}.{}", "Tags").as_str())?;
         if let Some(tags) = self.tags() {
             for (id, member) in tags.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "Tags").as_str(),
-                )?;
+                local_cloud_validate::validate_named(Some(member), format!("{at}.{}.member.{id}", "Tags").as_str())?;
             }
         }
         Ok(())

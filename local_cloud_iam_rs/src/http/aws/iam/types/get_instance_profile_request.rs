@@ -2,9 +2,7 @@ use crate::http::aws::iam::types;
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetInstanceProfileRequest {
     #[serde(rename = "InstanceProfileName")]
-    pub(crate) instance_profile_name: Option<
-        types::instance_profile_name_type::InstanceProfileNameType,
-    >,
+    pub(crate) instance_profile_name: Option<types::instance_profile_name_type::InstanceProfileNameType>,
 }
 impl GetInstanceProfileRequest {
     pub(crate) fn instance_profile_name(&self) -> Option<&str> {
