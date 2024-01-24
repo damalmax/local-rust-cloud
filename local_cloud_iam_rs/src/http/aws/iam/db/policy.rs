@@ -1,7 +1,9 @@
+use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Row, Sqlite, Transaction};
+use sqlx::{Error, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::policy::InsertPolicy;
+use crate::http::aws::iam::db::policy_tag;
+use crate::http::aws::iam::db::types::policy::{InsertPolicy, ListPoliciesQuery, SelectPolicy, SelectPolicyWithTags};
 
 pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut InsertPolicy) -> Result<(), Error> {
     let result = sqlx::query(
@@ -12,12 +14,13 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut In
                         policy_id,
                         arn,
                         path,
+                        policy_type,
                         is_attachable,
                         description,
                         create_date,
                         update_date
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                 RETURNING id"#,
     )
     .bind(&policy.account_id)
@@ -26,6 +29,7 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut In
     .bind(&policy.policy_id)
     .bind(&policy.arn)
     .bind(&policy.path)
+    .bind(&policy.policy_type)
     .bind(&policy.attachable)
     .bind(&policy.description)
     .bind(&policy.create_date)
@@ -46,6 +50,48 @@ pub(crate) async fn find_id_by_arn<'a>(
         .map(|row: SqliteRow| row.get::<i64, &str>("id"))
         .fetch_optional(tx.as_mut())
         .await?;
+    Ok(result)
+}
+
+pub(crate) async fn list_policies(
+    connection: &mut PoolConnection<Sqlite>, query: &ListPoliciesQuery,
+) -> Result<Vec<SelectPolicyWithTags>, Error> {
+    let mut policies = sqlx::query(
+        r#"
+            SELECT 
+                p.id as id,
+                p.account_id as account_id,
+                p.policy_name as policy_name,
+                p.arn as arn,
+                p.policy_id as policy_id,
+                p.path as path,
+                p.create_date as create_date,
+                p.update_date as update_date,
+                p.policy_type as policy_type,
+                p.description as description,
+                p.is_attachable as is_attachable,
+                pv.version as version
+            FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
+            WHERE path LIKE $1
+            LIMIT $2 OFFSET $3"#,
+    )
+    .bind(format!("{}%", &query.path_prefix))
+    .bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
+    .bind(query.skip)
+    .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
+    .fetch_all(connection.as_mut())
+    .await?;
+
+    let mut result: Vec<SelectPolicyWithTags> = vec![];
+    for i in 0..policies.len() {
+        let policy = policies.get(i).unwrap();
+        let tags = policy_tag::find_by_policy(connection.as_mut(), policy.id).await?;
+        result.push(SelectPolicyWithTags {
+            policy: policy.clone(),
+            tags,
+        })
+    }
+
     Ok(result)
 }
 

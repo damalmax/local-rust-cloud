@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ValidationErrorKind {
     Required,
     Min,
@@ -12,9 +12,10 @@ pub enum ValidationErrorKind {
     LengthMax,
     RegExp,
     Allowed,
+    Other,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ValidationError {
     pub kind: ValidationErrorKind,
     pub message: String,

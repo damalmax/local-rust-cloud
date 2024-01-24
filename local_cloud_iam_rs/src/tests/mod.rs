@@ -11,6 +11,7 @@ mod create_policy;
 mod create_policy_version;
 #[cfg(test)]
 mod create_user;
+pub mod fixture;
 #[cfg(test)]
 mod list_policies;
 

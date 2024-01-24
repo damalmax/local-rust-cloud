@@ -1,4 +1,3 @@
-use crate::http::aws::iam::types;
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListSamlProvidersRequest {}
 impl ListSamlProvidersRequest {}

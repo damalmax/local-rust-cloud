@@ -1,25 +1,28 @@
+use super::fixture;
 use aws_sdk_iam::types::Tag;
 use local_cloud_testing::assertions::assert_not_empty;
 
 #[actix_rt::test]
-async fn create_policy() {
+async fn test_create_policy() {
     let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let response = client
-        .create_policy()
-        .description("policy-description")
-        .path("/")
-        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
-        .policy_name("some-policy-name")
-        .tags(Tag::builder().key("key1").value("value1").build().unwrap())
-        .tags(Tag::builder().key("key2").value("value2").build().unwrap())
-        .tags(Tag::builder().key("key3").value("value3").build().unwrap())
-        .send()
-        .await
-        .expect("Failed to create IAM policy");
+    let response = fixture::create_policy(
+        &client,
+        "some-policy-name",
+        "policy-description",
+        "/",
+        include_str!("resources/create_user__permissions_boundary.json"),
+        Some(vec![
+            Tag::builder().key("key1").value("value1").build().unwrap(),
+            Tag::builder().key("key2").value("value2").build().unwrap(),
+            Tag::builder().key("key3").value("value3").build().unwrap(),
+        ]),
+    )
+    .await
+    .unwrap();
 
     assert!(response.policy().is_some());
     let policy = response.policy().unwrap();
@@ -57,7 +60,7 @@ async fn create_policy_too_many_tags() {
         .path("/")
         .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
         .policy_name("some-policy-name")
-        .set_tags(Option::Some(tags));
+        .set_tags(Some(tags));
 
     let result = request_builder.send().await;
     assert!(result.is_err());

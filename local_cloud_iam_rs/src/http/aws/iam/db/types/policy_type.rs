@@ -1,4 +1,7 @@
-#[derive(Debug, Clone)]
+use sqlx::database::HasValueRef;
+
+#[derive(Debug, Clone, sqlx::Type)]
+#[repr(i32)]
 pub(crate) enum PolicyType {
     LocalCloudManaged, // alternative for 'AWS Managed'
     CustomerManaged,

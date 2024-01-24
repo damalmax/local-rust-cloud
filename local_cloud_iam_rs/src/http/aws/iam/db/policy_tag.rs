@@ -1,15 +1,16 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, FromRow, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 
-pub(crate) async fn find_by_policy<'a>(
-    tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
-) -> Result<Vec<DbPolicyTag>, Error> {
+pub(crate) async fn find_by_policy<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbPolicyTag>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
     sqlx::query("SELECT id, policy_id, key, value FROM policy_tags WHERE policy_id=$1")
         .bind(policy_id)
         .map(|row: SqliteRow| DbPolicyTag::from_row(&row).unwrap())
-        .fetch_all(tx.as_mut())
+        .fetch_all(executor)
         .await
 }
 

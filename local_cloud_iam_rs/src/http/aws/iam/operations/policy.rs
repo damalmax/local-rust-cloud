@@ -10,7 +10,9 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::policy::{InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError};
+use crate::http::aws::iam::db::types::policy::{
+    InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError, SelectPolicyWithTags,
+};
 use crate::http::aws::iam::db::types::policy_tag::{DbPolicyTag, DbPolicyTagBuilder};
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::policy_version::{
@@ -22,6 +24,7 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
+use crate::http::aws::iam::types::marker_type::Marker;
 use crate::http::aws::iam::validate;
 use crate::http::aws::iam::{constants, db, types};
 
@@ -145,11 +148,43 @@ async fn check_policy_version_count<'a>(
 }
 
 pub async fn list_policies(
-    _ctx: &OperationCtx, input: &ListPoliciesRequest, _db: &LocalDb,
+    _ctx: &OperationCtx, input: &ListPoliciesRequest, db: &LocalDb,
 ) -> Result<ListPoliciesOutput, OperationError> {
     input.validate("$")?;
 
-    let output = ListPoliciesOutput::builder().build();
+    let query = input.into();
+
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+
+    let found_policies: Vec<SelectPolicyWithTags> = db::policy::list_policies(&mut connection, &query).await?;
+
+    let marker = if query.limit < found_policies.len() as i32 {
+        Some(
+            Marker::new(query.limit + query.skip)
+                .encode()
+                .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value."))?,
+        )
+    } else {
+        None
+    };
+
+    let mut policies: Vec<Policy> = vec![];
+    for i in 0..(query.limit) {
+        let policy = found_policies.get(i as usize);
+        match policy {
+            None => break,
+            Some(select_policy) => {
+                policies.push(select_policy.into());
+            }
+        }
+    }
+
+    let output = ListPoliciesOutput::builder()
+        .set_policies(Some(policies))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build();
 
     Ok(output)
 }

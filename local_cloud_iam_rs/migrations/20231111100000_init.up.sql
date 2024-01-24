@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS policies
     policy_name        VARCHAR2(128)                     NOT NULL,
     unique_policy_name VARCHAR2(128)                     NOT NULL,
     policy_id          VARCHAR2(21),
+    policy_type        INTEGER                           NOT NULL,
     arn                VARCHAR2(100),
     path               VARCHAR2(100),
     is_attachable      BOOLEAN,
@@ -79,6 +80,10 @@ CREATE TABLE IF NOT EXISTS policies
     UNIQUE (arn) ON CONFLICT FAIL,
     UNIQUE (unique_policy_name) ON CONFLICT FAIL
 );
+
+CREATE INDEX IF NOT EXISTS idx_policies__arn ON policies (arn ASC);
+CREATE INDEX IF NOT EXISTS fk_policies__policy_id ON policies (policy_id ASC);
+CREATE INDEX IF NOT EXISTS fk_policies__policy_type ON policies (policy_type ASC);
 
 CREATE TABLE IF NOT EXISTS policy_versions
 (
@@ -100,7 +105,8 @@ BEGIN
     UPDATE policy_versions
     SET version = (SELECT IFNULL(MAX(version), 0) + 1
                    FROM policy_versions
-                   WHERE account_id = new.account_id AND policy_id = new.policy_id)
+                   WHERE account_id = new.account_id
+                     AND policy_id = new.policy_id)
     WHERE id = new.id;
 END;
 

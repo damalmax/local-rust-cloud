@@ -34,6 +34,10 @@ impl ListPoliciesRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
     }
+
+    pub(crate) fn marker_type(&self) -> Option<&types::marker_type::MarkerType> {
+        self.marker.as_ref()
+    }
 }
 impl local_cloud_validate::NamedValidator for &ListPoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {

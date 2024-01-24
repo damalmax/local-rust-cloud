@@ -9,11 +9,11 @@ pub(crate) struct DbPolicyTag {
     pub(crate) value: String,
 }
 
-impl Into<aws_sdk_iam::types::Tag> for DbPolicyTag {
+impl Into<aws_sdk_iam::types::Tag> for &DbPolicyTag {
     fn into(self) -> aws_sdk_iam::types::Tag {
         aws_sdk_iam::types::Tag::builder()
-            .key(self.key)
-            .value(self.value)
+            .key(&self.key)
+            .value(&self.value)
             .build()
             .unwrap()
     }

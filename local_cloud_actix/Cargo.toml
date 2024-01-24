@@ -15,4 +15,4 @@ futures-util.workspace = true
 uuid.workspace = true
 
 encoding_rs.workspace = true
-serde_aws_query_ce = "0.1"
+serde_aws_query_ce.workspace = true

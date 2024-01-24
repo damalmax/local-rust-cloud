@@ -1,4 +1,5 @@
 use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
+use aws_sdk_iam::types::Tag;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
@@ -28,6 +29,7 @@ impl From<LocalListPoliciesOutput> for XmlResponse {
             write_tag_with_value(&mut policy_tag, "PolicyId", policy.policy_id());
             write_tag_with_value(&mut policy_tag, "Arn", policy.arn());
             write_tag_with_value(&mut policy_tag, "Path", policy.path());
+            write_tag_with_value(&mut policy_tag, "Description", policy.description());
             write_tag_with_value(&mut policy_tag, "DefaultVersionId", policy.default_version_id());
             write_tag_with_value(&mut policy_tag, "AttachmentCount", policy.attachment_count().map(|v| v.to_string()));
             write_tag_with_value(
@@ -38,12 +40,20 @@ impl From<LocalListPoliciesOutput> for XmlResponse {
             write_tag_with_value(&mut policy_tag, "IsAttachable", Some(policy.is_attachable().to_string()));
             write_iso8061_datetime_value_tag(&mut policy_tag, "CreateDate", policy.create_date());
             write_iso8061_datetime_value_tag(&mut policy_tag, "UpdateDate", policy.update_date());
+
+            local_cloud_xml::write_key_value_tags(
+                &mut policy_tag,
+                policy.tags(),
+                |t: &Tag| Some(t.key().to_owned()),
+                |t: &Tag| Some(t.value().to_owned()),
+            );
             policy_tag.finish();
         }
         policies_tag.finish();
         if let Some(token) = val.inner.marker() {
-            write_tag_with_value(&mut list_policies_result_tag, "NextToken", Some(token));
+            write_tag_with_value(&mut list_policies_result_tag, "Marker", Some(token));
         }
+        write_tag_with_value(&mut list_policies_result_tag, "IsTruncated", Some(val.inner.is_truncated.to_string()));
         list_policies_result_tag.finish();
 
         local_cloud_xml::write_request_metadata_tag(

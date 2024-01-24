@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use log::info;
 use sqlx::migrate::MigrateDatabase;
+use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{migrate::Migrator, Pool, Sqlite, SqlitePool, Transaction};
 
@@ -29,5 +30,9 @@ impl LocalDb {
 
     pub async fn new_tx(&self) -> Result<Transaction<Sqlite>, sqlx::Error> {
         self.0.begin().await
+    }
+
+    pub async fn new_connection(&self) -> Result<PoolConnection<Sqlite>, sqlx::Error> {
+        self.0.acquire().await
     }
 }
