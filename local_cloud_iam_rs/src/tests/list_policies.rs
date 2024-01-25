@@ -1,3 +1,4 @@
+use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
 use local_cloud_testing::assertions::assert_not_empty;
 
 #[actix_rt::test]
@@ -30,12 +31,8 @@ async fn list_policies_no_marker() {
         "some-policy-name",
         "some-policy-description",
         "/",
-        include_str!("resources/create_user__permissions_boundary.json"),
-        Some(vec![aws_sdk_iam::types::Tag::builder()
-            .key("tag-key1")
-            .value("tag-value1")
-            .build()
-            .unwrap()]),
+        CREATE_USER_PERMISSIONS_BOUNDARY,
+        Some(vec![tag("tag-key1", "tag-value1")]),
     )
     .await
     .unwrap();
@@ -83,12 +80,8 @@ async fn list_policies_with_marker() {
         "some-policy-name",
         "some-policy-description",
         "/",
-        include_str!("resources/create_user__permissions_boundary.json"),
-        Some(vec![aws_sdk_iam::types::Tag::builder()
-            .key("tag-key1")
-            .value("tag-value1")
-            .build()
-            .unwrap()]),
+        CREATE_USER_PERMISSIONS_BOUNDARY,
+        Some(vec![tag("tag-key1", "tag-value1")]),
     )
     .await
     .unwrap();
@@ -100,12 +93,8 @@ async fn list_policies_with_marker() {
         "some-policy-name2",
         "some-policy-description",
         "/",
-        include_str!("resources/create_user__permissions_boundary.json"),
-        Some(vec![aws_sdk_iam::types::Tag::builder()
-            .key("tag-key1")
-            .value("tag-value1")
-            .build()
-            .unwrap()]),
+        CREATE_USER_PERMISSIONS_BOUNDARY,
+        Some(vec![tag("tag-key1", "tag-value1")]),
     )
     .await
     .unwrap();

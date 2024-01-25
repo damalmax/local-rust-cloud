@@ -1,4 +1,4 @@
-use aws_sdk_iam::types::Tag;
+use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
 
 #[actix_rt::test]
 async fn create_policy_version() {
@@ -11,11 +11,11 @@ async fn create_policy_version() {
         .create_policy()
         .description("policy-description")
         .path("/")
-        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
+        .policy_document(CREATE_USER_PERMISSIONS_BOUNDARY)
         .policy_name("some-policy-name")
-        .tags(Tag::builder().key("key1").value("value1").build().unwrap())
-        .tags(Tag::builder().key("key2").value("value2").build().unwrap())
-        .tags(Tag::builder().key("key3").value("value3").build().unwrap())
+        .tags(tag("key1", "value1"))
+        .tags(tag("key2", "value2"))
+        .tags(tag("key3", "value3"))
         .send()
         .await
         .expect("Failed to create IAM policy");
@@ -23,7 +23,7 @@ async fn create_policy_version() {
     let create_policy_version_response = client
         .create_policy_version()
         .policy_arn(response.policy.unwrap().arn.unwrap())
-        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
+        .policy_document(CREATE_USER_PERMISSIONS_BOUNDARY)
         .set_as_default(false)
         .send()
         .await
@@ -46,10 +46,10 @@ async fn create_policy_version_limit_exceeded() {
         .create_policy()
         .description("policy-description")
         .path("/")
-        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
+        .policy_document(CREATE_USER_PERMISSIONS_BOUNDARY)
         .policy_name("some-policy-name2")
-        .tags(Tag::builder().key("key1").value("value1").build().unwrap())
-        .tags(Tag::builder().key("key2").value("value2").build().unwrap())
+        .tags(tag("key1", "value1"))
+        .tags(tag("key2", "value2"))
         .send()
         .await
         .expect("Failed to create IAM policy");
@@ -61,7 +61,7 @@ async fn create_policy_version_limit_exceeded() {
         client
             .create_policy_version()
             .policy_arn(&policy_arn)
-            .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
+            .policy_document(CREATE_USER_PERMISSIONS_BOUNDARY)
             .set_as_default(true)
             .send()
             .await
@@ -71,7 +71,7 @@ async fn create_policy_version_limit_exceeded() {
     let result = client
         .create_policy_version()
         .policy_arn(&policy_arn)
-        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
+        .policy_document(CREATE_USER_PERMISSIONS_BOUNDARY)
         .set_as_default(true)
         .send()
         .await;

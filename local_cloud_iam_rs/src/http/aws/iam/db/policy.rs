@@ -1,6 +1,7 @@
+use sqlx::database::HasArguments;
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, FromRow, Row, Sqlite, Transaction};
+use sqlx::{Encode, Error, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::policy_tag;
 use crate::http::aws::iam::db::types::policy::{InsertPolicy, ListPoliciesQuery, SelectPolicy, SelectPolicyWithTags};
@@ -56,7 +57,9 @@ pub(crate) async fn find_id_by_arn<'a>(
 pub(crate) async fn list_policies(
     connection: &mut PoolConnection<Sqlite>, query: &ListPoliciesQuery,
 ) -> Result<Vec<SelectPolicyWithTags>, Error> {
-    let mut policies = sqlx::query(
+    let scopes: Vec<i32> = query.policy_scope_types.iter().map(|v| v.as_i32()).collect();
+
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
         r#"
             SELECT 
                 p.id as id,
@@ -72,15 +75,25 @@ pub(crate) async fn list_policies(
                 p.is_attachable as is_attachable,
                 pv.version as version
             FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
-            WHERE path LIKE $1
-            LIMIT $2 OFFSET $3"#,
-    )
-    .bind(format!("{}%", &query.path_prefix))
-    .bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
-    .bind(query.skip)
-    .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
-    .fetch_all(connection.as_mut())
-    .await?;
+            WHERE path LIKE "#,
+    );
+    query_builder
+        .push_bind(format!("{}%", &query.path_prefix))
+        .push(" AND policy_type in (");
+    let mut separated = query_builder.separated(", ");
+    for scope in scopes {
+        separated.push_bind(scope);
+    }
+    separated.push_unseparated(")");
+    let mut policies = query_builder
+        .push(" LIMIT ")
+        .push_bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
+        .push(" OFFSET ")
+        .push_bind(query.skip)
+        .build()
+        .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
+        .fetch_all(connection.as_mut())
+        .await?;
 
     let mut result: Vec<SelectPolicyWithTags> = vec![];
     for i in 0..policies.len() {

@@ -13,12 +13,13 @@ use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::policy::{
     InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError, SelectPolicyWithTags,
 };
-use crate::http::aws::iam::db::types::policy_tag::{DbPolicyTag, DbPolicyTagBuilder};
+use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::policy_version::{
     InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError,
 };
-use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, ResourceType};
+use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
+use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
@@ -40,36 +41,41 @@ pub async fn create_policy(
 
     let policy_id = create_resource_id(&mut tx, constants::policy::MANAGED_POLICY_PREFIX, ResourceType::Policy).await?;
     let current_time = Utc::now().timestamp();
-    let mut policy: InsertPolicy = prepare_policy_for_insert(ctx, input, &policy_id, current_time)
+    let mut insert_policy: InsertPolicy = prepare_policy_for_insert(ctx, input, &policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
-    db::policy::create(&mut tx, &mut policy).await?;
+    db::policy::create(&mut tx, &mut insert_policy).await?;
 
     let policy_version_id =
         create_resource_id(&mut tx, constants::policy_version::POLICY_VERSION_PREFIX, ResourceType::PolicyVersion)
             .await?;
-    let mut policy_version =
-        prepare_policy_version_for_insert(ctx, policy_document, policy.id.unwrap(), policy_version_id, current_time)
-            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+    let mut policy_version = prepare_policy_version_for_insert(
+        ctx,
+        policy_document,
+        insert_policy.id.unwrap(),
+        policy_version_id,
+        current_time,
+    )
+    .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
     db::policy_version::create(&mut tx, &mut policy_version).await?;
 
-    let mut policy_tags = prepare_tags_for_insert(input.tags(), policy.id.unwrap());
+    let mut policy_tags = prepare_tags_for_insert(input.tags(), insert_policy.id.unwrap());
 
     db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
 
     let response_policy_builder = Policy::builder()
-        .arn(policy.arn)
-        .create_date(DateTime::from_secs(policy.create_date))
-        .update_date(DateTime::from_secs(policy.update_date))
-        .path(policy.path)
-        .policy_id(policy.policy_id)
-        .is_attachable(policy.attachable)
-        .set_description(policy.description)
+        .arn(insert_policy.arn)
+        .create_date(DateTime::from_secs(insert_policy.create_date))
+        .update_date(DateTime::from_secs(insert_policy.update_date))
+        .path(insert_policy.path)
+        .policy_id(insert_policy.policy_id)
+        .is_attachable(insert_policy.attachable)
+        .set_description(insert_policy.description)
         .attachment_count(0)
         .permissions_boundary_usage_count(0)
         .set_tags(prepare_tags_for_output(policy_tags))
         .set_default_version_id(Some(format!("v{}", policy_version.version.unwrap())))
-        .policy_name(&policy.policy_name);
+        .policy_name(&insert_policy.policy_name);
     let policy = response_policy_builder.build();
     let output = CreatePolicyOutput::builder().policy(policy).build();
 
@@ -189,25 +195,11 @@ pub async fn list_policies(
     Ok(output)
 }
 
-async fn create_resource_id<'a>(
-    tx: &mut Transaction<'a, Sqlite>, prefix: &str, resource_type: ResourceType,
-) -> Result<String, OperationError> {
-    loop {
-        let id = local_cloud_common::naming::generate_id(prefix, 21)
-            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
-
-        let mut resource_identifier = ResourceIdentifier::new(&id, resource_type);
-        if let Ok(()) = db::resource_identifier::create(tx, &mut resource_identifier).await {
-            return Ok(id);
-        }
-    }
-}
-
 fn prepare_policy_for_insert(
     ctx: &OperationCtx, policy_input: &CreatePolicyRequest, policy_id: &str, current_time: i64,
 ) -> Result<InsertPolicy, InsertPolicyBuilderError> {
     let policy_name = policy_input.policy_name().unwrap().trim();
-    let arn = format!("arn:aws:iam:{:0>12}:policy/{}", ctx.account_id, policy_name);
+    let arn = format!("arn:aws:iam::{:0>12}:policy/{}", ctx.account_id, policy_name);
     InsertPolicyBuilder::default()
         // The property will be initialized during insert
         .id(None)
@@ -246,13 +238,7 @@ fn prepare_tags_for_insert(tags: Option<&[types::tag::Tag]>, policy_id: i64) -> 
         Some(tags) => {
             let mut policy_tags = vec![];
             for tag in tags {
-                let policy_tag = DbPolicyTagBuilder::default()
-                    .id(None)
-                    .key(tag.key().unwrap().to_owned())
-                    .value(tag.value().unwrap().to_owned())
-                    .policy_id(policy_id)
-                    .build()
-                    .unwrap();
+                let policy_tag = DbPolicyTag::new(policy_id, tag.key().unwrap(), tag.value().unwrap());
                 policy_tags.push(policy_tag);
             }
             policy_tags

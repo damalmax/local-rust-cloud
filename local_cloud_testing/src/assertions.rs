@@ -32,3 +32,9 @@ impl<'a> From<Option<String>> for ValueToCheck<'a> {
         ValueToCheck::String(value)
     }
 }
+
+impl<'a> From<&'a str> for ValueToCheck<'a> {
+    fn from(value: &'a str) -> Self {
+        ValueToCheck::Str(Some(value))
+    }
+}

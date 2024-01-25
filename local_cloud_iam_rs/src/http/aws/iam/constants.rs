@@ -19,3 +19,7 @@ pub(crate) mod policy {
 
     pub(crate) const ROLE_SESSION_DEFAULT_DURATION_SEC: Duration = Duration::new(3600, 0);
 }
+
+pub(crate) mod user {
+    pub(crate) const USER_PREFIX: &str = "AIDA";
+}

@@ -1,10 +1,17 @@
-use sqlx::database::HasValueRef;
-
 #[derive(Debug, Clone, sqlx::Type)]
 #[repr(i32)]
 pub(crate) enum PolicyType {
     LocalCloudManaged, // alternative for 'AWS Managed'
     CustomerManaged,
+}
+
+impl PolicyType {
+    pub(crate) fn as_i32(&self) -> i32 {
+        match self {
+            PolicyType::LocalCloudManaged => 1,
+            PolicyType::CustomerManaged => 2,
+        }
+    }
 }
 
 impl Into<i32> for PolicyType {

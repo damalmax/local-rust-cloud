@@ -3,7 +3,6 @@ use std::ops::Deref;
 
 use base64::engine::general_purpose;
 use base64::Engine;
-use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 
 use local_cloud_validate::{ValidationError, ValidationErrorKind};

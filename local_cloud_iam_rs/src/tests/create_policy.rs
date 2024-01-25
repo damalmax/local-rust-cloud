@@ -1,6 +1,8 @@
-use super::fixture;
-use aws_sdk_iam::types::Tag;
 use local_cloud_testing::assertions::assert_not_empty;
+
+use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
+
+use super::fixture;
 
 #[actix_rt::test]
 async fn test_create_policy() {
@@ -14,12 +16,8 @@ async fn test_create_policy() {
         "some-policy-name",
         "policy-description",
         "/",
-        include_str!("resources/create_user__permissions_boundary.json"),
-        Some(vec![
-            Tag::builder().key("key1").value("value1").build().unwrap(),
-            Tag::builder().key("key2").value("value2").build().unwrap(),
-            Tag::builder().key("key3").value("value3").build().unwrap(),
-        ]),
+        CREATE_USER_PERMISSIONS_BOUNDARY,
+        Some(vec![tag("key1", "value1"), tag("key2", "value2"), tag("key3", "value3")]),
     )
     .await
     .unwrap();
@@ -46,19 +44,13 @@ async fn create_policy_too_many_tags() {
     let client = aws_sdk_iam::Client::new(&config);
 
     let tags = (0..51)
-        .map(|i| {
-            Tag::builder()
-                .key(format!("key-{}", i))
-                .value(format!("value-{}", i))
-                .build()
-                .unwrap()
-        })
+        .map(|i| tag(format!("key-{}", i).as_str(), format!("value-{}", i).as_str()))
         .collect();
     let request_builder = client
         .create_policy()
         .description("policy-description")
         .path("/")
-        .policy_document(include_str!("resources/create_user__permissions_boundary.json"))
+        .policy_document(CREATE_USER_PERMISSIONS_BOUNDARY)
         .policy_name("some-policy-name")
         .set_tags(Some(tags));
 

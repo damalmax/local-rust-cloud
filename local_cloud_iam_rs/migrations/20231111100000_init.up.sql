@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS accounts
     alias VARCHAR2(63)                      NOT NULL
 );
 INSERT INTO accounts(alias)
-VALUES ('Local-Rust-Cloud-user');
+VALUES ('Home Account');
 -- Region
 CREATE TABLE IF NOT EXISTS regions
 (
@@ -48,20 +48,6 @@ VALUES (1, 'eu-local-1', 'EU Local'),
        (31, 'me-south-1', 'Middle East (Bahrain)'),
        (32, 'me-central-1', 'Middle East (UAE)'),
        (33, 'sa-east-1', 'South America (São Paulo)');
--- User
-CREATE TABLE IF NOT EXISTS users
-(
-    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    username   VARCHAR2(20)                      NOT NULL,
-    path       VARCHAR2(512)                     NOT NULL,
-    user_id    VARCHAR2(20)                      NOT NULL,
-    account_id INTEGER REFERENCES accounts (id),
-    region_id  INTEGER REFERENCES regions (id),
-    UNIQUE (user_id)
-);
-INSERT INTO users(username, path, user_id, account_id, region_id)
-VALUES ('Admin', '/', 'LOCALCLOUDRS101ADMIN', 1, 2),
-       ('Admin', '/', 'LOCALCLOUDRS201ADMIN', 1, 1);
 -- Policy
 CREATE TABLE IF NOT EXISTS policies
 (
@@ -71,19 +57,40 @@ CREATE TABLE IF NOT EXISTS policies
     unique_policy_name VARCHAR2(128)                     NOT NULL,
     policy_id          VARCHAR2(21),
     policy_type        INTEGER                           NOT NULL,
-    arn                VARCHAR2(100),
-    path               VARCHAR2(100),
+    arn                VARCHAR2(2048)                    NOT NULL,
+    path               VARCHAR2(512)                     NOT NULL,
     is_attachable      BOOLEAN,
     description        VARCHAR2(200),
     create_date        INTEGER                           NOT NULL,
     update_date        INTEGER                           NOT NULL,
     UNIQUE (arn) ON CONFLICT FAIL,
+    UNIQUE (policy_id) ON CONFLICT FAIL,
     UNIQUE (unique_policy_name) ON CONFLICT FAIL
 );
-
 CREATE INDEX IF NOT EXISTS idx_policies__arn ON policies (arn ASC);
 CREATE INDEX IF NOT EXISTS fk_policies__policy_id ON policies (policy_id ASC);
 CREATE INDEX IF NOT EXISTS fk_policies__policy_type ON policies (policy_type ASC);
+
+-- User
+CREATE TABLE IF NOT EXISTS users
+(
+    id              INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id      INTEGER REFERENCES accounts (id),
+    username        VARCHAR2(128)                     NOT NULL,
+    unique_username VARCHAR2(128)                     NOT NULL,
+    arn             VARCHAR2(2048)                    NOT NULL,
+    path            VARCHAR2(512)                     NOT NULL,
+    user_id         VARCHAR2(21)                      NOT NULL,
+    policy_id       INTEGER REFERENCES policies (id),
+    create_date     INTEGER                           NOT NULL,
+    UNIQUE (arn) ON CONFLICT FAIL,
+    UNIQUE (user_id) ON CONFLICT FAIL,
+    UNIQUE (unique_username) ON CONFLICT FAIL
+);
+CREATE INDEX IF NOT EXISTS fk_users__account_id ON users (account_id ASC);
+
+INSERT INTO users(account_id, username, unique_username, arn, path, user_id, create_date)
+VALUES (1, 'Root', 'ROOT', '"arn:aws:iam::000000000001:user/Root"', '/', 'AIDAHOMECLOUDROOT101A', 1706219306);
 
 CREATE TABLE IF NOT EXISTS policy_versions
 (
@@ -96,6 +103,8 @@ CREATE TABLE IF NOT EXISTS policy_versions
     create_date       INTEGER                           NOT NULL,
     is_default        BOOLEAN                           NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS fk_policy_versions__policy_id ON policy_versions (policy_id ASC);
 
 CREATE TRIGGER IF NOT EXISTS auto_increment_policy_version
     AFTER INSERT
@@ -114,10 +123,23 @@ CREATE TABLE IF NOT EXISTS policy_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     policy_id INTEGER REFERENCES policies (id),
-    key       VARCHAR2(100)                     NOT NULL,
-    value     VARCHAR2(100)                     NOT NULL,
+    key       VARCHAR2(128)                     NOT NULL,
+    value     VARCHAR2(256)                     NOT NULL,
     UNIQUE (policy_id, key)
 );
+
+CREATE INDEX IF NOT EXISTS fk_policy_tags__policy_id ON policy_tags (policy_id ASC);
+
+CREATE TABLE IF NOT EXISTS user_tags
+(
+    id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER REFERENCES users (id),
+    key     VARCHAR2(128)                     NOT NULL,
+    value   VARCHAR2(256)                     NOT NULL,
+    UNIQUE (user_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS fk_user_tags__user_id ON user_tags (user_id ASC);
 
 CREATE TABLE IF NOT EXISTS unique_identifiers
 (

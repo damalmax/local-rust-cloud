@@ -6,6 +6,7 @@ use sqlx::FromRow;
 use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
+use crate::http::aws::iam::types::policy_scope_type::PolicyScopeType;
 
 #[derive(Debug, Builder)]
 pub(crate) struct InsertPolicy {
@@ -67,8 +68,8 @@ impl Into<Policy> for &SelectPolicyWithTags {
             .attachment_count(0) // TODO: Populate value from DB
             .permissions_boundary_usage_count(0) // TODO: Populate value from DB
             .is_attachable(policy.is_attachable)
-            .create_date(DateTime::from_millis(policy.create_date))
-            .update_date(DateTime::from_millis(policy.update_date))
+            .create_date(DateTime::from_secs(policy.create_date))
+            .update_date(DateTime::from_secs(policy.update_date))
             .set_tags(tags)
             .build()
     }
@@ -87,6 +88,7 @@ pub(crate) struct ListPoliciesQuery {
     pub(crate) limit: i32,
     pub(crate) skip: i32,
     pub(crate) is_attached: bool,
+    pub(crate) policy_scope_types: Vec<PolicyType>,
 }
 
 impl Into<ListPoliciesQuery> for &ListPoliciesRequest {
@@ -102,11 +104,23 @@ impl Into<ListPoliciesQuery> for &ListPoliciesRequest {
             Some(marker_type) => marker_type.marker().unwrap().truncate_amount,
         };
 
+        let policy_scopes_types = match &self.scope() {
+            None => {
+                vec![PolicyType::CustomerManaged, PolicyType::LocalCloudManaged]
+            }
+            Some(scope_type) => match scope_type {
+                PolicyScopeType::Local => vec![PolicyType::CustomerManaged],
+                PolicyScopeType::All => vec![PolicyType::CustomerManaged, PolicyType::LocalCloudManaged],
+                PolicyScopeType::Aws => vec![PolicyType::LocalCloudManaged],
+            },
+        };
+
         ListPoliciesQuery {
             path_prefix: self.path_prefix().unwrap_or("/").to_owned(),
             limit: if limit < 1 { 10 } else { limit },
             skip,
-            is_attached: self.only_attached().unwrap_or(true),
+            is_attached: self.only_attached().unwrap_or(false),
+            policy_scope_types: policy_scopes_types,
         }
     }
 }

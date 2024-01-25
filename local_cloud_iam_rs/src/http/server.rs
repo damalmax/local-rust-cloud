@@ -23,6 +23,7 @@ pub(crate) async fn start(app_config_factory: impl AppConfigFactory) -> std::io:
         App::new()
             .app_data(app_data.clone())
             .route("/iam/", web::post().to(aws::iam::handle))
+            .route("/iam", web::post().to(aws::iam::handle))
             .wrap(actix_web::middleware::Logger::default())
     })
     .bind(("0.0.0.0", app_config.service_port))?

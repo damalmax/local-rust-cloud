@@ -9,6 +9,7 @@ pub(crate) struct ResourceIdentifier {
 pub(crate) enum ResourceType {
     Policy,
     PolicyVersion,
+    User,
 }
 
 impl Into<i16> for ResourceType {
@@ -16,6 +17,7 @@ impl Into<i16> for ResourceType {
         match self {
             ResourceType::Policy => 1,
             ResourceType::PolicyVersion => 2,
+            ResourceType::User => 3,
         }
     }
 }
