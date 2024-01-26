@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UntagOpenIdConnectProviderRequest {
     #[serde(rename = "TagKeys")]
@@ -6,6 +7,7 @@ pub(crate) struct UntagOpenIdConnectProviderRequest {
     #[serde(rename = "OpenIDConnectProviderArn")]
     pub(crate) open_id_connect_provider_arn: Option<types::arn_type::ArnType>,
 }
+
 impl UntagOpenIdConnectProviderRequest {
     pub(crate) fn tag_keys(&self) -> Option<&[types::tag_key_type::TagKeyType]> {
         self.tag_keys.as_deref()
@@ -14,6 +16,7 @@ impl UntagOpenIdConnectProviderRequest {
         self.open_id_connect_provider_arn.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UntagOpenIdConnectProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.tag_keys(), format!("{at}.{}", "TagKeys").as_str())?;

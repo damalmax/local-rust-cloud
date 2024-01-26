@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct DeactivateMfaDeviceRequest {
     #[serde(rename = "UserName")]
@@ -6,6 +7,7 @@ pub(crate) struct DeactivateMfaDeviceRequest {
     #[serde(rename = "SerialNumber")]
     pub(crate) serial_number: Option<types::serial_number_type::SerialNumberType>,
 }
+
 impl DeactivateMfaDeviceRequest {
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -14,6 +16,7 @@ impl DeactivateMfaDeviceRequest {
         self.serial_number.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &DeactivateMfaDeviceRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;

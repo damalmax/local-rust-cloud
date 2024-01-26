@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct TagServerCertificateRequest {
     #[serde(rename = "ServerCertificateName")]
@@ -6,6 +7,7 @@ pub(crate) struct TagServerCertificateRequest {
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<types::tag::Tag>>,
 }
+
 impl TagServerCertificateRequest {
     pub(crate) fn server_certificate_name(&self) -> Option<&str> {
         self.server_certificate_name.as_deref()
@@ -14,6 +16,7 @@ impl TagServerCertificateRequest {
         self.tags.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &TagServerCertificateRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

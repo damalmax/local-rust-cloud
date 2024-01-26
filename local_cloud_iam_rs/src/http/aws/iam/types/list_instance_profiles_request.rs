@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListInstanceProfilesRequest {
     #[serde(rename = "MaxItems")]
@@ -8,6 +9,7 @@ pub(crate) struct ListInstanceProfilesRequest {
     #[serde(rename = "Marker")]
     pub(crate) marker: Option<types::marker_type::MarkerType>,
 }
+
 impl ListInstanceProfilesRequest {
     pub(crate) fn max_items(&self) -> Option<&i32> {
         self.max_items.as_deref()
@@ -19,6 +21,7 @@ impl ListInstanceProfilesRequest {
         self.marker.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListInstanceProfilesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct PutUserPermissionsBoundaryRequest {
     #[serde(rename = "PermissionsBoundary")]
@@ -6,6 +7,7 @@ pub(crate) struct PutUserPermissionsBoundaryRequest {
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::user_name_type::UserNameType>,
 }
+
 impl PutUserPermissionsBoundaryRequest {
     pub(crate) fn permissions_boundary(&self) -> Option<&str> {
         self.permissions_boundary.as_deref()
@@ -14,6 +16,7 @@ impl PutUserPermissionsBoundaryRequest {
         self.user_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &PutUserPermissionsBoundaryRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

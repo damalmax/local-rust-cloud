@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetGroupPolicyRequest {
     #[serde(rename = "PolicyName")]
@@ -6,6 +7,7 @@ pub(crate) struct GetGroupPolicyRequest {
     #[serde(rename = "GroupName")]
     pub(crate) group_name: Option<types::group_name_type::GroupNameType>,
 }
+
 impl GetGroupPolicyRequest {
     pub(crate) fn policy_name(&self) -> Option<&str> {
         self.policy_name.as_deref()
@@ -14,6 +16,7 @@ impl GetGroupPolicyRequest {
         self.group_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetGroupPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.policy_name(), format!("{at}.{}", "PolicyName").as_str())?;

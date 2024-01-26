@@ -9,6 +9,7 @@ pub(crate) struct UpdateLoginProfileRequest {
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::user_name_type::UserNameType>,
 }
+
 impl UpdateLoginProfileRequest {
     pub(crate) fn password(&self) -> Option<&str> {
         self.password.as_deref()
@@ -20,6 +21,7 @@ impl UpdateLoginProfileRequest {
         self.user_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateLoginProfileRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.password.as_ref(), format!("{at}.{}", "Password").as_str())?;

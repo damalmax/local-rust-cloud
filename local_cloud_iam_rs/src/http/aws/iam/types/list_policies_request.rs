@@ -15,6 +15,7 @@ pub(crate) struct ListPoliciesRequest {
     #[serde(rename = "Marker")]
     pub(crate) marker: Option<types::marker_type::MarkerType>,
 }
+
 impl ListPoliciesRequest {
     pub(crate) fn max_items(&self) -> Option<&i32> {
         self.max_items.as_deref()
@@ -39,6 +40,7 @@ impl ListPoliciesRequest {
         self.marker.as_ref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListPoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;

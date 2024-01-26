@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateAccessKeyRequest {
     #[serde(rename = "AccessKeyId")]
@@ -8,6 +9,7 @@ pub(crate) struct UpdateAccessKeyRequest {
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::existing_user_name_type::ExistingUserNameType>,
 }
+
 impl UpdateAccessKeyRequest {
     pub(crate) fn access_key_id(&self) -> Option<&str> {
         self.access_key_id.as_deref()
@@ -19,6 +21,7 @@ impl UpdateAccessKeyRequest {
         self.user_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateAccessKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.access_key_id(), format!("{at}.{}", "AccessKeyId").as_str())?;

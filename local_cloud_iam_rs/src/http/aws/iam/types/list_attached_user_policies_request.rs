@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListAttachedUserPoliciesRequest {
     #[serde(rename = "Marker")]
@@ -10,6 +11,7 @@ pub(crate) struct ListAttachedUserPoliciesRequest {
     #[serde(rename = "PathPrefix")]
     pub(crate) path_prefix: Option<types::policy_path_type::PolicyPathType>,
 }
+
 impl ListAttachedUserPoliciesRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
@@ -24,6 +26,7 @@ impl ListAttachedUserPoliciesRequest {
         self.path_prefix.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListAttachedUserPoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateAssumeRolePolicyRequest {
     #[serde(rename = "PolicyDocument")]
@@ -6,6 +7,7 @@ pub(crate) struct UpdateAssumeRolePolicyRequest {
     #[serde(rename = "RoleName")]
     pub(crate) role_name: Option<types::role_name_type::RoleNameType>,
 }
+
 impl UpdateAssumeRolePolicyRequest {
     pub(crate) fn policy_document(&self) -> Option<&str> {
         self.policy_document.as_deref()
@@ -14,6 +16,7 @@ impl UpdateAssumeRolePolicyRequest {
         self.role_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateAssumeRolePolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.policy_document(), format!("{at}.{}", "PolicyDocument").as_str())?;

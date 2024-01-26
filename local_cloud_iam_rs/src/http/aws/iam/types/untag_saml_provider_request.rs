@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UntagSamlProviderRequest {
     #[serde(rename = "SAMLProviderArn")]
@@ -6,6 +7,7 @@ pub(crate) struct UntagSamlProviderRequest {
     #[serde(rename = "TagKeys")]
     pub(crate) tag_keys: Option<Vec<types::tag_key_type::TagKeyType>>,
 }
+
 impl UntagSamlProviderRequest {
     pub(crate) fn saml_provider_arn(&self) -> Option<&str> {
         self.saml_provider_arn.as_deref()
@@ -14,6 +16,7 @@ impl UntagSamlProviderRequest {
         self.tag_keys.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UntagSamlProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct TagRoleRequest {
     #[serde(rename = "RoleName")]
@@ -6,6 +7,7 @@ pub(crate) struct TagRoleRequest {
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<types::tag::Tag>>,
 }
+
 impl TagRoleRequest {
     pub(crate) fn role_name(&self) -> Option<&str> {
         self.role_name.as_deref()
@@ -14,6 +16,7 @@ impl TagRoleRequest {
         self.tags.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &TagRoleRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;

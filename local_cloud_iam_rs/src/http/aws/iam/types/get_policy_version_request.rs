@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetPolicyVersionRequest {
     #[serde(rename = "PolicyArn")]
@@ -6,6 +7,7 @@ pub(crate) struct GetPolicyVersionRequest {
     #[serde(rename = "VersionId")]
     pub(crate) version_id: Option<types::policy_version_id_type::PolicyVersionIdType>,
 }
+
 impl GetPolicyVersionRequest {
     pub(crate) fn policy_arn(&self) -> Option<&str> {
         self.policy_arn.as_deref()
@@ -14,6 +16,7 @@ impl GetPolicyVersionRequest {
         self.version_id.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetPolicyVersionRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;

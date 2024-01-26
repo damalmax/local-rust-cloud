@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct CreateUserRequest {
     #[serde(rename = "Tags")]
@@ -10,6 +11,7 @@ pub(crate) struct CreateUserRequest {
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::user_name_type::UserNameType>,
 }
+
 impl CreateUserRequest {
     pub(crate) fn tags(&self) -> Option<&[types::tag::Tag]> {
         self.tags.as_deref()
@@ -24,6 +26,7 @@ impl CreateUserRequest {
         self.user_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreateUserRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_array_size_min(self.tags(), 0usize, format!("{at}.{}", "Tags").as_str())?;

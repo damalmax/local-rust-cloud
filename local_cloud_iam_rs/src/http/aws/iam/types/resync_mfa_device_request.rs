@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ResyncMfaDeviceRequest {
     #[serde(rename = "SerialNumber")]
@@ -10,6 +11,7 @@ pub(crate) struct ResyncMfaDeviceRequest {
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::existing_user_name_type::ExistingUserNameType>,
 }
+
 impl ResyncMfaDeviceRequest {
     pub(crate) fn serial_number(&self) -> Option<&str> {
         self.serial_number.as_deref()
@@ -24,6 +26,7 @@ impl ResyncMfaDeviceRequest {
         self.user_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ResyncMfaDeviceRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.serial_number(), format!("{at}.{}", "SerialNumber").as_str())?;

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListPolicyTagsRequest {
     #[serde(rename = "PolicyArn")]
@@ -8,6 +9,7 @@ pub(crate) struct ListPolicyTagsRequest {
     #[serde(rename = "MaxItems")]
     pub(crate) max_items: Option<types::max_items_type::MaxItemsType>,
 }
+
 impl ListPolicyTagsRequest {
     pub(crate) fn policy_arn(&self) -> Option<&str> {
         self.policy_arn.as_deref()
@@ -19,6 +21,7 @@ impl ListPolicyTagsRequest {
         self.max_items.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListPolicyTagsRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;

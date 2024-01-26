@@ -9,6 +9,7 @@ pub(crate) struct CreatePolicyVersionRequest {
     #[serde(rename = "PolicyArn")]
     pub(crate) policy_arn: Option<types::arn_type::ArnType>,
 }
+
 impl CreatePolicyVersionRequest {
     pub(crate) fn set_as_default(&self) -> Option<bool> {
         self.set_as_default.as_ref().map(|v| v.as_bool())
@@ -20,6 +21,7 @@ impl CreatePolicyVersionRequest {
         self.policy_arn.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreatePolicyVersionRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.policy_document(), format!("{at}.{}", "PolicyDocument").as_str())?;

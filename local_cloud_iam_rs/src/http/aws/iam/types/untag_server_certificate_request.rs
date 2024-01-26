@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UntagServerCertificateRequest {
     #[serde(rename = "TagKeys")]
@@ -6,6 +7,7 @@ pub(crate) struct UntagServerCertificateRequest {
     #[serde(rename = "ServerCertificateName")]
     pub(crate) server_certificate_name: Option<types::server_certificate_name_type::ServerCertificateNameType>,
 }
+
 impl UntagServerCertificateRequest {
     pub(crate) fn tag_keys(&self) -> Option<&[types::tag_key_type::TagKeyType]> {
         self.tag_keys.as_deref()
@@ -14,6 +16,7 @@ impl UntagServerCertificateRequest {
         self.server_certificate_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UntagServerCertificateRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.tag_keys(), format!("{at}.{}", "TagKeys").as_str())?;

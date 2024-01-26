@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateGroupRequest {
     #[serde(rename = "NewGroupName")]
@@ -8,6 +9,7 @@ pub(crate) struct UpdateGroupRequest {
     #[serde(rename = "NewPath")]
     pub(crate) new_path: Option<types::path_type::PathType>,
 }
+
 impl UpdateGroupRequest {
     pub(crate) fn new_group_name(&self) -> Option<&str> {
         self.new_group_name.as_deref()
@@ -19,6 +21,7 @@ impl UpdateGroupRequest {
         self.new_path.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateGroupRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(

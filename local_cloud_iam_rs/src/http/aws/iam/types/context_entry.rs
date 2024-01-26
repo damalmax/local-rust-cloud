@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 /**<p>Contains information about a condition context key. It includes the name of the key and
 specifies the value (or values, if the context key supports multiple values) to use in the
 simulation. This information is used when evaluating the <code>Condition</code> elements of
@@ -14,6 +15,7 @@ pub(crate) struct ContextEntry {
     #[serde(rename = "ContextKeyType")]
     pub(crate) context_key_type: Option<types::context_key_type_enum::ContextKeyTypeEnum>,
 }
+
 impl ContextEntry {
     pub(crate) fn context_key_name(&self) -> Option<&str> {
         self.context_key_name.as_deref()
@@ -25,6 +27,7 @@ impl ContextEntry {
         self.context_key_type.as_ref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ContextEntry {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(

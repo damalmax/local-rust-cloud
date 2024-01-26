@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListInstanceProfileTagsRequest {
     #[serde(rename = "Marker")]
@@ -8,6 +9,7 @@ pub(crate) struct ListInstanceProfileTagsRequest {
     #[serde(rename = "InstanceProfileName")]
     pub(crate) instance_profile_name: Option<types::instance_profile_name_type::InstanceProfileNameType>,
 }
+
 impl ListInstanceProfileTagsRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
@@ -19,6 +21,7 @@ impl ListInstanceProfileTagsRequest {
         self.instance_profile_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListInstanceProfileTagsRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;

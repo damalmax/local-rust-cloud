@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UploadServerCertificateRequest {
     #[serde(rename = "Path")]
@@ -14,6 +15,7 @@ pub(crate) struct UploadServerCertificateRequest {
     #[serde(rename = "CertificateChain")]
     pub(crate) certificate_chain: Option<types::certificate_chain_type::CertificateChainType>,
 }
+
 impl UploadServerCertificateRequest {
     pub(crate) fn path(&self) -> Option<&str> {
         self.path.as_deref()
@@ -34,6 +36,7 @@ impl UploadServerCertificateRequest {
         self.certificate_chain.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UploadServerCertificateRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.path.as_ref(), format!("{at}.{}", "Path").as_str())?;

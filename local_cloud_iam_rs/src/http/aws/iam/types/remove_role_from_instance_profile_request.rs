@@ -7,6 +7,7 @@ pub(crate) struct RemoveRoleFromInstanceProfileRequest {
     #[serde(rename = "RoleName")]
     pub(crate) role_name: Option<types::role_name_type::RoleNameType>,
 }
+
 impl RemoveRoleFromInstanceProfileRequest {
     pub(crate) fn instance_profile_name(&self) -> Option<&str> {
         self.instance_profile_name.as_deref()
@@ -15,6 +16,7 @@ impl RemoveRoleFromInstanceProfileRequest {
         self.role_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &RemoveRoleFromInstanceProfileRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

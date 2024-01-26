@@ -15,6 +15,7 @@ pub(crate) struct CreatePolicyRequest {
     #[serde(rename = "Description")]
     pub(crate) description: Option<types::policy_description_type::PolicyDescriptionType>,
 }
+
 impl CreatePolicyRequest {
     pub(crate) fn path(&self) -> Option<&str> {
         self.path.as_deref()
@@ -35,6 +36,7 @@ impl CreatePolicyRequest {
         self.description.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreatePolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.path.as_ref(), format!("{at}.{}", "Path").as_str())?;

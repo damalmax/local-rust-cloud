@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateSshPublicKeyRequest {
     #[serde(rename = "Status")]
@@ -8,6 +9,7 @@ pub(crate) struct UpdateSshPublicKeyRequest {
     #[serde(rename = "SSHPublicKeyId")]
     pub(crate) ssh_public_key_id: Option<types::public_key_id_type::PublicKeyIdType>,
 }
+
 impl UpdateSshPublicKeyRequest {
     pub(crate) fn status(&self) -> Option<&types::status_type::StatusType> {
         self.status.as_ref()
@@ -19,6 +21,7 @@ impl UpdateSshPublicKeyRequest {
         self.ssh_public_key_id.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateSshPublicKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.status(), format!("{at}.{}", "Status").as_str())?;

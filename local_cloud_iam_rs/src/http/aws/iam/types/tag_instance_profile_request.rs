@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct TagInstanceProfileRequest {
     #[serde(rename = "InstanceProfileName")]
@@ -6,6 +7,7 @@ pub(crate) struct TagInstanceProfileRequest {
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<types::tag::Tag>>,
 }
+
 impl TagInstanceProfileRequest {
     pub(crate) fn instance_profile_name(&self) -> Option<&str> {
         self.instance_profile_name.as_deref()
@@ -14,6 +16,7 @@ impl TagInstanceProfileRequest {
         self.tags.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &TagInstanceProfileRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

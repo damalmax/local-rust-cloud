@@ -9,6 +9,7 @@ pub(crate) struct CreateLoginProfileRequest {
     #[serde(rename = "PasswordResetRequired")]
     pub(crate) password_reset_required: Option<local_cloud_common::types::Bool>,
 }
+
 impl CreateLoginProfileRequest {
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -20,6 +21,7 @@ impl CreateLoginProfileRequest {
         self.password_reset_required.as_ref().map(|v| v.as_bool())
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreateLoginProfileRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;

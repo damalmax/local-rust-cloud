@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetMfaDeviceRequest {
     #[serde(rename = "SerialNumber")]
@@ -6,6 +7,7 @@ pub(crate) struct GetMfaDeviceRequest {
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::user_name_type::UserNameType>,
 }
+
 impl GetMfaDeviceRequest {
     pub(crate) fn serial_number(&self) -> Option<&str> {
         self.serial_number.as_deref()
@@ -14,6 +16,7 @@ impl GetMfaDeviceRequest {
         self.user_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetMfaDeviceRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.serial_number(), format!("{at}.{}", "SerialNumber").as_str())?;

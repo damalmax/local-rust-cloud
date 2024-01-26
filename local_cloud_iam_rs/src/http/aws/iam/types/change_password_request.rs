@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ChangePasswordRequest {
     #[serde(rename = "OldPassword")]
@@ -6,6 +7,7 @@ pub(crate) struct ChangePasswordRequest {
     #[serde(rename = "NewPassword")]
     pub(crate) new_password: Option<types::password_type::PasswordType>,
 }
+
 impl ChangePasswordRequest {
     pub(crate) fn old_password(&self) -> Option<&str> {
         self.old_password.as_deref()
@@ -14,6 +16,7 @@ impl ChangePasswordRequest {
         self.new_password.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ChangePasswordRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.old_password(), format!("{at}.{}", "OldPassword").as_str())?;

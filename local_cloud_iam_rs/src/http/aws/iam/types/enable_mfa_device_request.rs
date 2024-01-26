@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct EnableMfaDeviceRequest {
     #[serde(rename = "UserName")]
@@ -10,6 +11,7 @@ pub(crate) struct EnableMfaDeviceRequest {
     #[serde(rename = "AuthenticationCode2")]
     pub(crate) authentication_code_2: Option<types::authentication_code_type::AuthenticationCodeType>,
 }
+
 impl EnableMfaDeviceRequest {
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -24,6 +26,7 @@ impl EnableMfaDeviceRequest {
         self.authentication_code_2.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &EnableMfaDeviceRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;

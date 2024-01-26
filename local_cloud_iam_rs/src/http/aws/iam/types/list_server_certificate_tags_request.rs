@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListServerCertificateTagsRequest {
     #[serde(rename = "ServerCertificateName")]
@@ -8,6 +9,7 @@ pub(crate) struct ListServerCertificateTagsRequest {
     #[serde(rename = "Marker")]
     pub(crate) marker: Option<types::marker_type::MarkerType>,
 }
+
 impl ListServerCertificateTagsRequest {
     pub(crate) fn server_certificate_name(&self) -> Option<&str> {
         self.server_certificate_name.as_deref()
@@ -19,6 +21,7 @@ impl ListServerCertificateTagsRequest {
         self.marker.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListServerCertificateTagsRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

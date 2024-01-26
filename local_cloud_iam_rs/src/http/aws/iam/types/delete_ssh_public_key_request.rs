@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct DeleteSshPublicKeyRequest {
     #[serde(rename = "UserName")]
@@ -6,6 +7,7 @@ pub(crate) struct DeleteSshPublicKeyRequest {
     #[serde(rename = "SSHPublicKeyId")]
     pub(crate) ssh_public_key_id: Option<types::public_key_id_type::PublicKeyIdType>,
 }
+
 impl DeleteSshPublicKeyRequest {
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -14,6 +16,7 @@ impl DeleteSshPublicKeyRequest {
         self.ssh_public_key_id.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &DeleteSshPublicKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;

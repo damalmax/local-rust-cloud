@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct CreateOpenIdConnectProviderRequest {
     #[serde(rename = "ClientIDList")]
@@ -10,6 +11,7 @@ pub(crate) struct CreateOpenIdConnectProviderRequest {
     #[serde(rename = "ThumbprintList")]
     pub(crate) thumbprint_list: Option<Vec<types::thumbprint_type::ThumbprintType>>,
 }
+
 impl CreateOpenIdConnectProviderRequest {
     pub(crate) fn client_id_list(&self) -> Option<&[types::client_id_type::ClientIdType]> {
         self.client_id_list.as_deref()
@@ -24,6 +26,7 @@ impl CreateOpenIdConnectProviderRequest {
         self.thumbprint_list.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreateOpenIdConnectProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         if let Some(client_id_list) = self.client_id_list() {

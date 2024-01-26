@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetSshPublicKeyRequest {
     #[serde(rename = "UserName")]
@@ -8,6 +9,7 @@ pub(crate) struct GetSshPublicKeyRequest {
     #[serde(rename = "Encoding")]
     pub(crate) encoding: Option<types::encoding_type::EncodingType>,
 }
+
 impl GetSshPublicKeyRequest {
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -19,6 +21,7 @@ impl GetSshPublicKeyRequest {
         self.encoding.as_ref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetSshPublicKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;

@@ -21,6 +21,7 @@ pub(crate) struct UpdateAccountPasswordPolicyRequest {
     #[serde(rename = "HardExpiry")]
     pub(crate) hard_expiry: Option<local_cloud_common::types::Bool>,
 }
+
 impl UpdateAccountPasswordPolicyRequest {
     pub(crate) fn max_password_age(&self) -> Option<&i32> {
         self.max_password_age.as_deref()
@@ -50,6 +51,7 @@ impl UpdateAccountPasswordPolicyRequest {
         self.hard_expiry.as_ref().map(|v| v.as_bool())
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateAccountPasswordPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(

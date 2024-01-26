@@ -9,6 +9,7 @@ pub(crate) struct CreateSamlProviderRequest {
     #[serde(rename = "Tags")]
     pub(crate) tags: Option<Vec<types::tag::Tag>>,
 }
+
 impl CreateSamlProviderRequest {
     pub(crate) fn saml_metadata_document(&self) -> Option<&str> {
         self.saml_metadata_document.as_deref()
@@ -20,6 +21,7 @@ impl CreateSamlProviderRequest {
         self.tags.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreateSamlProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

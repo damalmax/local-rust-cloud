@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct RemoveClientIdFromOpenIdConnectProviderRequest {
     #[serde(rename = "ClientID")]
@@ -6,6 +7,7 @@ pub(crate) struct RemoveClientIdFromOpenIdConnectProviderRequest {
     #[serde(rename = "OpenIDConnectProviderArn")]
     pub(crate) open_id_connect_provider_arn: Option<types::arn_type::ArnType>,
 }
+
 impl RemoveClientIdFromOpenIdConnectProviderRequest {
     pub(crate) fn client_id(&self) -> Option<&str> {
         self.client_id.as_deref()
@@ -14,6 +16,7 @@ impl RemoveClientIdFromOpenIdConnectProviderRequest {
         self.open_id_connect_provider_arn.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &RemoveClientIdFromOpenIdConnectProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.client_id(), format!("{at}.{}", "ClientID").as_str())?;

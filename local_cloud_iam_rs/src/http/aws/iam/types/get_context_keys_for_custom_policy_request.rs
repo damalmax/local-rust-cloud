@@ -1,14 +1,17 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetContextKeysForCustomPolicyRequest {
     #[serde(rename = "PolicyInputList")]
     pub(crate) policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
 }
+
 impl GetContextKeysForCustomPolicyRequest {
     pub(crate) fn policy_input_list(&self) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
         self.policy_input_list.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetContextKeysForCustomPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

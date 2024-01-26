@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetAccountAuthorizationDetailsRequest {
     #[serde(rename = "Marker")]
@@ -8,6 +9,7 @@ pub(crate) struct GetAccountAuthorizationDetailsRequest {
     #[serde(rename = "MaxItems")]
     pub(crate) max_items: Option<types::max_items_type::MaxItemsType>,
 }
+
 impl GetAccountAuthorizationDetailsRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
@@ -19,6 +21,7 @@ impl GetAccountAuthorizationDetailsRequest {
         self.max_items.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetAccountAuthorizationDetailsRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;

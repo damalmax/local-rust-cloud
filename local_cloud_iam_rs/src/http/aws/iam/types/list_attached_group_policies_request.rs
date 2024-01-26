@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListAttachedGroupPoliciesRequest {
     #[serde(rename = "PathPrefix")]
@@ -10,6 +11,7 @@ pub(crate) struct ListAttachedGroupPoliciesRequest {
     #[serde(rename = "MaxItems")]
     pub(crate) max_items: Option<types::max_items_type::MaxItemsType>,
 }
+
 impl ListAttachedGroupPoliciesRequest {
     pub(crate) fn path_prefix(&self) -> Option<&str> {
         self.path_prefix.as_deref()
@@ -24,6 +26,7 @@ impl ListAttachedGroupPoliciesRequest {
         self.max_items.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListAttachedGroupPoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.path_prefix.as_ref(), format!("{at}.{}", "PathPrefix").as_str())?;

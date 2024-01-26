@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListAttachedRolePoliciesRequest {
     #[serde(rename = "RoleName")]
@@ -10,6 +11,7 @@ pub(crate) struct ListAttachedRolePoliciesRequest {
     #[serde(rename = "Marker")]
     pub(crate) marker: Option<types::marker_type::MarkerType>,
 }
+
 impl ListAttachedRolePoliciesRequest {
     pub(crate) fn role_name(&self) -> Option<&str> {
         self.role_name.as_deref()
@@ -24,6 +26,7 @@ impl ListAttachedRolePoliciesRequest {
         self.marker.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListAttachedRolePoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;

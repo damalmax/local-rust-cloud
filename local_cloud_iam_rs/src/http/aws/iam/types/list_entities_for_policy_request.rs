@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListEntitiesForPolicyRequest {
     #[serde(rename = "Marker")]
@@ -14,6 +15,7 @@ pub(crate) struct ListEntitiesForPolicyRequest {
     #[serde(rename = "PolicyUsageFilter")]
     pub(crate) policy_usage_filter: Option<types::policy_usage_type::PolicyUsageType>,
 }
+
 impl ListEntitiesForPolicyRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
@@ -34,6 +36,7 @@ impl ListEntitiesForPolicyRequest {
         self.policy_usage_filter.as_ref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListEntitiesForPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;

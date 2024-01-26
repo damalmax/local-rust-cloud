@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListServiceSpecificCredentialsRequest {
     #[serde(rename = "UserName")]
@@ -6,6 +7,7 @@ pub(crate) struct ListServiceSpecificCredentialsRequest {
     #[serde(rename = "ServiceName")]
     pub(crate) service_name: Option<types::service_name::ServiceName>,
 }
+
 impl ListServiceSpecificCredentialsRequest {
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -14,6 +16,7 @@ impl ListServiceSpecificCredentialsRequest {
         self.service_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListServiceSpecificCredentialsRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;

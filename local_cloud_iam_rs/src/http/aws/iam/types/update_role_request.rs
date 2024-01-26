@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateRoleRequest {
     #[serde(rename = "RoleName")]
@@ -8,6 +9,7 @@ pub(crate) struct UpdateRoleRequest {
     #[serde(rename = "MaxSessionDuration")]
     pub(crate) max_session_duration: Option<types::role_max_session_duration_type::RoleMaxSessionDurationType>,
 }
+
 impl UpdateRoleRequest {
     pub(crate) fn role_name(&self) -> Option<&str> {
         self.role_name.as_deref()
@@ -19,6 +21,7 @@ impl UpdateRoleRequest {
         self.max_session_duration.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateRoleRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.role_name(), format!("{at}.{}", "RoleName").as_str())?;

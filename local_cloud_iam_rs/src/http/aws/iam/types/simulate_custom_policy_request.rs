@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct SimulateCustomPolicyRequest {
     #[serde(rename = "ActionNames")]
@@ -24,6 +25,7 @@ pub(crate) struct SimulateCustomPolicyRequest {
     #[serde(rename = "ResourceArns")]
     pub(crate) resource_arns: Option<Vec<types::resource_name_type::ResourceNameType>>,
 }
+
 impl SimulateCustomPolicyRequest {
     pub(crate) fn action_names(&self) -> Option<&[types::action_name_type::ActionNameType]> {
         self.action_names.as_deref()
@@ -61,6 +63,7 @@ impl SimulateCustomPolicyRequest {
         self.resource_arns.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &SimulateCustomPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.action_names(), format!("{at}.{}", "ActionNames").as_str())?;

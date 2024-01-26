@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateSamlProviderRequest {
     #[serde(rename = "SAMLMetadataDocument")]
@@ -6,6 +7,7 @@ pub(crate) struct UpdateSamlProviderRequest {
     #[serde(rename = "SAMLProviderArn")]
     pub(crate) saml_provider_arn: Option<types::arn_type::ArnType>,
 }
+
 impl UpdateSamlProviderRequest {
     pub(crate) fn saml_metadata_document(&self) -> Option<&str> {
         self.saml_metadata_document.as_deref()
@@ -14,6 +16,7 @@ impl UpdateSamlProviderRequest {
         self.saml_provider_arn.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateSamlProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UntagRoleRequest {
     #[serde(rename = "TagKeys")]
@@ -6,6 +7,7 @@ pub(crate) struct UntagRoleRequest {
     #[serde(rename = "RoleName")]
     pub(crate) role_name: Option<types::role_name_type::RoleNameType>,
 }
+
 impl UntagRoleRequest {
     pub(crate) fn tag_keys(&self) -> Option<&[types::tag_key_type::TagKeyType]> {
         self.tag_keys.as_deref()
@@ -14,6 +16,7 @@ impl UntagRoleRequest {
         self.role_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UntagRoleRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.tag_keys(), format!("{at}.{}", "TagKeys").as_str())?;

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct GetOrganizationsAccessReportRequest {
     #[serde(rename = "Marker")]
@@ -10,6 +11,7 @@ pub(crate) struct GetOrganizationsAccessReportRequest {
     #[serde(rename = "JobId")]
     pub(crate) job_id: Option<types::job_id_type::JobIdType>,
 }
+
 impl GetOrganizationsAccessReportRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
@@ -24,6 +26,7 @@ impl GetOrganizationsAccessReportRequest {
         self.job_id.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &GetOrganizationsAccessReportRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;

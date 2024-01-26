@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListPoliciesGrantingServiceAccessRequest {
     #[serde(rename = "Marker")]
@@ -8,6 +9,7 @@ pub(crate) struct ListPoliciesGrantingServiceAccessRequest {
     #[serde(rename = "ServiceNamespaces")]
     pub(crate) service_namespaces: Option<Vec<types::service_namespace_type::ServiceNamespaceType>>,
 }
+
 impl ListPoliciesGrantingServiceAccessRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
@@ -19,6 +21,7 @@ impl ListPoliciesGrantingServiceAccessRequest {
         self.service_namespaces.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &ListPoliciesGrantingServiceAccessRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;

@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct CreateVirtualMfaDeviceRequest {
     #[serde(rename = "Path")]
@@ -8,6 +9,7 @@ pub(crate) struct CreateVirtualMfaDeviceRequest {
     #[serde(rename = "VirtualMFADeviceName")]
     pub(crate) virtual_mfa_device_name: Option<types::virtual_mfa_device_name::VirtualMfaDeviceName>,
 }
+
 impl CreateVirtualMfaDeviceRequest {
     pub(crate) fn path(&self) -> Option<&str> {
         self.path.as_deref()
@@ -19,6 +21,7 @@ impl CreateVirtualMfaDeviceRequest {
         self.virtual_mfa_device_name.as_deref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &CreateVirtualMfaDeviceRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_named(self.path.as_ref(), format!("{at}.{}", "Path").as_str())?;

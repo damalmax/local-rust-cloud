@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct UpdateSigningCertificateRequest {
     #[serde(rename = "CertificateId")]
@@ -8,6 +9,7 @@ pub(crate) struct UpdateSigningCertificateRequest {
     #[serde(rename = "Status")]
     pub(crate) status: Option<types::status_type::StatusType>,
 }
+
 impl UpdateSigningCertificateRequest {
     pub(crate) fn certificate_id(&self) -> Option<&str> {
         self.certificate_id.as_deref()
@@ -19,6 +21,7 @@ impl UpdateSigningCertificateRequest {
         self.status.as_ref()
     }
 }
+
 impl local_cloud_validate::NamedValidator for &UpdateSigningCertificateRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(self.certificate_id(), format!("{at}.{}", "CertificateId").as_str())?;
