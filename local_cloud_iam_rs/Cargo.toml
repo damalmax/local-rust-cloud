@@ -49,6 +49,7 @@ local_cloud_db = { path = "../local_cloud_db" }
 local_cloud_iam_policy_document = { path = "../local_cloud_iam_policy_document" }
 lazy_static = "1.4"
 encoding_rs = "0.8"
+urlencoding.workspace = true
 
 [dev-dependencies]
 actix-rt.workspace = true

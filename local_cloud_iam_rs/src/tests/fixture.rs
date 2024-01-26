@@ -6,6 +6,9 @@ use aws_smithy_runtime_api::client::result::SdkError;
 pub(crate) const CREATE_USER_PERMISSIONS_BOUNDARY: &str =
     include_str!("resources/create_user__permissions_boundary.json");
 
+pub(crate) const CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY: &str =
+    include_str!("resources/create_role__assume_role_policy_document.json");
+
 pub(crate) fn tag(key: &str, value: &str) -> Tag {
     Tag::builder().key(key).value(value).build().unwrap()
 }

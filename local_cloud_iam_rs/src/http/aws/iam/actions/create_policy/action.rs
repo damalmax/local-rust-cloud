@@ -21,8 +21,7 @@ impl CreatePolicyRequest {
                     if kind == ApiErrorKind::EntityAlreadyExists {
                         ApiError::new(
                             kind,
-                            format!("IAM policy with name '{}' already exists.", self.policy_name().unwrap().trim())
-                                .as_str(),
+                            format!("IAM policy with name '{}' already exists.", self.policy_name().unwrap().trim()),
                             aws_request_id,
                         )
                     } else {

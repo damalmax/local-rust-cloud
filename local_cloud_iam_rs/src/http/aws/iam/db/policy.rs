@@ -1,7 +1,6 @@
-use sqlx::database::HasArguments;
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Encode, Error, FromRow, QueryBuilder, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::policy_tag;
 use crate::http::aws::iam::db::types::policy::{InsertPolicy, ListPoliciesQuery, SelectPolicy, SelectPolicyWithTags};
@@ -43,13 +42,14 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut In
     Ok(())
 }
 
-pub(crate) async fn find_id_by_arn<'a>(
-    tx: &mut Transaction<'a, Sqlite>, policy_arn: &str,
-) -> Result<Option<i64>, Error> {
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, policy_arn: &str) -> Result<Option<i64>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
     let result = sqlx::query("SELECT id FROM policies WHERE arn = $1")
         .bind(policy_arn)
         .map(|row: SqliteRow| row.get::<i64, &str>("id"))
-        .fetch_optional(tx.as_mut())
+        .fetch_optional(executor)
         .await?;
     Ok(result)
 }

@@ -18,11 +18,11 @@ pub(crate) struct ApiError {
 }
 
 impl ApiError {
-    pub(crate) fn new(kind: ApiErrorKind, message: &str, aws_request_id: &str) -> Self {
+    pub(crate) fn new(kind: ApiErrorKind, message: impl Into<String>, aws_request_id: impl Into<String>) -> Self {
         ApiError {
             kind,
-            message: Some(message.to_owned()),
-            aws_request_id: aws_request_id.to_owned(),
+            message: Some(message.into()),
+            aws_request_id: aws_request_id.into(),
             extras: None,
         }
     }

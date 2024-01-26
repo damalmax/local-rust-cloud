@@ -4,6 +4,7 @@ use aws_smithy_types::DateTime;
 use chrono::Utc;
 
 use local_cloud_db::LocalDb;
+use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
@@ -18,26 +19,13 @@ use crate::http::aws::iam::{constants, db, types};
 pub async fn create_user(
     ctx: &OperationCtx, input: &CreateUserRequest, db: &LocalDb,
 ) -> Result<CreateUserOutput, OperationError> {
+    input.validate("$")?;
     let current_time = Utc::now().timestamp();
 
     let mut tx = db.new_tx().await?;
-    let user_id = create_resource_id(&mut tx, constants::user::USER_PREFIX, ResourceType::User).await?;
+    let user_id = create_resource_id(&mut tx, constants::user::PREFIX, ResourceType::User).await?;
 
-    let policy_id = match input.permissions_boundary() {
-        None => None,
-        Some(policy_arn) => {
-            let policy = db::policy::find_id_by_arn(&mut tx, policy_arn).await?;
-            match policy {
-                None => {
-                    return Err(OperationError::new(
-                        ApiErrorKind::NoSuchEntity,
-                        "Policy with the given Permissions Boundary doesn't exist.",
-                    ))
-                }
-                Some(id) => Some(id),
-            }
-        }
-    };
+    let policy_id = super::policy::find_policy_id_by_arn((&mut tx).as_mut(), input.permissions_boundary()).await?;
 
     let mut insert_user = prepare_user_for_insert(ctx, input, &user_id, policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
@@ -108,10 +96,6 @@ fn prepare_tags_for_output(tags: Vec<DbUserTag>) -> Option<Vec<Tag>> {
     if tags.len() == 0 {
         None
     } else {
-        Some(
-            tags.iter()
-                .map(|tag| Tag::builder().key(&tag.key).value(&tag.value).build().unwrap())
-                .collect(),
-        )
+        Some(tags.iter().map(|tag| tag.into()).collect())
     }
 }

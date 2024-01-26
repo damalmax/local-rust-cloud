@@ -1,7 +1,8 @@
 #[derive(Debug, Clone, sqlx::Type)]
 #[repr(i32)]
 pub(crate) enum PolicyType {
-    LocalCloudManaged, // alternative for 'AWS Managed'
+    LocalCloudManaged,
+    // alternative for 'AWS Managed'
     CustomerManaged,
 }
 

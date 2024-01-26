@@ -88,9 +88,20 @@ CREATE TABLE IF NOT EXISTS users
     UNIQUE (unique_username) ON CONFLICT FAIL
 );
 CREATE INDEX IF NOT EXISTS fk_users__account_id ON users (account_id ASC);
+CREATE INDEX IF NOT EXISTS idx_users__arn ON users (arn ASC);
 
 INSERT INTO users(account_id, username, unique_username, arn, path, user_id, create_date)
 VALUES (1, 'Root', 'ROOT', '"arn:aws:iam::000000000001:user/Root"', '/', 'AIDAHOMECLOUDROOT101A', 1706219306);
+
+CREATE TABLE IF NOT EXISTS user_tags
+(
+    id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id INTEGER REFERENCES users (id),
+    key     VARCHAR2(128)                     NOT NULL,
+    value   VARCHAR2(256)                     NOT NULL,
+    UNIQUE (user_id, key)
+);
+CREATE INDEX IF NOT EXISTS fk_user_tags__user_id ON user_tags (user_id ASC);
 
 CREATE TABLE IF NOT EXISTS policy_versions
 (
@@ -129,17 +140,37 @@ CREATE TABLE IF NOT EXISTS policy_tags
 );
 
 CREATE INDEX IF NOT EXISTS fk_policy_tags__policy_id ON policy_tags (policy_id ASC);
-
-CREATE TABLE IF NOT EXISTS user_tags
+-- Role
+CREATE TABLE IF NOT EXISTS roles
+(
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id           INTEGER REFERENCES accounts (id)  NOT NULL,
+    role_name            VARCHAR2(64)                      NOT NULL,
+    unique_role_name     VARCHAR2(64)                      NOT NULL,
+    description          VARCHAR2(1000),
+    max_session_duration INTEGER                           NOT NULL,
+    arn                  VARCHAR2(2048)                    NOT NULL,
+    path                 VARCHAR2(512)                     NOT NULL,
+    role_id              VARCHAR2(21)                      NOT NULL,
+    policy_id            INTEGER REFERENCES policies (id),
+    create_date          INTEGER                           NOT NULL,
+    last_used_date       INTEGER,
+    last_used_region_id  INTEGER REFERENCES regions (id),
+    UNIQUE (arn) ON CONFLICT FAIL,
+    UNIQUE (role_id) ON CONFLICT FAIL,
+    UNIQUE (unique_role_name) ON CONFLICT FAIL
+);
+CREATE INDEX IF NOT EXISTS fk_roles__account_id ON roles (account_id ASC);
+CREATE INDEX IF NOT EXISTS idx_roles__arn ON roles (arn ASC);
+CREATE TABLE IF NOT EXISTS role_tags
 (
     id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    user_id INTEGER REFERENCES users (id),
+    role_id INTEGER REFERENCES roles (id),
     key     VARCHAR2(128)                     NOT NULL,
     value   VARCHAR2(256)                     NOT NULL,
-    UNIQUE (user_id, key)
+    UNIQUE (role_id, key)
 );
-
-CREATE INDEX IF NOT EXISTS fk_user_tags__user_id ON user_tags (user_id ASC);
+CREATE INDEX IF NOT EXISTS fk_role_tags__role_id ON role_tags (role_id ASC);
 
 CREATE TABLE IF NOT EXISTS unique_identifiers
 (

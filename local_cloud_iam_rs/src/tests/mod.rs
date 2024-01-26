@@ -10,6 +10,8 @@ mod create_policy;
 #[cfg(test)]
 mod create_policy_version;
 #[cfg(test)]
+mod create_role;
+#[cfg(test)]
 mod create_user;
 pub mod fixture;
 #[cfg(test)]

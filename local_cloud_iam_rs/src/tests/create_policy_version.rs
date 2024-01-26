@@ -57,7 +57,7 @@ async fn create_policy_version_limit_exceeded() {
     let policy_arn = response.policy.unwrap().arn.unwrap();
 
     // create 4 other policy versions
-    for i in 0..4 {
+    for _i in 0..4 {
         client
             .create_policy_version()
             .policy_arn(&policy_arn)

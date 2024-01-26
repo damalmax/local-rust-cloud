@@ -31,7 +31,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] create_open_id_connect_provider
 - [X] create_policy
 - [X] create_policy_version
-- [ ] create_role
+- [X] create_role
 - [ ] create_saml_provider
 - [ ] create_service_linked_role
 - [ ] create_service_specific_credential

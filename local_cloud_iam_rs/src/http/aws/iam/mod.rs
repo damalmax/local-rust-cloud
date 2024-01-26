@@ -10,6 +10,7 @@ use local_cloud_db::LocalDb;
 use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
+use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 
@@ -32,30 +33,36 @@ pub(crate) enum LocalAwsRequest {
     CreatePolicyVersion(CreatePolicyVersionRequest),
     #[serde(rename = "CreateUser")]
     CreateUser(CreateUserRequest),
+    #[serde(rename = "CreateRole")]
+    CreateRole(CreateRoleRequest),
 }
 
 pub(crate) async fn handle(
     _req: HttpRequest, aws_query: local::web::AwsQuery<LocalAwsRequest>, db: web::Data<LocalDb>,
 ) -> impl Responder {
     // TODO: populate account ID from token
-    let acc_id = 1i64;
+    let account_id = 1i64;
     let aws_request = aws_query.into_inner();
     let aws_request_id = Uuid::new_v4().to_string();
     let output: Result<XmlResponse, ApiError> = match aws_request {
         LocalAwsRequest::CreatePolicy(create_policy) => create_policy
-            .execute(acc_id, &aws_request_id, db.as_ref())
+            .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListPolicies(list_policies) => list_policies
-            .execute(acc_id, &aws_request_id, db.as_ref())
+            .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
         LocalAwsRequest::CreatePolicyVersion(create_policy_version) => create_policy_version
-            .execute(acc_id, &aws_request_id, db.as_ref())
+            .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
         LocalAwsRequest::CreateUser(create_user) => create_user
-            .execute(acc_id, &aws_request_id, db.as_ref())
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreateRole(create_role) => create_role
+            .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
     };

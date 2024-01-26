@@ -3,14 +3,14 @@ pub(crate) mod xml {
 }
 
 pub(crate) mod policy_version {
-    pub(crate) const POLICY_VERSION_PREFIX: &str = "ANVA";
+    pub(crate) const PREFIX: &str = "ANVA";
     pub(crate) const POLICY_VERSION_MAX_COUNT: usize = 5;
 }
 
 pub(crate) mod policy {
     use std::time::Duration;
 
-    pub(crate) const MANAGED_POLICY_PREFIX: &str = "ANPA";
+    pub(crate) const PREFIX: &str = "ANPA";
 
     /// 15 minutes
     pub(crate) const ROLE_SESSION_DURATION_MIN_SEC: Duration = Duration::new(900, 0);
@@ -21,5 +21,10 @@ pub(crate) mod policy {
 }
 
 pub(crate) mod user {
-    pub(crate) const USER_PREFIX: &str = "AIDA";
+    pub(crate) const PREFIX: &str = "AIDA";
+}
+
+pub(crate) mod role {
+    pub(crate) const PREFIX: &str = "AROA";
+    pub(crate) const DEFAULT_MAX_SESSION_DURATION: i32 = 3600;
 }

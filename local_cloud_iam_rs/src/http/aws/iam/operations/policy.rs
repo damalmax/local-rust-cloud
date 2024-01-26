@@ -4,7 +4,7 @@ use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
-use sqlx::{Sqlite, Transaction};
+use sqlx::{Executor, Sqlite, Transaction};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
@@ -29,7 +29,7 @@ use crate::http::aws::iam::types::marker_type::Marker;
 use crate::http::aws::iam::validate;
 use crate::http::aws::iam::{constants, db, types};
 
-pub async fn create_policy(
+pub(crate) async fn create_policy(
     ctx: &OperationCtx, input: &CreatePolicyRequest, db: &LocalDb,
 ) -> Result<CreatePolicyOutput, OperationError> {
     // validate
@@ -39,7 +39,7 @@ pub async fn create_policy(
     // init transaction
     let mut tx = db.new_tx().await?;
 
-    let policy_id = create_resource_id(&mut tx, constants::policy::MANAGED_POLICY_PREFIX, ResourceType::Policy).await?;
+    let policy_id = create_resource_id(&mut tx, constants::policy::PREFIX, ResourceType::Policy).await?;
     let current_time = Utc::now().timestamp();
     let mut insert_policy: InsertPolicy = prepare_policy_for_insert(ctx, input, &policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
@@ -47,8 +47,7 @@ pub async fn create_policy(
     db::policy::create(&mut tx, &mut insert_policy).await?;
 
     let policy_version_id =
-        create_resource_id(&mut tx, constants::policy_version::POLICY_VERSION_PREFIX, ResourceType::PolicyVersion)
-            .await?;
+        create_resource_id(&mut tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
     let mut policy_version = prepare_policy_version_for_insert(
         ctx,
         policy_document,
@@ -84,7 +83,29 @@ pub async fn create_policy(
     Ok(output)
 }
 
-pub async fn create_policy_version(
+pub(crate) async fn find_policy_id_by_arn<'a, E>(executor: E, arn: Option<&str>) -> Result<Option<i64>, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let policy_id = match arn {
+        None => None,
+        Some(policy_arn) => {
+            let policy = db::policy::find_id_by_arn(executor, policy_arn).await?;
+            match policy {
+                None => {
+                    return Err(OperationError::new(
+                        ApiErrorKind::NoSuchEntity,
+                        "Policy with the given Permissions Boundary doesn't exist.",
+                    ));
+                }
+                Some(id) => Some(id),
+            }
+        }
+    };
+    Ok(policy_id)
+}
+
+pub(crate) async fn create_policy_version(
     ctx: &OperationCtx, input: &CreatePolicyVersionRequest, db: &LocalDb,
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
     // validate
@@ -94,7 +115,7 @@ pub async fn create_policy_version(
     // init transaction
     let mut tx = db.new_tx().await?;
 
-    let policy_id = db::policy::find_id_by_arn(&mut tx, input.policy_arn().unwrap()).await?;
+    let policy_id = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
     if policy_id.is_none() {
         return Err(OperationError::new(
             ApiErrorKind::NoSuchEntity,
@@ -120,8 +141,7 @@ pub async fn create_policy_version(
         .build();
 
     let policy_version_id =
-        create_resource_id(&mut tx, constants::policy_version::POLICY_VERSION_PREFIX, ResourceType::PolicyVersion)
-            .await?;
+        create_resource_id(&mut tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
     let mut insert_policy_version =
         prepare_policy_version_for_insert(ctx, policy_document, policy_id, policy_version_id, current_time)
             .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
@@ -153,7 +173,7 @@ async fn check_policy_version_count<'a>(
     Ok(())
 }
 
-pub async fn list_policies(
+pub(crate) async fn list_policies(
     _ctx: &OperationCtx, input: &ListPoliciesRequest, db: &LocalDb,
 ) -> Result<ListPoliciesOutput, OperationError> {
     input.validate("$")?;
@@ -165,15 +185,14 @@ pub async fn list_policies(
 
     let found_policies: Vec<SelectPolicyWithTags> = db::policy::list_policies(&mut connection, &query).await?;
 
-    let marker = if query.limit < found_policies.len() as i32 {
-        Some(
-            Marker::new(query.limit + query.skip)
-                .encode()
-                .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value."))?,
-        )
-    } else {
-        None
-    };
+    let marker =
+        if query.limit < found_policies.len() as i32 {
+            Some(Marker::new(query.limit + query.skip).encode().map_err(|_err| {
+                OperationError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value.")
+            })?)
+        } else {
+            None
+        };
 
     let mut policies: Vec<Policy> = vec![];
     for i in 0..(query.limit) {
@@ -250,10 +269,6 @@ fn prepare_tags_for_output(tags: Vec<DbPolicyTag>) -> Option<Vec<Tag>> {
     if tags.len() == 0 {
         None
     } else {
-        Some(
-            tags.iter()
-                .map(|tag| Tag::builder().key(&tag.key).value(&tag.value).build().unwrap())
-                .collect(),
-        )
+        Some(tags.iter().map(|tag| tag.into()).collect())
     }
 }
