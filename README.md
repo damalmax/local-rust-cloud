@@ -25,7 +25,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] change_password
 - [ ] create_access_key
 - [ ] create_account_alias
-- [ ] create_group
+- [X] create_group
 - [ ] create_instance_profile
 - [ ] create_login_profile
 - [ ] create_open_id_connect_provider
