@@ -85,7 +85,7 @@ pub(crate) async fn list_policies(
         separated.push_bind(scope);
     }
     separated.push_unseparated(")");
-    let mut policies = query_builder
+    let policies = query_builder
         .push(" LIMIT ")
         .push_bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
         .push(" OFFSET ")

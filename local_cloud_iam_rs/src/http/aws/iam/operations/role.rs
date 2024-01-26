@@ -51,6 +51,8 @@ pub async fn create_role(
         .build()
         .unwrap();
     let output = CreateRoleOutput::builder().role(role).build();
+
+    tx.commit().await?;
     Ok(output)
 }
 

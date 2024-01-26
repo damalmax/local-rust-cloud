@@ -1,6 +1,7 @@
 pub(crate) mod common;
 pub(crate) mod ctx;
 pub(crate) mod error;
+pub(crate) mod group;
 pub(crate) mod policy;
 pub(crate) mod role;
 pub(crate) mod user;

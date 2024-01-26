@@ -48,6 +48,22 @@ VALUES (1, 'eu-local-1', 'EU Local'),
        (31, 'me-south-1', 'Middle East (Bahrain)'),
        (32, 'me-central-1', 'Middle East (UAE)'),
        (33, 'sa-east-1', 'South America (São Paulo)');
+-- Group
+CREATE TABLE IF NOT EXISTS groups
+(
+    id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id        INTEGER REFERENCES accounts (id)  NOT NULL,
+    group_name        VARCHAR2(128)                     NOT NULL,
+    unique_group_name VARCHAR2(128)                     NOT NULL,
+    arn               VARCHAR2(2048)                    NOT NULL,
+    path              VARCHAR2(512)                     NOT NULL,
+    group_id          VARCHAR2(21)                      NOT NULL,
+    create_date       INTEGER                           NOT NULL,
+    UNIQUE (arn),
+    UNIQUE (group_id),
+    UNIQUE (account_id, unique_group_name)
+);
+CREATE INDEX IF NOT EXISTS idx_groups__arn ON groups (arn ASC);
 -- Policy
 CREATE TABLE IF NOT EXISTS policies
 (
@@ -55,7 +71,7 @@ CREATE TABLE IF NOT EXISTS policies
     account_id         INTEGER REFERENCES accounts (id)  NOT NULL,
     policy_name        VARCHAR2(128)                     NOT NULL,
     unique_policy_name VARCHAR2(128)                     NOT NULL,
-    policy_id          VARCHAR2(21),
+    policy_id          VARCHAR2(21)                      NOT NULL,
     policy_type        INTEGER                           NOT NULL,
     arn                VARCHAR2(2048)                    NOT NULL,
     path               VARCHAR2(512)                     NOT NULL,
@@ -63,9 +79,9 @@ CREATE TABLE IF NOT EXISTS policies
     description        VARCHAR2(200),
     create_date        INTEGER                           NOT NULL,
     update_date        INTEGER                           NOT NULL,
-    UNIQUE (arn) ON CONFLICT FAIL,
-    UNIQUE (policy_id) ON CONFLICT FAIL,
-    UNIQUE (unique_policy_name) ON CONFLICT FAIL
+    UNIQUE (arn),
+    UNIQUE (policy_id),
+    UNIQUE (account_id, unique_policy_name)
 );
 CREATE INDEX IF NOT EXISTS idx_policies__arn ON policies (arn ASC);
 CREATE INDEX IF NOT EXISTS fk_policies__policy_id ON policies (policy_id ASC);
@@ -83,9 +99,9 @@ CREATE TABLE IF NOT EXISTS users
     user_id         VARCHAR2(21)                      NOT NULL,
     policy_id       INTEGER REFERENCES policies (id),
     create_date     INTEGER                           NOT NULL,
-    UNIQUE (arn) ON CONFLICT FAIL,
-    UNIQUE (user_id) ON CONFLICT FAIL,
-    UNIQUE (unique_username) ON CONFLICT FAIL
+    UNIQUE (arn),
+    UNIQUE (user_id),
+    UNIQUE (account_id, unique_username)
 );
 CREATE INDEX IF NOT EXISTS fk_users__account_id ON users (account_id ASC);
 CREATE INDEX IF NOT EXISTS idx_users__arn ON users (arn ASC);
@@ -156,9 +172,9 @@ CREATE TABLE IF NOT EXISTS roles
     create_date          INTEGER                           NOT NULL,
     last_used_date       INTEGER,
     last_used_region_id  INTEGER REFERENCES regions (id),
-    UNIQUE (arn) ON CONFLICT FAIL,
-    UNIQUE (role_id) ON CONFLICT FAIL,
-    UNIQUE (unique_role_name) ON CONFLICT FAIL
+    UNIQUE (arn),
+    UNIQUE (role_id),
+    UNIQUE (account_id, unique_role_name)
 );
 CREATE INDEX IF NOT EXISTS fk_roles__account_id ON roles (account_id ASC);
 CREATE INDEX IF NOT EXISTS idx_roles__arn ON roles (arn ASC);

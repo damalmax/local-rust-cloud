@@ -11,6 +11,7 @@ pub(crate) enum ResourceType {
     PolicyVersion,
     User,
     Role,
+    Group,
 }
 
 impl Into<i16> for ResourceType {
@@ -20,6 +21,7 @@ impl Into<i16> for ResourceType {
             ResourceType::PolicyVersion => 2,
             ResourceType::User => 3,
             ResourceType::Role => 4,
+            ResourceType::Group => 5,
         }
     }
 }

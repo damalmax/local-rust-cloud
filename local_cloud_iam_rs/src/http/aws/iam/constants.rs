@@ -2,6 +2,10 @@ pub(crate) mod xml {
     pub(crate) const IAM_XMLNS: &str = "https://iam.amazonaws.com/doc/2010-05-08/";
 }
 
+pub(crate) mod group {
+    pub(crate) const PREFIX: &str = "AIDG";
+}
+
 pub(crate) mod policy_version {
     pub(crate) const PREFIX: &str = "ANVA";
     pub(crate) const POLICY_VERSION_MAX_COUNT: usize = 5;

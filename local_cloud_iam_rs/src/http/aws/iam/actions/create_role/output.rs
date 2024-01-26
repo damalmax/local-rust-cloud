@@ -19,10 +19,10 @@ impl From<LocalCreateRoleOutput> for XmlResponse {
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut create_user_result_tag = create_role_response_tag.start_el("CreateRoleResult").finish();
+        let mut create_role_result_tag = create_role_response_tag.start_el("CreateRoleResult").finish();
 
         if let Some(role) = val.inner.role() {
-            let mut role_tag = create_user_result_tag.start_el("Role").finish();
+            let mut role_tag = create_role_result_tag.start_el("Role").finish();
             local_cloud_xml::write_tag_with_value(&mut role_tag, "Path", Some(role.path()));
             local_cloud_xml::write_tag_with_value(&mut role_tag, "RoleName", Some(role.role_name()));
             local_cloud_xml::write_tag_with_value(&mut role_tag, "RoleId", Some(role.role_id()));
@@ -42,7 +42,7 @@ impl From<LocalCreateRoleOutput> for XmlResponse {
             role_tag.finish();
         }
 
-        create_user_result_tag.finish();
+        create_role_result_tag.finish();
 
         let mut response_metadata_tag = create_role_response_tag.start_el("ResponseMetadata").finish();
         local_cloud_xml::write_tag_with_value(&mut response_metadata_tag, "RequestId", Some(val.request_id));

@@ -1,3 +1,4 @@
+pub(crate) mod create_group;
 pub(crate) mod create_policy;
 pub(crate) mod create_policy_version;
 pub(crate) mod create_role;
