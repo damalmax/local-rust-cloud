@@ -7,12 +7,14 @@ use local_cloud_actix::local;
 use local_cloud_actix::local::web::XmlResponse;
 use local_cloud_db::LocalDb;
 
+use crate::http::aws::iam::actions::action::Action;
 use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
+use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 
 #[derive(Deserialize, Debug)]
@@ -22,6 +24,8 @@ pub(crate) enum LocalAwsRequest {
     CreateGroup(CreateGroupRequest),
     #[serde(rename = "CreatePolicy")]
     CreatePolicy(CreatePolicyRequest),
+    #[serde(rename = "ListGroups")]
+    ListGroups(ListGroupsRequest),
     #[serde(rename = "ListPolicies")]
     ListPolicies(ListPoliciesRequest),
     #[serde(rename = "CreatePolicyVersion")]
@@ -61,6 +65,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::CreateGroup(create_group) => create_group
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListGroups(list_groups) => list_groups
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

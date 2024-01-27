@@ -3,6 +3,7 @@ use aws_smithy_types::DateTime;
 use derive_builder::Builder;
 use sqlx::FromRow;
 
+use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::tag::DbTag;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
@@ -89,6 +90,16 @@ pub(crate) struct ListPoliciesQuery {
     pub(crate) skip: i32,
     pub(crate) is_attached: bool,
     pub(crate) policy_scope_types: Vec<PolicyType>,
+}
+
+impl Pageable for &ListPoliciesQuery {
+    fn limit(&self) -> i32 {
+        self.limit
+    }
+
+    fn skip(&self) -> i32 {
+        self.skip
+    }
 }
 
 impl Into<ListPoliciesQuery> for &ListPoliciesRequest {

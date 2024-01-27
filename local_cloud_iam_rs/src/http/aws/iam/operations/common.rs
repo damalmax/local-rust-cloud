@@ -2,9 +2,11 @@ use aws_sdk_iam::types::Tag;
 use sqlx::{Sqlite, Transaction};
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
+use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, ResourceType};
 use crate::http::aws::iam::db::types::tag::DbTag;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::marker_type::Marker;
 use crate::http::aws::iam::{db, types};
 
 pub(crate) async fn create_resource_id<'a>(
@@ -40,5 +42,18 @@ pub(crate) fn prepare_tags_for_output(tags: Vec<DbTag>) -> Option<Vec<Tag>> {
         None
     } else {
         Some(tags.iter().map(|tag| tag.into()).collect())
+    }
+}
+
+pub(crate) fn create_encoded_marker(
+    pageable: impl Pageable, found_items: usize,
+) -> Result<Option<String>, OperationError> {
+    if pageable.limit() < found_items as i32 {
+        let marker = Marker::new(pageable.limit() + pageable.skip())
+            .encode()
+            .map_err(|_err| OperationError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value."))?;
+        Ok(Some(marker))
+    } else {
+        Ok(None)
     }
 }

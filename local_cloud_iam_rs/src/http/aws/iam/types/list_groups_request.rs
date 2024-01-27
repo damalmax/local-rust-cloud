@@ -17,6 +17,11 @@ impl ListGroupsRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
     }
+
+    pub(crate) fn marker_type(&self) -> Option<&types::marker_type::MarkerType> {
+        self.marker.as_ref()
+    }
+
     pub(crate) fn path_prefix(&self) -> Option<&str> {
         self.path_prefix.as_deref()
     }

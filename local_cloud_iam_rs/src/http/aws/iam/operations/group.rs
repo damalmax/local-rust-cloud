@@ -1,4 +1,5 @@
 use aws_sdk_iam::operation::create_group::CreateGroupOutput;
+use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -7,12 +8,13 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::group::{InsertGroup, InsertGroupBuilder, InsertGroupBuilderError};
+use crate::http::aws::iam::db::types::group::{InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, SelectGroup};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
+use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_group(
@@ -59,4 +61,37 @@ fn prepare_group_for_insert(
         .group_id(group_id.to_owned())
         .create_date(current_time)
         .build()
+}
+
+pub async fn list_groups(
+    ctx: &OperationCtx, input: &ListGroupsRequest, db: &LocalDb,
+) -> Result<ListGroupsOutput, OperationError> {
+    input.validate("$")?;
+
+    let query = input.into();
+
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+
+    let found_groups: Vec<SelectGroup> = db::group::list_groups(&mut connection, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
+
+    let mut groups: Vec<Group> = vec![];
+    for i in 0..(query.limit) {
+        let group = found_groups.get(i as usize);
+        match group {
+            None => break,
+            Some(select_group) => {
+                groups.push(select_group.into());
+            }
+        }
+    }
+
+    let output = ListGroupsOutput::builder()
+        .set_groups(Some(groups))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
+    Ok(output)
 }

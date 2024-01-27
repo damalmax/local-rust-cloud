@@ -3,16 +3,16 @@ use aws_sdk_iam::operation::create_user::CreateUserOutput;
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam;
+use crate::http::aws::iam::actions::action::Action;
 use crate::http::aws::iam::actions::error::{ApiError, ApiErrorKind};
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 
-impl CreateUserRequest {
-    pub async fn execute(
-        &self, account_id: i64, aws_request_id: &str, db: &LocalDb,
-    ) -> Result<OutputWrapper<CreateUserOutput>, ApiError> {
+impl Action for CreateUserRequest {
+    type Output = OutputWrapper<CreateUserOutput>;
+    async fn execute(&self, account_id: i64, aws_request_id: &str, db: &LocalDb) -> Result<Self::Output, ApiError> {
         let ctx = OperationCtx::new(account_id, aws_request_id);
         let output = iam::operations::user::create_user(&ctx, self, db)
             .await

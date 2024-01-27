@@ -15,6 +15,8 @@ mod create_role;
 mod create_user;
 pub mod fixture;
 #[cfg(test)]
+mod list_groups;
+#[cfg(test)]
 mod list_policies;
 
 pub fn credentials_provider() -> impl ProvideCredentials {

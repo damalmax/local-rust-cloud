@@ -103,7 +103,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_attached_user_policies
 - [ ] list_entities_for_policy
 - [ ] list_group_policies
-- [ ] list_groups
+- [X] list_groups
 - [ ] list_groups_for_user
 - [ ] list_instance_profile_tags
 - [ ] list_instance_profiles
@@ -112,7 +112,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_mfa_devices
 - [ ] list_open_id_connect_provider_tags
 - [ ] list_open_id_connect_providers
-- [ ] list_policies
+- [X] list_policies
 - [ ] list_policies_granting_service_access
 - [ ] list_policy_tags
 - [ ] list_policy_versions

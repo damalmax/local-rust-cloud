@@ -24,7 +24,6 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
-use crate::http::aws::iam::types::marker_type::Marker;
 use crate::http::aws::iam::validate;
 use crate::http::aws::iam::{constants, db};
 
@@ -183,15 +182,7 @@ pub(crate) async fn list_policies(
     let mut connection = db.new_connection().await?;
 
     let found_policies: Vec<SelectPolicyWithTags> = db::policy::list_policies(&mut connection, &query).await?;
-
-    let marker =
-        if query.limit < found_policies.len() as i32 {
-            Some(Marker::new(query.limit + query.skip).encode().map_err(|_err| {
-                OperationError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value.")
-            })?)
-        } else {
-            None
-        };
+    let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
     let mut policies: Vec<Policy> = vec![];
     for i in 0..(query.limit) {
