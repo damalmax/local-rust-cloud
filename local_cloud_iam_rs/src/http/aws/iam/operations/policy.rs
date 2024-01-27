@@ -1,7 +1,7 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
 use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
-use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
+use aws_sdk_iam::types::{Policy, PolicyVersion};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
@@ -13,7 +13,6 @@ use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::policy::{
     InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError, SelectPolicyWithTags,
 };
-use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::policy_version::{
     InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError,
@@ -27,7 +26,7 @@ use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVer
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::marker_type::Marker;
 use crate::http::aws::iam::validate;
-use crate::http::aws::iam::{constants, db, types};
+use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_policy(
     ctx: &OperationCtx, input: &CreatePolicyRequest, db: &LocalDb,
@@ -58,7 +57,7 @@ pub(crate) async fn create_policy(
     .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
     db::policy_version::create(&mut tx, &mut policy_version).await?;
 
-    let mut policy_tags = prepare_tags_for_insert(input.tags(), insert_policy.id.unwrap());
+    let mut policy_tags = super::common::prepare_tags_for_insert(input.tags(), insert_policy.id.unwrap());
 
     db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
 
@@ -72,7 +71,7 @@ pub(crate) async fn create_policy(
         .set_description(insert_policy.description)
         .attachment_count(0)
         .permissions_boundary_usage_count(0)
-        .set_tags(prepare_tags_for_output(policy_tags))
+        .set_tags(super::common::prepare_tags_for_output(policy_tags))
         .set_default_version_id(Some(format!("v{}", policy_version.version.unwrap())))
         .policy_name(&insert_policy.policy_name);
     let policy = response_policy_builder.build();
@@ -249,26 +248,4 @@ fn prepare_policy_version_for_insert(
         .account_id(ctx.account_id)
         .create_date(current_time)
         .build()
-}
-
-fn prepare_tags_for_insert(tags: Option<&[types::tag::Tag]>, policy_id: i64) -> Vec<DbPolicyTag> {
-    match tags {
-        None => vec![],
-        Some(tags) => {
-            let mut policy_tags = vec![];
-            for tag in tags {
-                let policy_tag = DbPolicyTag::new(policy_id, tag.key().unwrap(), tag.value().unwrap());
-                policy_tags.push(policy_tag);
-            }
-            policy_tags
-        }
-    }
-}
-
-fn prepare_tags_for_output(tags: Vec<DbPolicyTag>) -> Option<Vec<Tag>> {
-    if tags.len() == 0 {
-        None
-    } else {
-        Some(tags.iter().map(|tag| tag.into()).collect())
-    }
 }

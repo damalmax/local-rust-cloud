@@ -1,5 +1,5 @@
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
-use aws_sdk_iam::types::{Role, Tag};
+use aws_sdk_iam::types::Role;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 
@@ -9,12 +9,11 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError};
-use crate::http::aws::iam::db::types::role_tag::DbRoleTag;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
-use crate::http::aws::iam::{constants, db, types};
+use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(
     ctx: &OperationCtx, input: &CreateRoleRequest, db: &LocalDb,
@@ -32,7 +31,7 @@ pub async fn create_role(
 
     db::role::create(&mut tx, &mut insert_role).await?;
 
-    let mut role_tags = prepare_tags_for_insert(input.tags(), insert_role.id.unwrap());
+    let mut role_tags = super::common::prepare_tags_for_insert(input.tags(), insert_role.id.unwrap());
     db::role_tag::save_all(&mut tx, &mut role_tags).await?;
 
     let role = Role::builder()
@@ -47,7 +46,7 @@ pub async fn create_role(
         .arn(&insert_role.arn)
         .set_description(insert_role.description.as_ref().map(|s| s.to_owned()))
         .create_date(DateTime::from_secs(insert_role.create_date))
-        .set_tags(prepare_tags_for_output(role_tags))
+        .set_tags(super::common::prepare_tags_for_output(role_tags))
         .build()
         .unwrap();
     let output = CreateRoleOutput::builder().role(role).build();
@@ -77,26 +76,4 @@ fn prepare_role_for_insert(
         .policy_id(policy_id)
         .create_date(current_time)
         .build()
-}
-
-fn prepare_tags_for_insert(tags: Option<&[types::tag::Tag]>, user_id: i64) -> Vec<DbRoleTag> {
-    match tags {
-        None => vec![],
-        Some(tags) => {
-            let mut role_tags = vec![];
-            for tag in tags {
-                let role_tag = DbRoleTag::new(user_id, tag.key().unwrap(), tag.value().unwrap_or(""));
-                role_tags.push(role_tag);
-            }
-            role_tags
-        }
-    }
-}
-
-fn prepare_tags_for_output(tags: Vec<DbRoleTag>) -> Option<Vec<Tag>> {
-    if tags.len() == 0 {
-        None
-    } else {
-        Some(tags.iter().map(|tag| tag.into()).collect())
-    }
 }

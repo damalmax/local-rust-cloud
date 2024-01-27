@@ -156,7 +156,10 @@ mod tests {
             Error::Database(db_error) => {
                 println!("{:?}", db_error.kind());
                 assert_eq!(&db_error.code().unwrap(), "2067");
-                assert_eq!(db_error.message(), "UNIQUE constraint failed: policies.unique_policy_name");
+                assert_eq!(
+                    db_error.message(),
+                    "UNIQUE constraint failed: policies.account_id, policies.unique_policy_name"
+                );
                 Ok(())
             }
             _ => Err(fmt::Error),

@@ -3,8 +3,8 @@ use aws_smithy_types::DateTime;
 use derive_builder::Builder;
 use sqlx::FromRow;
 
-use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
+use crate::http::aws::iam::db::types::tag::DbTag;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::policy_scope_type::PolicyScopeType;
 
@@ -42,7 +42,7 @@ pub(crate) struct SelectPolicy {
 #[derive(Debug)]
 pub(crate) struct SelectPolicyWithTags {
     pub(crate) policy: SelectPolicy,
-    pub(crate) tags: Vec<DbPolicyTag>,
+    pub(crate) tags: Vec<DbTag>,
 }
 
 impl Into<Policy> for &SelectPolicyWithTags {

@@ -1,49 +1,22 @@
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::policy_tag::DbPolicyTag;
+use crate::http::aws::iam::db::types::tag::DbTag;
 
-pub(crate) async fn find_by_policy<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbPolicyTag>, Error>
+pub(crate) async fn find_by_policy<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbTag>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    sqlx::query("SELECT id, policy_id, key, value FROM policy_tags WHERE policy_id=$1")
-        .bind(policy_id)
-        .map(|row: SqliteRow| DbPolicyTag::from_row(&row).unwrap())
-        .fetch_all(executor)
-        .await
+    super::tag::find_by_parent_id(executor, policy_id, "policy_tags").await
 }
 
-pub(crate) async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbPolicyTag) -> Result<(), Error> {
-    let result = sqlx::query(
-        r#"INSERT INTO policy_tags
-                (policy_id, key, value)
-                VALUES ($1, $2, $3)
-                ON CONFLICT(policy_id, key) DO UPDATE SET value=$3
-                RETURNING id"#,
-    )
-    .bind(&tag.policy_id)
-    .bind(&tag.key)
-    .bind(&tag.value)
-    .map(|row: SqliteRow| row.get::<i64, &str>("id"))
-    .fetch_one(tx.as_mut())
-    .await?;
-
-    tag.id = Some(result);
-    Ok(())
+pub(crate) async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbTag) -> Result<(), Error> {
+    super::tag::save(tx, tag, "policy_tags").await
 }
 
-pub(crate) async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Vec<DbPolicyTag>) -> Result<(), Error> {
-    for tag in tags {
-        save(tx, tag).await?;
-    }
-    return Ok(());
+pub(crate) async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Vec<DbTag>) -> Result<(), Error> {
+    super::tag::save_all(tx, tags, "policy_tags").await
 }
 
-pub(crate) async fn delete_by_policy<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<(), Error> {
-    sqlx::query("DELETE * FROM policy_tags WHERE policy_id=$1")
-        .bind(policy_id)
-        .execute(tx.as_mut())
-        .await
-        .map(|_| ())
+pub(crate) async fn delete_by_policy_id<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<(), Error> {
+    super::tag::delete_by_parent_id(tx, policy_id, "policy_tags").await
 }

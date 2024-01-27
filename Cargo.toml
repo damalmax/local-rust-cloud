@@ -71,3 +71,6 @@ etcd-client = "0.12"
 
 # Testing
 rstest = "0.18.2"
+
+[profile.release]
+strip = "debuginfo"

@@ -112,12 +112,12 @@ VALUES (1, 'Root', 'ROOT', '"arn:aws:iam::000000000001:user/Root"', '/', 'AIDAHO
 CREATE TABLE IF NOT EXISTS user_tags
 (
     id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    user_id INTEGER REFERENCES users (id),
+    parent_id INTEGER REFERENCES users (id),
     key     VARCHAR2(128)                     NOT NULL,
     value   VARCHAR2(256)                     NOT NULL,
-    UNIQUE (user_id, key)
+    UNIQUE (parent_id, key)
 );
-CREATE INDEX IF NOT EXISTS fk_user_tags__user_id ON user_tags (user_id ASC);
+CREATE INDEX IF NOT EXISTS fk_user_tags__parent_id ON user_tags (parent_id ASC);
 
 CREATE TABLE IF NOT EXISTS policy_versions
 (
@@ -149,13 +149,13 @@ END;
 CREATE TABLE IF NOT EXISTS policy_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    policy_id INTEGER REFERENCES policies (id),
+    parent_id INTEGER REFERENCES policies (id),
     key       VARCHAR2(128)                     NOT NULL,
     value     VARCHAR2(256)                     NOT NULL,
-    UNIQUE (policy_id, key)
+    UNIQUE (parent_id, key)
 );
 
-CREATE INDEX IF NOT EXISTS fk_policy_tags__policy_id ON policy_tags (policy_id ASC);
+CREATE INDEX IF NOT EXISTS fk_policy_tags__parent_id ON policy_tags (parent_id ASC);
 -- Role
 CREATE TABLE IF NOT EXISTS roles
 (
@@ -181,12 +181,12 @@ CREATE INDEX IF NOT EXISTS idx_roles__arn ON roles (arn ASC);
 CREATE TABLE IF NOT EXISTS role_tags
 (
     id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    role_id INTEGER REFERENCES roles (id),
+    parent_id INTEGER REFERENCES roles (id),
     key     VARCHAR2(128)                     NOT NULL,
     value   VARCHAR2(256)                     NOT NULL,
-    UNIQUE (role_id, key)
+    UNIQUE (parent_id, key)
 );
-CREATE INDEX IF NOT EXISTS fk_role_tags__role_id ON role_tags (role_id ASC);
+CREATE INDEX IF NOT EXISTS fk_role_tags__parent_id ON role_tags (parent_id ASC);
 
 CREATE TABLE IF NOT EXISTS unique_identifiers
 (

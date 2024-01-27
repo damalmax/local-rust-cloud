@@ -1,5 +1,5 @@
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
-use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, Tag, User};
+use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 
@@ -9,12 +9,11 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError};
-use crate::http::aws::iam::db::types::user_tag::DbUserTag;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
-use crate::http::aws::iam::{constants, db, types};
+use crate::http::aws::iam::{constants, db};
 
 pub async fn create_user(
     ctx: &OperationCtx, input: &CreateUserRequest, db: &LocalDb,
@@ -32,7 +31,7 @@ pub async fn create_user(
 
     db::user::create(&mut tx, &mut insert_user).await?;
 
-    let mut user_tags = prepare_tags_for_insert(input.tags(), insert_user.id.unwrap());
+    let mut user_tags = super::common::prepare_tags_for_insert(input.tags(), insert_user.id.unwrap());
     db::user_tag::save_all(&mut tx, &mut user_tags).await?;
 
     let permissions_boundary = match policy_id {
@@ -52,7 +51,7 @@ pub async fn create_user(
         .arn(&insert_user.arn)
         .create_date(DateTime::from_secs(insert_user.create_date))
         .set_permissions_boundary(permissions_boundary)
-        .set_tags(prepare_tags_for_output(user_tags))
+        .set_tags(super::common::prepare_tags_for_output(user_tags))
         .build()
         .unwrap();
     let output = CreateUserOutput::builder().user(user).build();
@@ -76,26 +75,4 @@ fn prepare_user_for_insert(
         .policy_id(policy_id)
         .create_date(current_time)
         .build()
-}
-
-fn prepare_tags_for_insert(tags: Option<&[types::tag::Tag]>, user_id: i64) -> Vec<DbUserTag> {
-    match tags {
-        None => vec![],
-        Some(tags) => {
-            let mut policy_tags = vec![];
-            for tag in tags {
-                let policy_tag = DbUserTag::new(user_id, tag.key().unwrap(), tag.value().unwrap_or(""));
-                policy_tags.push(policy_tag);
-            }
-            policy_tags
-        }
-    }
-}
-
-fn prepare_tags_for_output(tags: Vec<DbUserTag>) -> Option<Vec<Tag>> {
-    if tags.len() == 0 {
-        None
-    } else {
-        Some(tags.iter().map(|tag| tag.into()).collect())
-    }
 }
