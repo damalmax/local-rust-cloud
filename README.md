@@ -18,7 +18,7 @@ The project is created to help with serverless apps testing on local environment
 
 - [ ] add_client_id_to_open_id_connect_provider
 - [ ] add_role_to_instance_profile
-- [ ] add_user_to_group
+- [X] add_user_to_group
 - [ ] attach_group_policy
 - [ ] attach_role_policy
 - [ ] attach_user_policy
@@ -75,7 +75,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_context_keys_for_custom_policy
 - [ ] get_context_keys_for_principal_policy
 - [ ] get_credential_report
-- [ ] get_group
+- [X] get_group
 - [ ] get_group_policy
 - [ ] get_instance_profile
 - [ ] get_login_profile

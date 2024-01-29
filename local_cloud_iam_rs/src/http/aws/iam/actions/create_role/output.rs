@@ -1,11 +1,10 @@
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
-use aws_sdk_iam::types::Tag;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
 
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
-use crate::http::aws::iam::constants;
+use crate::http::aws::iam::{constants, utils};
 
 pub type LocalCreateRoleOutput = OutputWrapper<CreateRoleOutput>;
 
@@ -33,12 +32,7 @@ impl From<LocalCreateRoleOutput> for XmlResponse {
                 "AssumeRolePolicyDocument",
                 role.assume_role_policy_document(),
             );
-            local_cloud_xml::write_key_value_tags(
-                &mut role_tag,
-                role.tags(),
-                |t: &Tag| Some(t.key().to_owned()),
-                |t: &Tag| Some(t.value().to_owned()),
-            );
+            utils::xml::write_tags(&mut role_tag, role.tags());
             role_tag.finish();
         }
 

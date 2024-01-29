@@ -2,7 +2,7 @@ use sqlx::{Error, Executor, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::tag::DbTag;
 
-pub(crate) async fn find_by_policy<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbTag>, Error>
+pub(crate) async fn find_by_policy_id<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbTag>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {

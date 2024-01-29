@@ -11,7 +11,7 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::policy::{
-    InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError, SelectPolicyWithTags,
+    InsertPolicy, InsertPolicyBuilder, InsertPolicyBuilderError, SelectPolicy,
 };
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::policy_version::{
@@ -70,7 +70,7 @@ pub(crate) async fn create_policy(
         .set_description(insert_policy.description)
         .attachment_count(0)
         .permissions_boundary_usage_count(0)
-        .set_tags(super::common::prepare_tags_for_output(policy_tags))
+        .set_tags(super::common::prepare_tags_for_output(&policy_tags))
         .set_default_version_id(Some(format!("v{}", policy_version.version.unwrap())))
         .policy_name(&insert_policy.policy_name);
     let policy = response_policy_builder.build();
@@ -181,7 +181,7 @@ pub(crate) async fn list_policies(
     // obtain connection
     let mut connection = db.new_connection().await?;
 
-    let found_policies: Vec<SelectPolicyWithTags> = db::policy::list_policies(&mut connection, &query).await?;
+    let found_policies: Vec<SelectPolicy> = db::policy::list_policies(&mut connection, &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
     let mut policies: Vec<Policy> = vec![];

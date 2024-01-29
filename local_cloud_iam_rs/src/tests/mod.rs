@@ -6,6 +6,10 @@ use aws_types::SdkConfig;
 mod test_suite;
 
 #[cfg(test)]
+mod add_user_to_group;
+#[cfg(test)]
+mod create_group;
+#[cfg(test)]
 mod create_policy;
 #[cfg(test)]
 mod create_policy_version;
@@ -14,6 +18,8 @@ mod create_role;
 #[cfg(test)]
 mod create_user;
 pub mod fixture;
+#[cfg(test)]
+mod get_group;
 #[cfg(test)]
 mod list_groups;
 #[cfg(test)]

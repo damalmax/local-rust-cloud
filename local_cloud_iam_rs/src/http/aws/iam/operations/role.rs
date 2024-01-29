@@ -46,7 +46,7 @@ pub async fn create_role(
         .arn(&insert_role.arn)
         .set_description(insert_role.description.as_ref().map(|s| s.to_owned()))
         .create_date(DateTime::from_secs(insert_role.create_date))
-        .set_tags(super::common::prepare_tags_for_output(role_tags))
+        .set_tags(super::common::prepare_tags_for_output(&role_tags))
         .build()
         .unwrap();
     let output = CreateRoleOutput::builder().role(role).build();

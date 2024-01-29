@@ -1,4 +1,6 @@
+use aws_sdk_iam::operation::add_user_to_group::AddUserToGroupOutput;
 use aws_sdk_iam::operation::create_group::CreateGroupOutput;
+use aws_sdk_iam::operation::get_group::GetGroupOutput;
 use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
@@ -10,14 +12,17 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::group::{InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, SelectGroup};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
+use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
+use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub async fn create_group(
+pub(crate) async fn create_group(
     ctx: &OperationCtx, input: &CreateGroupRequest, db: &LocalDb,
 ) -> Result<CreateGroupOutput, OperationError> {
     input.validate("$")?;
@@ -63,7 +68,7 @@ fn prepare_group_for_insert(
         .build()
 }
 
-pub async fn list_groups(
+pub(crate) async fn list_groups(
     ctx: &OperationCtx, input: &ListGroupsRequest, db: &LocalDb,
 ) -> Result<ListGroupsOutput, OperationError> {
     input.validate("$")?;
@@ -73,7 +78,7 @@ pub async fn list_groups(
     // obtain connection
     let mut connection = db.new_connection().await?;
 
-    let found_groups: Vec<SelectGroup> = db::group::list_groups(&mut connection, &query).await?;
+    let found_groups: Vec<SelectGroup> = db::group::list_groups((&mut connection).as_mut(), &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
 
     let mut groups: Vec<Group> = vec![];
@@ -94,4 +99,90 @@ pub async fn list_groups(
         .build()
         .unwrap();
     Ok(output)
+}
+
+pub(crate) async fn add_user_to_group(
+    ctx: &OperationCtx, input: &AddUserToGroupRequest, db: &LocalDb,
+) -> Result<AddUserToGroupOutput, OperationError> {
+    input.validate("$")?;
+    let mut tx = db.new_tx().await?;
+
+    let found_group =
+        db::group::find_group_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
+    if found_group.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM group with name '{}' doesn't exist.", input.group_name().unwrap().trim()).as_str(),
+        ));
+    }
+
+    let found_user = db::user::find_by_name((&mut tx).as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+    if found_user.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM user with name '{}' doesn't exist.", input.user_name().unwrap().trim()).as_str(),
+        ));
+    }
+
+    db::group::assign_user_to_group(&mut tx, found_group.unwrap().id, found_user.unwrap().id).await?;
+    let output = AddUserToGroupOutput::builder().build();
+
+    tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn get_group(
+    ctx: &OperationCtx, input: &GetGroupRequest, db: &LocalDb,
+) -> Result<GetGroupOutput, OperationError> {
+    input.validate("$")?;
+
+    let group_name = input.group_name().unwrap().trim();
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+    let found_group = db::group::find_group_by_name((&mut connection).as_mut(), ctx.account_id, group_name).await?;
+
+    match found_group {
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
+            ))
+        }
+        Some(group) => {
+            let limit = match input.max_items() {
+                None => 10,
+                Some(v) => *v,
+            };
+
+            let skip = match input.marker_type() {
+                None => 0,
+                Some(marker_type) => marker_type.marker().unwrap().truncate_amount,
+            };
+
+            let query = ListUsersByGroupQuery {
+                group_id: group.id,
+                limit,
+                skip,
+            };
+
+            let found_users = db::user::find_by_group_id(&mut connection, &query).await?;
+
+            let marker = super::common::create_encoded_marker(&query, found_users.len())?;
+
+            let mut users = vec![];
+            for found_user in found_users {
+                let user = found_user.into();
+                users.push(user);
+            }
+
+            let output = GetGroupOutput::builder()
+                .group((&group).into())
+                .set_users(Some(users))
+                .set_is_truncated(marker.as_ref().map(|_v| true))
+                .set_marker(marker)
+                .build()
+                .unwrap();
+            Ok(output)
+        }
+    }
 }

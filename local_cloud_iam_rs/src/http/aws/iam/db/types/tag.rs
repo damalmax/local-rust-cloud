@@ -1,4 +1,6 @@
-use sqlx::FromRow;
+use sqlx::{Error, FromRow};
+
+use crate::http::aws::iam::db;
 
 #[derive(Clone, FromRow, Debug)]
 pub(crate) struct DbTag {
@@ -17,6 +19,33 @@ impl DbTag {
             value: value.into(),
         }
     }
+
+    pub(crate) fn from_str(raw: &str) -> Result<Self, Error> {
+        let parts: Vec<&str> = raw.split(db::constants::COLUMN_SEPARATOR).collect();
+        let id: Option<i64> = if parts[0].len() == 0 {
+            // actually should not happen for select queries
+            None
+        } else {
+            Some(parts[0].parse().unwrap()) // we consider this as a safe `unwrap` operation
+        };
+        let parent_id: i64 = parts[1].parse().unwrap(); // we consider this as a safe `unwrap` operation
+        let key = parts[2].to_owned();
+        let value = parts[3].to_owned();
+        Ok(DbTag {
+            id,
+            parent_id,
+            key,
+            value,
+        })
+    }
+}
+
+pub(crate) fn parse_tags_from_raw(raw: &str) -> Result<Vec<DbTag>, Error> {
+    let mut tags = vec![];
+    for t in raw.split(db::constants::ROW_SEPARATOR) {
+        tags.push(DbTag::from_str(t)?)
+    }
+    Ok(tags)
 }
 
 impl Into<aws_sdk_iam::types::Tag> for &DbTag {

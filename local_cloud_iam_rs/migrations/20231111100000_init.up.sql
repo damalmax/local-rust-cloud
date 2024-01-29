@@ -111,10 +111,10 @@ VALUES (1, 'Root', 'ROOT', '"arn:aws:iam::000000000001:user/Root"', '/', 'AIDAHO
 
 CREATE TABLE IF NOT EXISTS user_tags
 (
-    id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     parent_id INTEGER REFERENCES users (id),
-    key     VARCHAR2(128)                     NOT NULL,
-    value   VARCHAR2(256)                     NOT NULL,
+    key       VARCHAR2(128)                     NOT NULL,
+    value     VARCHAR2(256)                     NOT NULL,
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_user_tags__parent_id ON user_tags (parent_id ASC);
@@ -180,10 +180,10 @@ CREATE INDEX IF NOT EXISTS fk_roles__account_id ON roles (account_id ASC);
 CREATE INDEX IF NOT EXISTS idx_roles__arn ON roles (arn ASC);
 CREATE TABLE IF NOT EXISTS role_tags
 (
-    id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     parent_id INTEGER REFERENCES roles (id),
-    key     VARCHAR2(128)                     NOT NULL,
-    value   VARCHAR2(256)                     NOT NULL,
+    key       VARCHAR2(128)                     NOT NULL,
+    value     VARCHAR2(256)                     NOT NULL,
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_role_tags__parent_id ON role_tags (parent_id ASC);
@@ -195,3 +195,12 @@ CREATE TABLE IF NOT EXISTS unique_identifiers
     resource_type INTEGER                           NOT NULL,
     UNIQUE (unique_id)
 );
+
+CREATE TABLE IF NOT EXISTS group_users
+(
+    group_id INTEGER REFERENCES groups (id) NOT NULL,
+    user_id  INTEGER REFERENCES users (id)  NOT NULL,
+    UNIQUE (group_id, user_id) ON CONFLICT IGNORE
+);
+CREATE INDEX IF NOT EXISTS fk_group_users__group_id ON group_users (group_id ASC);
+CREATE INDEX IF NOT EXISTS fk_group_users__user_id ON group_users (user_id ASC);

@@ -32,7 +32,6 @@ uuid.workspace = true
 rand.workspace = true
 parking_lot.workspace = true
 regex.workspace = true
-etcd-client.workspace = true
 
 aws-config.workspace = true
 aws-smithy-xml.workspace = true

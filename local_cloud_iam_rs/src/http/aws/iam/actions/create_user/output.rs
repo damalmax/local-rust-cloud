@@ -1,11 +1,10 @@
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
-use aws_sdk_iam::types::Tag;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
 
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
-use crate::http::aws::iam::constants;
+use crate::http::aws::iam::{constants, utils};
 
 pub type LocalCreateUserOutput = OutputWrapper<CreateUserOutput>;
 
@@ -42,12 +41,7 @@ impl From<LocalCreateUserOutput> for XmlResponse {
                 );
                 permissions_boundary_tag.finish();
             }
-            local_cloud_xml::write_key_value_tags(
-                &mut user_tag,
-                user.tags(),
-                |t: &Tag| Some(t.key().to_owned()),
-                |t: &Tag| Some(t.value().to_owned()),
-            );
+            utils::xml::write_tags(&mut user_tag, user.tags());
             user_tag.finish();
         }
 

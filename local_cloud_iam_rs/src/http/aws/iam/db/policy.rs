@@ -2,8 +2,7 @@ use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::policy_tag;
-use crate::http::aws::iam::db::types::policy::{InsertPolicy, ListPoliciesQuery, SelectPolicy, SelectPolicyWithTags};
+use crate::http::aws::iam::db::types::policy::{InsertPolicy, ListPoliciesQuery, SelectPolicy};
 
 pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut InsertPolicy) -> Result<(), Error> {
     let result = sqlx::query(
@@ -54,26 +53,65 @@ where
     Ok(result)
 }
 
+pub(crate) async fn find_by_id<'a, E>(executor: E, policy_id: i64) -> Result<Option<SelectPolicy>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        r#"
+            SELECT 
+                id,
+                account_id,
+                policy_name,
+                arn,
+                policy_id,
+                path,
+                create_date,
+                update_date,
+                policy_type,
+                description,
+                is_attachable,
+                version 
+            FROM policies 
+            WHERE id = $1"#,
+    )
+    .bind(policy_id)
+    .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
+    .fetch_optional(executor)
+    .await?;
+    Ok(result)
+}
+
 pub(crate) async fn list_policies(
     connection: &mut PoolConnection<Sqlite>, query: &ListPoliciesQuery,
-) -> Result<Vec<SelectPolicyWithTags>, Error> {
+) -> Result<Vec<SelectPolicy>, Error> {
     let scopes: Vec<i32> = query.policy_scope_types.iter().map(|v| v.as_i32()).collect();
 
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
         r#"
             SELECT 
-                p.id as id,
-                p.account_id as account_id,
-                p.policy_name as policy_name,
-                p.arn as arn,
-                p.policy_id as policy_id,
-                p.path as path,
-                p.create_date as create_date,
-                p.update_date as update_date,
-                p.policy_type as policy_type,
-                p.description as description,
-                p.is_attachable as is_attachable,
-                pv.version as version
+                p.id AS id,
+                p.account_id AS account_id,
+                p.policy_name AS policy_name,
+                p.unique_policy_name AS unique_policy_name,
+                p.arn AS arn,
+                p.policy_id AS policy_id,
+                p.path AS path,
+                p.create_date AS create_date,
+                p.update_date AS update_date,
+                p.policy_type AS policy_type,
+                p.description AS description,
+                p.is_attachable AS is_attachable,
+                pv.version AS version,
+                (
+                    SELECT group_concat(tag, '♫')
+                    FROM (
+                        SELECT (pt.id || '♪' || pt.parent_id || '♪' || pt.key || '♪' || pt.value) AS tag
+                        FROM policy_tags pt
+                        WHERE pt.parent_id = p.id
+                        ORDER BY pt.id
+                    )
+                ) AS tags
             FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
             WHERE path LIKE "#,
     );
@@ -86,6 +124,7 @@ pub(crate) async fn list_policies(
     }
     separated.push_unseparated(")");
     let policies = query_builder
+        .push(" ORDER BY p.unique_policy_name")
         .push(" LIMIT ")
         .push_bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
         .push(" OFFSET ")
@@ -94,18 +133,7 @@ pub(crate) async fn list_policies(
         .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
         .fetch_all(connection.as_mut())
         .await?;
-
-    let mut result: Vec<SelectPolicyWithTags> = vec![];
-    for i in 0..policies.len() {
-        let policy = policies.get(i).unwrap();
-        let tags = policy_tag::find_by_policy(connection.as_mut(), policy.id).await?;
-        result.push(SelectPolicyWithTags {
-            policy: policy.clone(),
-            tags,
-        })
-    }
-
-    Ok(result)
+    Ok(policies)
 }
 
 #[cfg(test)]

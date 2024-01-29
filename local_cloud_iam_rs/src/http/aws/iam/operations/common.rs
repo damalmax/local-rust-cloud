@@ -37,7 +37,7 @@ pub(crate) fn prepare_tags_for_insert(tags: Option<&[types::tag::Tag]>, parent_i
     }
 }
 
-pub(crate) fn prepare_tags_for_output(tags: Vec<DbTag>) -> Option<Vec<Tag>> {
+pub(crate) fn prepare_tags_for_output(tags: &[DbTag]) -> Option<Vec<Tag>> {
     if tags.len() == 0 {
         None
     } else {

@@ -17,6 +17,9 @@ impl GetGroupRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
     }
+    pub(crate) fn marker_type(&self) -> Option<&types::marker_type::MarkerType> {
+        self.marker.as_ref()
+    }
     pub(crate) fn group_name(&self) -> Option<&str> {
         self.group_name.as_deref()
     }

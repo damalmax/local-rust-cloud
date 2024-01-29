@@ -1,11 +1,10 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
-use aws_sdk_iam::types::Tag;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
 
 use crate::http::aws::iam::actions::wrapper::OutputWrapper;
-use crate::http::aws::iam::constants;
+use crate::http::aws::iam::{constants, utils};
 
 pub type LocalCreatePolicyOutput = OutputWrapper<CreatePolicyOutput>;
 
@@ -45,12 +44,7 @@ impl From<LocalCreatePolicyOutput> for XmlResponse {
             local_cloud_xml::write_tag_with_value(&mut policy_tag, "Description", policy.description());
             local_cloud_xml::write_iso8061_datetime_value_tag(&mut policy_tag, "CreateDate", policy.create_date());
             local_cloud_xml::write_iso8061_datetime_value_tag(&mut policy_tag, "UpdateDate", policy.update_date());
-            local_cloud_xml::write_key_value_tags(
-                &mut policy_tag,
-                policy.tags(),
-                |t: &Tag| Some(t.key().to_owned()),
-                |t: &Tag| Some(t.value().to_owned()),
-            );
+            utils::xml::write_tags(&mut policy_tag, policy.tags());
         }
         create_policy_result_tag.finish();
 

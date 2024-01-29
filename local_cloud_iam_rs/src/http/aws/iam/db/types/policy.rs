@@ -1,7 +1,8 @@
 use aws_sdk_iam::types::Policy;
 use aws_smithy_types::DateTime;
 use derive_builder::Builder;
-use sqlx::FromRow;
+use sqlx::sqlite::SqliteRow;
+use sqlx::{Error, FromRow, Row};
 
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
@@ -24,7 +25,7 @@ pub(crate) struct InsertPolicy {
     pub(crate) attachable: bool,
 }
 
-#[derive(Debug, FromRow, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct SelectPolicy {
     pub(crate) id: i64,
     pub(crate) account_id: i64,
@@ -38,39 +39,75 @@ pub(crate) struct SelectPolicy {
     pub(crate) policy_type: PolicyType,
     pub(crate) description: Option<String>,
     pub(crate) is_attachable: bool,
+    pub(crate) tags: Option<Vec<DbTag>>,
 }
 
-#[derive(Debug)]
-pub(crate) struct SelectPolicyWithTags {
-    pub(crate) policy: SelectPolicy,
-    pub(crate) tags: Vec<DbTag>,
-}
-
-impl Into<Policy> for &SelectPolicyWithTags {
-    fn into(self) -> Policy {
-        let policy = &self.policy;
-        let tags = if self.tags.len() > 0 {
-            Some(self.tags.iter().map(|tag| tag.into()).collect())
-        } else {
-            None
+impl<'r> FromRow<'r, SqliteRow> for SelectPolicy {
+    fn from_row(row: &'r SqliteRow) -> Result<Self, Error> {
+        let id: i64 = row.try_get("id")?;
+        let account_id: i64 = row.try_get("account_id")?;
+        let arn: String = row.try_get("arn")?;
+        let policy_id: String = row.try_get("policy_id")?;
+        let path: String = row.try_get("path")?;
+        let create_date: i64 = row.try_get("create_date")?;
+        let version: i32 = row.try_get("version")?;
+        let update_date: i64 = row.try_get("update_date")?;
+        let policy_name: String = row.try_get("policy_name")?;
+        let policy_type: i32 = row.try_get("policy_type")?;
+        let description: Option<String> = row.try_get("description")?;
+        let is_attachable: bool = row.try_get("is_attachable")?;
+        let raw_tags: Option<String> = row.try_get("tags")?;
+        let tags = match raw_tags {
+            None => None,
+            Some(raw) => Some(super::tag::parse_tags_from_raw(&raw)?),
         };
-        let description = match &policy.description {
+        Ok(SelectPolicy {
+            id,
+            account_id,
+            arn,
+            policy_id,
+            path,
+            create_date,
+            version,
+            update_date,
+            policy_name,
+            policy_type: PolicyType::from(policy_type),
+            description,
+            is_attachable,
+            tags,
+        })
+    }
+}
+
+impl Into<Policy> for &SelectPolicy {
+    fn into(self) -> Policy {
+        let tags = match &self.tags {
+            None => None,
+            Some(tags) => {
+                if tags.len() > 0 {
+                    Some(tags.iter().map(|tag| tag.into()).collect())
+                } else {
+                    None
+                }
+            }
+        };
+        let description = match &self.description {
             None => None,
             Some(desc) => Some(desc.to_owned()),
         };
 
         Policy::builder()
-            .policy_name(&policy.policy_name)
-            .policy_id(&policy.policy_id)
-            .arn(&policy.arn)
+            .policy_name(&self.policy_name)
+            .policy_id(&self.policy_id)
+            .arn(&self.arn)
             .set_description(description)
-            .path(&policy.path)
-            .default_version_id(format!("v{}", &policy.version))
+            .path(&self.path)
+            .default_version_id(format!("v{}", &self.version))
             .attachment_count(0) // TODO: Populate value from DB
             .permissions_boundary_usage_count(0) // TODO: Populate value from DB
-            .is_attachable(policy.is_attachable)
-            .create_date(DateTime::from_secs(policy.create_date))
-            .update_date(DateTime::from_secs(policy.update_date))
+            .is_attachable(self.is_attachable)
+            .create_date(DateTime::from_secs(self.create_date))
+            .update_date(DateTime::from_secs(self.update_date))
             .set_tags(tags)
             .build()
     }

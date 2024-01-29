@@ -51,7 +51,7 @@ pub async fn create_user(
         .arn(&insert_user.arn)
         .create_date(DateTime::from_secs(insert_user.create_date))
         .set_permissions_boundary(permissions_boundary)
-        .set_tags(super::common::prepare_tags_for_output(user_tags))
+        .set_tags(super::common::prepare_tags_for_output(&user_tags))
         .build()
         .unwrap();
     let output = CreateUserOutput::builder().user(user).build();
