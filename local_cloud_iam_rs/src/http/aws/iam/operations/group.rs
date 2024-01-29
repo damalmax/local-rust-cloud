@@ -1,4 +1,5 @@
 use aws_sdk_iam::operation::add_user_to_group::AddUserToGroupOutput;
+use aws_sdk_iam::operation::attach_group_policy::AttachGroupPolicyOutput;
 use aws_sdk_iam::operation::create_group::CreateGroupOutput;
 use aws_sdk_iam::operation::get_group::GetGroupOutput;
 use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
@@ -17,6 +18,7 @@ use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
+use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
@@ -126,6 +128,38 @@ pub(crate) async fn add_user_to_group(
 
     db::group::assign_user_to_group(&mut tx, found_group.unwrap().id, found_user.unwrap().id).await?;
     let output = AddUserToGroupOutput::builder().build();
+
+    tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn attach_group_policy(
+    ctx: &OperationCtx, input: &AttachGroupPolicyRequest, db: &LocalDb,
+) -> Result<AttachGroupPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let found_group =
+        db::group::find_group_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
+    if found_group.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM group with name '{}' doesn't exist.", input.group_name().unwrap().trim()).as_str(),
+        ));
+    }
+
+    let found_policy = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
+    if found_policy.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
+        ));
+    }
+
+    db::group::assign_policy_to_group(&mut tx, found_group.unwrap().id, found_policy.unwrap()).await?;
+
+    let output = AttachGroupPolicyOutput::builder().build();
 
     tx.commit().await?;
     Ok(output)

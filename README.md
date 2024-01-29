@@ -19,7 +19,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] add_client_id_to_open_id_connect_provider
 - [ ] add_role_to_instance_profile
 - [X] add_user_to_group
-- [ ] attach_group_policy
+- [X] attach_group_policy
 - [ ] attach_role_policy
 - [ ] attach_user_policy
 - [ ] change_password

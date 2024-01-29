@@ -104,3 +104,14 @@ pub(crate) async fn assign_user_to_group<'a>(
         .await?;
     Ok(())
 }
+
+pub(crate) async fn assign_policy_to_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, group_id: i64, policy_id: i64,
+) -> Result<(), Error> {
+    sqlx::query(r#"INSERT INTO policy_groups (group_id, policy_id) VALUES ($1, $2)"#)
+        .bind(group_id)
+        .bind(policy_id)
+        .execute(tx.as_mut())
+        .await?;
+    Ok(())
+}

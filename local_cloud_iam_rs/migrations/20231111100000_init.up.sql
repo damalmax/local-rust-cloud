@@ -204,3 +204,33 @@ CREATE TABLE IF NOT EXISTS group_users
 );
 CREATE INDEX IF NOT EXISTS fk_group_users__group_id ON group_users (group_id ASC);
 CREATE INDEX IF NOT EXISTS fk_group_users__user_id ON group_users (user_id ASC);
+
+CREATE TABLE IF NOT EXISTS policy_groups
+(
+    policy_id INTEGER REFERENCES policies (id) NOT NULL,
+    group_id  INTEGER REFERENCES groups (id)   NOT NULL,
+    UNIQUE (policy_id, group_id) ON CONFLICT IGNORE
+);
+
+CREATE INDEX IF NOT EXISTS fk_policy_groups__group_id ON policy_groups (group_id ASC);
+CREATE INDEX IF NOT EXISTS fk_policy_groups__policy_id ON policy_groups (policy_id ASC);
+
+CREATE TABLE IF NOT EXISTS policy_roles
+(
+    policy_id INTEGER REFERENCES policies (id) NOT NULL,
+    role_id  INTEGER REFERENCES roles (id)   NOT NULL,
+    UNIQUE (policy_id, role_id) ON CONFLICT IGNORE
+);
+
+CREATE INDEX IF NOT EXISTS fk_policy_roles__policy_id ON policy_roles (policy_id ASC);
+CREATE INDEX IF NOT EXISTS fk_policy_roles__role_id ON policy_roles (role_id ASC);
+
+CREATE TABLE IF NOT EXISTS policy_users
+(
+    policy_id INTEGER REFERENCES policies (id) NOT NULL,
+    user_id  INTEGER REFERENCES users (id)   NOT NULL,
+    UNIQUE (policy_id, user_id) ON CONFLICT IGNORE
+);
+
+CREATE INDEX IF NOT EXISTS fk_policy_users__policy_id ON policy_users (policy_id ASC);
+CREATE INDEX IF NOT EXISTS fk_policy_users__user_id ON policy_users (user_id ASC);

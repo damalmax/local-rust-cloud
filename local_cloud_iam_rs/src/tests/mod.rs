@@ -8,6 +8,8 @@ mod test_suite;
 #[cfg(test)]
 mod add_user_to_group;
 #[cfg(test)]
+mod attach_group_policy;
+#[cfg(test)]
 mod create_group;
 #[cfg(test)]
 mod create_policy;

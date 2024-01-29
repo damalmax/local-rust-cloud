@@ -10,6 +10,7 @@ use local_cloud_db::LocalDb;
 use crate::http::aws::iam::actions::action::Action;
 use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
+use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
@@ -24,16 +25,18 @@ use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 pub(crate) enum LocalAwsRequest {
     #[serde(rename = "AddUserToGroup")]
     AddUserToGroup(AddUserToGroupRequest),
+    #[serde(rename = "AttachGroupPolicy")]
+    AttachGroupPolicy(AttachGroupPolicyRequest),
     #[serde(rename = "CreateGroup")]
     CreateGroup(CreateGroupRequest),
     #[serde(rename = "CreatePolicy")]
     CreatePolicy(CreatePolicyRequest),
     #[serde(rename = "CreatePolicyVersion")]
     CreatePolicyVersion(CreatePolicyVersionRequest),
-    #[serde(rename = "CreateUser")]
-    CreateUser(CreateUserRequest),
     #[serde(rename = "CreateRole")]
     CreateRole(CreateRoleRequest),
+    #[serde(rename = "CreateUser")]
+    CreateUser(CreateUserRequest),
     #[serde(rename = "GetGroup")]
     GetGroupRequest(GetGroupRequest),
     #[serde(rename = "ListGroups")]
@@ -50,23 +53,11 @@ pub(crate) async fn handle(
     let aws_request = aws_query.into_inner();
     let aws_request_id = Uuid::new_v4().to_string();
     let output: Result<XmlResponse, ApiError> = match aws_request {
-        LocalAwsRequest::CreatePolicy(create_policy) => create_policy
+        LocalAwsRequest::AttachGroupPolicy(attach_group_policy) => attach_group_policy
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
-        LocalAwsRequest::ListPolicies(list_policies) => list_policies
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreatePolicyVersion(create_policy_version) => create_policy_version
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateUser(create_user) => create_user
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateRole(create_role) => create_role
+        LocalAwsRequest::AddUserToGroup(add_user_to_group) => add_user_to_group
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
@@ -74,7 +65,19 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
-        LocalAwsRequest::ListGroups(list_groups) => list_groups
+        LocalAwsRequest::CreatePolicy(create_policy) => create_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreatePolicyVersion(create_policy_version) => create_policy_version
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreateRole(create_role) => create_role
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreateUser(create_user) => create_user
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
@@ -82,7 +85,11 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
-        LocalAwsRequest::AddUserToGroup(add_user_to_group) => add_user_to_group
+        LocalAwsRequest::ListGroups(list_groups) => list_groups
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListPolicies(list_policies) => list_policies
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
