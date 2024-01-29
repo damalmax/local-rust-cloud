@@ -20,7 +20,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] add_role_to_instance_profile
 - [X] add_user_to_group
 - [X] attach_group_policy
-- [ ] attach_role_policy
+- [X] attach_role_policy
 - [ ] attach_user_policy
 - [ ] change_password
 - [ ] create_access_key

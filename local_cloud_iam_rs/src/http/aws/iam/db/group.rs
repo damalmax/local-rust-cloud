@@ -64,7 +64,7 @@ where
     Ok(result)
 }
 
-pub(crate) async fn find_group_by_name<'a, E>(
+pub(crate) async fn find_by_name<'a, E>(
     executor: E, account_id: i64, group_name: &str,
 ) -> Result<Option<SelectGroup>, Error>
 where
@@ -82,7 +82,7 @@ where
                 group_id,
                 create_date
             FROM groups
-            WHERE account_id = $1 AND unique_group_name = $2 ORDER BY id ASC
+            WHERE account_id = $1 AND unique_group_name = $2
     "#,
     )
     .bind(account_id)

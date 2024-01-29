@@ -1,3 +1,5 @@
+use aws_sdk_iam::operation::attach_group_policy::AttachGroupPolicyOutput;
+use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
 use aws_sdk_iam::types::Role;
 use aws_smithy_types::DateTime;
@@ -12,6 +14,8 @@ use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, Inse
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
+use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -76,4 +80,35 @@ fn prepare_role_for_insert(
         .policy_id(policy_id)
         .create_date(current_time)
         .build()
+}
+
+pub(crate) async fn attach_role_policy(
+    ctx: &OperationCtx, input: &AttachRolePolicyRequest, db: &LocalDb,
+) -> Result<AttachRolePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let found_role = db::role::find_id_by_name((&mut tx).as_mut(), ctx.account_id, input.role_name().unwrap()).await?;
+    if found_role.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM role with name '{}' doesn't exist.", input.role_name().unwrap().trim()).as_str(),
+        ));
+    }
+
+    let found_policy = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
+    if found_policy.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
+        ));
+    }
+
+    db::role::assign_policy_to_role(&mut tx, found_role.unwrap(), found_policy.unwrap()).await?;
+
+    let output = AttachRolePolicyOutput::builder().build();
+
+    tx.commit().await?;
+    Ok(output)
 }

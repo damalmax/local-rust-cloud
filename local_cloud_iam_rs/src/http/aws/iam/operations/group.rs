@@ -109,8 +109,7 @@ pub(crate) async fn add_user_to_group(
     input.validate("$")?;
     let mut tx = db.new_tx().await?;
 
-    let found_group =
-        db::group::find_group_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
+    let found_group = db::group::find_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
     if found_group.is_none() {
         return Err(OperationError::new(
             ApiErrorKind::NoSuchEntity,
@@ -140,8 +139,7 @@ pub(crate) async fn attach_group_policy(
 
     let mut tx = db.new_tx().await?;
 
-    let found_group =
-        db::group::find_group_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
+    let found_group = db::group::find_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
     if found_group.is_none() {
         return Err(OperationError::new(
             ApiErrorKind::NoSuchEntity,
@@ -173,7 +171,7 @@ pub(crate) async fn get_group(
     let group_name = input.group_name().unwrap().trim();
     // obtain connection
     let mut connection = db.new_connection().await?;
-    let found_group = db::group::find_group_by_name((&mut connection).as_mut(), ctx.account_id, group_name).await?;
+    let found_group = db::group::find_by_name((&mut connection).as_mut(), ctx.account_id, group_name).await?;
 
     match found_group {
         None => {
