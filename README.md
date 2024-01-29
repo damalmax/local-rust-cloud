@@ -21,7 +21,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] add_user_to_group
 - [X] attach_group_policy
 - [X] attach_role_policy
-- [ ] attach_user_policy
+- [X] attach_user_policy
 - [ ] change_password
 - [ ] create_access_key
 - [ ] create_account_alias

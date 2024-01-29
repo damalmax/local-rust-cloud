@@ -1,20 +1,15 @@
 use crate::tests::fixture::{CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY, CREATE_USER_PERMISSIONS_BOUNDARY};
 
 #[actix_rt::test]
-async fn attach_role_policy() {
+async fn attach_user_policy() {
     let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_role_output = client
-        .create_role()
-        .role_name("Test-Role")
-        .path("/")
-        .assume_role_policy_document(CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY)
-        .send()
+    let create_user_output = super::fixture::create_user(&client, "user1", "/", None, None)
         .await
-        .expect("Failed to create IAM role");
+        .expect("Failed to create IAM user");
 
     let policy_output = super::fixture::create_policy(
         &client,
@@ -28,8 +23,8 @@ async fn attach_role_policy() {
     .expect("Failed to create IAM policy");
 
     let response = client
-        .attach_role_policy()
-        .role_name("Test-Role")
+        .attach_user_policy()
+        .user_name("user1")
         .policy_arn(policy_output.policy().unwrap().arn().unwrap())
         .send()
         .await

@@ -12,6 +12,7 @@ use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
 use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
+use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
@@ -30,6 +31,8 @@ pub(crate) enum LocalAwsRequest {
     AttachGroupPolicy(AttachGroupPolicyRequest),
     #[serde(rename = "AttachRolePolicy")]
     AttachRolePolicy(AttachRolePolicyRequest),
+    #[serde(rename = "AttachUserPolicy")]
+    AttachUserPolicy(AttachUserPolicyRequest),
     #[serde(rename = "CreateGroup")]
     CreateGroup(CreateGroupRequest),
     #[serde(rename = "CreatePolicy")]
@@ -65,6 +68,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::AttachRolePolicy(attach_role_policy) => attach_role_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::AttachUserPolicy(attach_user_policy) => attach_user_policy
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

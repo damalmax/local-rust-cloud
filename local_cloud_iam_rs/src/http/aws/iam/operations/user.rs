@@ -1,3 +1,4 @@
+use aws_sdk_iam::operation::attach_user_policy::AttachUserPolicyOutput;
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
@@ -12,6 +13,7 @@ use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, Inse
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -75,4 +77,35 @@ fn prepare_user_for_insert(
         .policy_id(policy_id)
         .create_date(current_time)
         .build()
+}
+
+pub(crate) async fn attach_user_policy(
+    ctx: &OperationCtx, input: &AttachUserPolicyRequest, db: &LocalDb,
+) -> Result<AttachUserPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let found_user = db::user::find_id_by_name((&mut tx).as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+    if found_user.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM user with name '{}' doesn't exist.", input.user_name().unwrap().trim()).as_str(),
+        ));
+    }
+
+    let found_policy = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
+    if found_policy.is_none() {
+        return Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
+        ));
+    }
+
+    db::user::assign_policy_to_user(&mut tx, found_user.unwrap(), found_policy.unwrap()).await?;
+
+    let output = AttachUserPolicyOutput::builder().build();
+
+    tx.commit().await?;
+    Ok(output)
 }

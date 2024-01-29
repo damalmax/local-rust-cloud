@@ -113,3 +113,35 @@ pub(crate) async fn find_by_group_id(
         .await?;
     Ok(users)
 }
+
+pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, user_name: &str) -> Result<Option<i64>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let group = sqlx::query(
+        r#"
+            SELECT 
+                id
+            FROM users
+            WHERE account_id = $1 AND unique_username = $2
+    "#,
+    )
+    .bind(account_id)
+    .bind(user_name.to_uppercase())
+    .map(|row: SqliteRow| row.get::<i64, &str>("id"))
+    .fetch_optional(executor)
+    .await?;
+
+    Ok(group)
+}
+
+pub(crate) async fn assign_policy_to_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, user_id: i64, policy_id: i64,
+) -> Result<(), Error> {
+    sqlx::query(r#"INSERT INTO policy_users (user_id, policy_id) VALUES ($1, $2)"#)
+        .bind(user_id)
+        .bind(policy_id)
+        .execute(tx.as_mut())
+        .await?;
+    Ok(())
+}

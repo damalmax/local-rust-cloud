@@ -2,6 +2,7 @@ pub(crate) mod action;
 pub(crate) mod add_user_to_group;
 pub(crate) mod attach_group_policy;
 pub(crate) mod attach_role_policy;
+pub(crate) mod attach_user_policy;
 pub(crate) mod create_group;
 pub(crate) mod create_policy;
 pub(crate) mod create_policy_version;

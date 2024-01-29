@@ -1,4 +1,3 @@
-use aws_sdk_iam::operation::attach_group_policy::AttachGroupPolicyOutput;
 use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
 use aws_sdk_iam::types::Role;
@@ -14,7 +13,6 @@ use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, Inse
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::{constants, db};
