@@ -15,8 +15,8 @@ impl Deref for ArnType {
 
 impl local_cloud_validate::NamedValidator for &ArnType {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_str_length_min(Some(&self), 20usize, at)?;
-        local_cloud_validate::validate_str_length_max(Some(&self), 2048usize, at)?;
+        local_cloud_validate::validate_str_length_min(Some(self), 20usize, at)?;
+        local_cloud_validate::validate_str_length_max(Some(self), 2048usize, at)?;
         Ok(())
     }
 }

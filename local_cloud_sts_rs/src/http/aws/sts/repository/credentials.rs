@@ -12,9 +12,9 @@ pub async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, credentials: &mut DbCr
     .bind(&credentials.access_key_id)
     .bind(&credentials.secret_access_key)
     .bind(&credentials.session_token)
-    .bind(&credentials.expiration)
-    .bind(&credentials.account_id)
-    .bind(&credentials.region_id)
+    .bind(credentials.expiration)
+    .bind(credentials.account_id)
+    .bind(credentials.region_id)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
     .await?;

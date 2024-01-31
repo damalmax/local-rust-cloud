@@ -3,13 +3,14 @@ use aws_sdk_iam::operation::create_user::CreateUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
+use sqlx::{Executor, Sqlite};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
-use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError};
+use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError, SelectUser};
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
@@ -26,7 +27,7 @@ pub async fn create_user(
     let mut tx = db.new_tx().await?;
     let user_id = create_resource_id(&mut tx, constants::user::PREFIX, ResourceType::User).await?;
 
-    let policy_id = super::policy::find_policy_id_by_arn((&mut tx).as_mut(), input.permissions_boundary()).await?;
+    let policy_id = super::policy::find_policy_id_by_arn(tx.as_mut(), input.permissions_boundary()).await?;
 
     let mut insert_user = prepare_user_for_insert(ctx, input, &user_id, policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
@@ -79,6 +80,23 @@ fn prepare_user_for_insert(
         .build()
 }
 
+pub(crate) async fn find_by_name<'a, E>(
+    ctx: &OperationCtx, executor: E, user_name: &str,
+) -> Result<SelectUser, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::user::find_by_name(executor, ctx.account_id, user_name).await? {
+        Some(user) => Ok(user),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
+            ))
+        }
+    }
+}
+
 pub(crate) async fn attach_user_policy(
     ctx: &OperationCtx, input: &AttachUserPolicyRequest, db: &LocalDb,
 ) -> Result<AttachUserPolicyOutput, OperationError> {
@@ -86,23 +104,29 @@ pub(crate) async fn attach_user_policy(
 
     let mut tx = db.new_tx().await?;
 
-    let found_user = db::user::find_id_by_name((&mut tx).as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
-    if found_user.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("IAM user with name '{}' doesn't exist.", input.user_name().unwrap().trim()).as_str(),
-        ));
-    }
+    let user_name = input.user_name().unwrap();
+    let found_user_id = match db::user::find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await? {
+        Some(user_id) => user_id,
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
+            ))
+        }
+    };
 
-    let found_policy = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
-    if found_policy.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
-        ));
-    }
+    let policy_arn = input.policy_arn().unwrap();
+    let found_policy_id = match db::policy::find_id_by_arn(tx.as_mut(), policy_arn).await? {
+        Some(policy_id) => policy_id,
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("Unable to find policy with ARN '{}'.", policy_arn).as_str(),
+            ))
+        }
+    };
 
-    db::user::assign_policy_to_user(&mut tx, found_user.unwrap(), found_policy.unwrap()).await?;
+    db::user::assign_policy_to_user(&mut tx, found_user_id, found_policy_id).await?;
 
     let output = AttachUserPolicyOutput::builder().build();
 

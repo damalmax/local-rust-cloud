@@ -1,4 +1,3 @@
-use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
@@ -19,14 +18,14 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, user: &mut Inse
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING id"#,
     )
-    .bind(&user.account_id)
+    .bind(user.account_id)
     .bind(&user.username)
     .bind(&user.username.to_uppercase())
     .bind(&user.arn)
     .bind(&user.path)
     .bind(&user.user_id)
-    .bind(&user.policy_id)
-    .bind(&user.create_date)
+    .bind(user.policy_id)
+    .bind(user.create_date)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
     .await?;
@@ -73,9 +72,12 @@ where
     Ok(result)
 }
 
-pub(crate) async fn find_by_group_id(
-    tx: &mut PoolConnection<Sqlite>, query: &ListUsersByGroupQuery,
-) -> Result<Vec<SelectUser>, Error> {
+pub(crate) async fn find_by_group_id<'a, E>(
+    executor: E, query: &ListUsersByGroupQuery,
+) -> Result<Vec<SelectUser>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
         r#"
         SELECT 
@@ -109,7 +111,7 @@ pub(crate) async fn find_by_group_id(
         .push_bind(query.skip)
         .build()
         .map(|row: SqliteRow| SelectUser::from_row(&row).unwrap())
-        .fetch_all(tx.as_mut())
+        .fetch_all(executor)
         .await?;
     Ok(users)
 }

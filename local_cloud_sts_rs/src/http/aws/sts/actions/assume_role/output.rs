@@ -66,6 +66,6 @@ impl From<LocalAssumeRoleOutput> for XmlResponse {
         response_metadata_tag.finish();
 
         assume_role_response_tag.finish();
-        return XmlResponse(out);
+        XmlResponse(out)
     }
 }

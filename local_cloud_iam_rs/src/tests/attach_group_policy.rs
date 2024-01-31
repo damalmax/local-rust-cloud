@@ -7,7 +7,7 @@ async fn attach_group_policy() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_group_output = client
+    let _create_group_output = client
         .create_group()
         .group_name("test_group_1")
         .path("/")
@@ -26,7 +26,7 @@ async fn attach_group_policy() {
     .await
     .unwrap();
 
-    let response = client
+    let _response = client
         .attach_group_policy()
         .group_name("test_group_1")
         .policy_arn(policy_output.policy().unwrap().arn().unwrap())

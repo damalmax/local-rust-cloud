@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::policy_document_type::PolicyDocumentType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct CreatePolicyRequest {
@@ -11,7 +12,7 @@ pub(crate) struct CreatePolicyRequest {
     #[serde(rename = "PolicyName")]
     pub(crate) policy_name: Option<types::policy_name_type::PolicyNameType>,
     #[serde(rename = "PolicyDocument")]
-    pub(crate) policy_document: Option<types::policy_document_type::PolicyDocumentType>,
+    pub(crate) policy_document: Option<PolicyDocumentType>,
     #[serde(rename = "Description")]
     pub(crate) description: Option<types::policy_description_type::PolicyDescriptionType>,
 }
@@ -30,8 +31,13 @@ impl CreatePolicyRequest {
         self.policy_name.as_deref()
     }
     pub(crate) fn policy_document(&self) -> Option<&str> {
-        self.policy_document.as_deref()
+        // we expect that property is already validated, so, `unwrap` should be safe
+        self.policy_document_type().map(|doc| doc.document().unwrap())
     }
+    pub(crate) fn policy_document_type(&self) -> Option<&PolicyDocumentType> {
+        self.policy_document.as_ref()
+    }
+
     pub(crate) fn description(&self) -> Option<&str> {
         self.description.as_deref()
     }
@@ -49,9 +55,12 @@ impl local_cloud_validate::NamedValidator for &CreatePolicyRequest {
         }
         local_cloud_validate::validate_required(self.policy_name(), format!("{at}.{}", "PolicyName").as_str())?;
         local_cloud_validate::validate_named(self.policy_name.as_ref(), format!("{at}.{}", "PolicyName").as_str())?;
-        local_cloud_validate::validate_required(self.policy_document(), format!("{at}.{}", "PolicyDocument").as_str())?;
+        local_cloud_validate::validate_required(
+            self.policy_document_type(),
+            format!("{at}.{}", "PolicyDocument").as_str(),
+        )?;
         local_cloud_validate::validate_named(
-            self.policy_document.as_ref(),
+            self.policy_document_type(),
             format!("{at}.{}", "PolicyDocument").as_str(),
         )?;
         local_cloud_validate::validate_named(self.description.as_ref(), format!("{at}.{}", "Description").as_str())?;

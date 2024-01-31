@@ -14,6 +14,7 @@ use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicy
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
+use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
@@ -35,6 +36,8 @@ pub(crate) enum LocalAwsRequest {
     AttachUserPolicy(AttachUserPolicyRequest),
     #[serde(rename = "CreateGroup")]
     CreateGroup(CreateGroupRequest),
+    #[serde(rename = "CreateInstanceProfile")]
+    CreateInstanceProfile(CreateInstanceProfileRequest),
     #[serde(rename = "CreatePolicy")]
     CreatePolicy(CreatePolicyRequest),
     #[serde(rename = "CreatePolicyVersion")]
@@ -79,6 +82,10 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
+        LocalAwsRequest::CreateInstanceProfile(create_instance_profile) => create_instance_profile
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
         LocalAwsRequest::CreatePolicy(create_policy) => create_policy
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
@@ -109,12 +116,12 @@ pub(crate) async fn handle(
             .map(|out| out.into()),
     };
 
-    return match output {
+    match output {
         Ok(body) => HttpResponse::with_body(StatusCode::OK, body),
         Err(err) => {
             let error_code = err.kind.status_code();
             let body: XmlResponse = err.into();
             HttpResponse::with_body(error_code, body)
         }
-    };
+    }
 }

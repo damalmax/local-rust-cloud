@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 aws-smithy-xml.workspace = true
 aws-smithy-types.workspace = true
-aws-smithy-protocol-test = "0.55.1"
+aws-smithy-protocol-test = "0.60"

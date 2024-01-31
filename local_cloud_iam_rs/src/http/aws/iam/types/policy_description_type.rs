@@ -17,9 +17,9 @@ impl Deref for PolicyDescriptionType {
 
 impl local_cloud_validate::NamedValidator for &PolicyDescriptionType {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_str_length_min(Some(&self), 0usize, at)?;
-        local_cloud_validate::validate_str_length_max(Some(&self), 1000usize, at)?;
-        local_cloud_validate::validate_chars(Some(&self), &CHARACTERS, at)?;
+        local_cloud_validate::validate_str_length_min(Some(self), 0usize, at)?;
+        local_cloud_validate::validate_str_length_max(Some(self), 1000usize, at)?;
+        local_cloud_validate::validate_chars(Some(self), &CHARACTERS, at)?;
         Ok(())
     }
 }

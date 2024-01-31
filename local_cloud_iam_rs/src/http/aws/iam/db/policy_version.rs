@@ -18,12 +18,12 @@ pub(crate) async fn create<'a>(
                 VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING id, version"#,
     )
-    .bind(&policy_version.account_id)
-    .bind(&policy_version.policy_id)
+    .bind(policy_version.account_id)
+    .bind(policy_version.policy_id)
     .bind(&policy_version.policy_version_id)
     .bind(&policy_version.policy_document)
-    .bind(&policy_version.create_date)
-    .bind(&policy_version.is_default)
+    .bind(policy_version.create_date)
+    .bind(policy_version.is_default)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
     .await?;

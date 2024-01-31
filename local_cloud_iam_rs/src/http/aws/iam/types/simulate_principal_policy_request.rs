@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::policy_document_type::PolicyDocumentType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct SimulatePrincipalPolicyRequest {
@@ -17,11 +18,11 @@ pub(crate) struct SimulatePrincipalPolicyRequest {
     #[serde(rename = "ResourceArns")]
     pub(crate) resource_arns: Option<Vec<types::resource_name_type::ResourceNameType>>,
     #[serde(rename = "PolicyInputList")]
-    pub(crate) policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
+    pub(crate) policy_input_list: Option<Vec<PolicyDocumentType>>,
     #[serde(rename = "PermissionsBoundaryPolicyInputList")]
-    pub(crate) permissions_boundary_policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
+    pub(crate) permissions_boundary_policy_input_list: Option<Vec<PolicyDocumentType>>,
     #[serde(rename = "ResourcePolicy")]
-    pub(crate) resource_policy: Option<types::policy_document_type::PolicyDocumentType>,
+    pub(crate) resource_policy: Option<PolicyDocumentType>,
     #[serde(rename = "ResourceHandlingOption")]
     pub(crate) resource_handling_option: Option<types::resource_handling_option_type::ResourceHandlingOptionType>,
     #[serde(rename = "ResourceOwner")]
@@ -50,16 +51,18 @@ impl SimulatePrincipalPolicyRequest {
     pub(crate) fn resource_arns(&self) -> Option<&[types::resource_name_type::ResourceNameType]> {
         self.resource_arns.as_deref()
     }
-    pub(crate) fn policy_input_list(&self) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
+    pub(crate) fn policy_input_list(&self) -> Option<&[PolicyDocumentType]> {
         self.policy_input_list.as_deref()
     }
-    pub(crate) fn permissions_boundary_policy_input_list(
-        &self,
-    ) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
+    pub(crate) fn permissions_boundary_policy_input_list(&self) -> Option<&[PolicyDocumentType]> {
         self.permissions_boundary_policy_input_list.as_deref()
     }
     pub(crate) fn resource_policy(&self) -> Option<&str> {
-        self.resource_policy.as_deref()
+        // we expect that property is already validated, so, `unwrap` should be safe
+        self.resource_policy_type().map(|doc| doc.document().unwrap())
+    }
+    pub(crate) fn resource_policy_type(&self) -> Option<&PolicyDocumentType> {
+        self.resource_policy.as_ref()
     }
     pub(crate) fn resource_handling_option(&self) -> Option<&str> {
         self.resource_handling_option.as_deref()
@@ -124,7 +127,7 @@ impl local_cloud_validate::NamedValidator for &SimulatePrincipalPolicyRequest {
             }
         }
         local_cloud_validate::validate_named(
-            self.resource_policy.as_ref(),
+            self.resource_policy_type(),
             format!("{at}.{}", "ResourcePolicy").as_str(),
         )?;
         local_cloud_validate::validate_named(

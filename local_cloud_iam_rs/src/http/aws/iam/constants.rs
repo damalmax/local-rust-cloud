@@ -32,3 +32,7 @@ pub(crate) mod role {
     pub(crate) const PREFIX: &str = "AROA";
     pub(crate) const DEFAULT_MAX_SESSION_DURATION: i32 = 3600;
 }
+
+pub(crate) mod instance_profile {
+    pub(crate) const PREFIX: &str = "AIPA";
+}

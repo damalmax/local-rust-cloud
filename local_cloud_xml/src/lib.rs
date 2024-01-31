@@ -2,6 +2,7 @@ use aws_smithy_types::date_time::Format;
 use aws_smithy_xml::encode::ScopeWriter;
 
 ///Adds a new sub-tag to the parent tag with the given name in case if value is defined.
+#[inline]
 pub fn write_tag_with_value(parent_tag: &mut ScopeWriter, child_tag_name: &str, value: Option<impl Into<String>>) {
     if value.is_some() {
         let mut child_tag = parent_tag.start_el(child_tag_name).finish();
@@ -26,12 +27,13 @@ pub fn write_iso8061_datetime_value_tag(
     }
 }
 
+#[inline]
 pub fn write_request_metadata_tag(
     parent_tag: &mut ScopeWriter, response_metadata_tag_name: &str, request_id_tag_name: &str,
     request_id: impl Into<String>,
 ) {
     let mut response_metadata_tag = parent_tag.start_el(response_metadata_tag_name).finish();
-    write_tag_with_value(&mut response_metadata_tag, request_id_tag_name, Option::Some(request_id.into()));
+    write_tag_with_value(&mut response_metadata_tag, request_id_tag_name, Some(request_id.into()));
     response_metadata_tag.finish();
 }
 
@@ -46,8 +48,8 @@ pub fn write_key_value_tags<T>(
     let mut tags_tag = parent_tag.start_el("Tags").finish();
     for tag in tags {
         let mut tag_tag = tags_tag.start_el("member").finish();
-        write_tag_with_value(&mut tag_tag, "Key", key_mapper(&tag));
-        write_tag_with_value(&mut tag_tag, "Value", value_mapper(&tag));
+        write_tag_with_value(&mut tag_tag, "Key", key_mapper(tag));
+        write_tag_with_value(&mut tag_tag, "Value", value_mapper(tag));
         tag_tag.finish();
     }
     tags_tag.finish();

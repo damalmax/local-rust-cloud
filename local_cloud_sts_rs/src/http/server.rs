@@ -27,5 +27,5 @@ pub(crate) async fn start(app_config_factory: impl AppConfigFactory) -> std::io:
     })
     .bind(("0.0.0.0", app_config.service_port))?
     .run();
-    return Ok(server);
+    Ok(server)
 }

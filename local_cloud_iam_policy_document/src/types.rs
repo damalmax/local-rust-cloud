@@ -141,10 +141,10 @@ fn validate_effect(effect: &str) -> Result<(), ValidationError> {
 
 fn validate_version(version: &str) -> Result<(), ValidationError> {
     if version == "2008-10-17" || version == "2012-10-17" {
-        return Ok(());
+        Ok(())
+    } else {
+        Err(ValidationError::new("Unsupported Version. Supported values: '2008-10-17', '2012-10-17'."))
     }
-
-    return Err(ValidationError::new("Unsupported Version. Supported values: '2008-10-17', '2012-10-17'."));
 }
 
 fn validate_resource(resource: &FlexiString) -> Result<(), ValidationError> {

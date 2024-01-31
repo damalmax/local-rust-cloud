@@ -1,0 +1,17 @@
+mod add_user_to_group;
+mod attach_group_policy;
+mod attach_role_policy;
+mod attach_user_policy;
+mod common;
+mod create_group;
+mod create_instance_profile;
+mod create_policy;
+mod create_policy_version;
+mod create_role;
+mod create_user;
+mod get_group;
+mod list_groups;
+mod list_policies;
+mod roles;
+mod tags;
+pub(crate) mod wrapper;

@@ -17,13 +17,13 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, group: &mut Ins
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id"#,
     )
-    .bind(&group.account_id)
+    .bind(group.account_id)
     .bind(&group.group_name)
     .bind(&group.group_name.to_uppercase())
     .bind(&group.arn)
     .bind(&group.path)
     .bind(&group.group_id)
-    .bind(&group.create_date)
+    .bind(group.create_date)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))
     .fetch_one(tx.as_mut())
     .await?;

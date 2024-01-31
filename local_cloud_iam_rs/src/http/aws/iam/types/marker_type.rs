@@ -26,12 +26,12 @@ impl<'de> Deserialize<'de> for MarkerType {
     {
         let input: String = Deserialize::deserialize(deserializer)?;
         let bytes = general_purpose::STANDARD
-            .decode(input.as_str().as_bytes())
-            .map_err(|err| ValidationError::new(ValidationErrorKind::Other, DECODE_MARKER_ERROR_MSG));
+            .decode(input.as_bytes())
+            .map_err(|_err| ValidationError::new(ValidationErrorKind::Other, DECODE_MARKER_ERROR_MSG));
 
         let marker = match bytes {
             Ok(bytes) => serde_json::from_slice::<Marker>(&bytes)
-                .map_err(|err| ValidationError::new(ValidationErrorKind::Other, DECODE_MARKER_ERROR_MSG)),
+                .map_err(|_err| ValidationError::new(ValidationErrorKind::Other, DECODE_MARKER_ERROR_MSG)),
             Err(err) => Err(err),
         };
         Ok(MarkerType {
@@ -56,10 +56,10 @@ impl Deref for MarkerType {
 
 impl local_cloud_validate::NamedValidator for &MarkerType {
     fn validate(&self, at: &str) -> Result<(), ValidationError> {
-        local_cloud_validate::validate_str_length_min(Some(&self), 1usize, at)?;
-        local_cloud_validate::validate_str_length_max(Some(&self), 320usize, at)?;
-        local_cloud_validate::validate_regexp(Some(&self), REGEX.deref(), at)?;
-        let marker = self.marker().map_err(|err| {
+        local_cloud_validate::validate_str_length_min(Some(self), 1usize, at)?;
+        local_cloud_validate::validate_str_length_max(Some(self), 320usize, at)?;
+        local_cloud_validate::validate_regexp(Some(self), REGEX.deref(), at)?;
+        let marker = self.marker().map_err(|_err| {
             ValidationError::new(ValidationErrorKind::Other, format!("Invalid value provided for '{at}'."))
         })?;
         if marker.truncate_amount < 0 {
@@ -83,8 +83,8 @@ pub(crate) struct Marker {
 impl Marker {
     pub(crate) fn encode(&self) -> Result<String, std::io::Error> {
         let json = serde_json::to_string(self)
-            .map_err(|err| std::io::Error::new(ErrorKind::Other, "Failed to generate Marker"))?;
-        Ok(general_purpose::STANDARD.encode(&json))
+            .map_err(|_err| std::io::Error::new(ErrorKind::Other, "Failed to generate Marker"))?;
+        Ok(general_purpose::STANDARD.encode(json))
     }
 
     pub(crate) fn new(truncate_amount: i32) -> Marker {

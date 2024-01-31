@@ -1,13 +1,14 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::policy_document_type::PolicyDocumentType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct SimulateCustomPolicyRequest {
     #[serde(rename = "ActionNames")]
     pub(crate) action_names: Option<Vec<types::action_name_type::ActionNameType>>,
     #[serde(rename = "PolicyInputList")]
-    pub(crate) policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
+    pub(crate) policy_input_list: Option<Vec<PolicyDocumentType>>,
     #[serde(rename = "ResourcePolicy")]
-    pub(crate) resource_policy: Option<types::policy_document_type::PolicyDocumentType>,
+    pub(crate) resource_policy: Option<PolicyDocumentType>,
     #[serde(rename = "CallerArn")]
     pub(crate) caller_arn: Option<types::resource_name_type::ResourceNameType>,
     #[serde(rename = "ResourceOwner")]
@@ -19,7 +20,7 @@ pub(crate) struct SimulateCustomPolicyRequest {
     #[serde(rename = "ContextEntries")]
     pub(crate) context_entries: Option<Vec<types::context_entry::ContextEntry>>,
     #[serde(rename = "PermissionsBoundaryPolicyInputList")]
-    pub(crate) permissions_boundary_policy_input_list: Option<Vec<types::policy_document_type::PolicyDocumentType>>,
+    pub(crate) permissions_boundary_policy_input_list: Option<Vec<PolicyDocumentType>>,
     #[serde(rename = "Marker")]
     pub(crate) marker: Option<types::marker_type::MarkerType>,
     #[serde(rename = "ResourceArns")]
@@ -34,7 +35,11 @@ impl SimulateCustomPolicyRequest {
         self.policy_input_list.as_deref()
     }
     pub(crate) fn resource_policy(&self) -> Option<&str> {
-        self.resource_policy.as_deref()
+        // we expect that property is already validated, so, `unwrap` should be safe
+        self.resource_policy_type().map(|doc| doc.document().unwrap())
+    }
+    pub(crate) fn resource_policy_type(&self) -> Option<&PolicyDocumentType> {
+        self.resource_policy.as_ref()
     }
     pub(crate) fn caller_arn(&self) -> Option<&str> {
         self.caller_arn.as_deref()
@@ -88,7 +93,7 @@ impl local_cloud_validate::NamedValidator for &SimulateCustomPolicyRequest {
             }
         }
         local_cloud_validate::validate_named(
-            self.resource_policy.as_ref(),
+            self.resource_policy_type(),
             format!("{at}.{}", "ResourcePolicy").as_str(),
         )?;
         local_cloud_validate::validate_named(self.caller_arn.as_ref(), format!("{at}.{}", "CallerArn").as_str())?;

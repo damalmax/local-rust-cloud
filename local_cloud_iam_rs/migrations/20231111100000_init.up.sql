@@ -48,6 +48,14 @@ VALUES (1, 'eu-local-1', 'EU Local'),
        (31, 'me-south-1', 'Middle East (Bahrain)'),
        (32, 'me-central-1', 'Middle East (UAE)'),
        (33, 'sa-east-1', 'South America (São Paulo)');
+
+CREATE TABLE IF NOT EXISTS unique_identifiers
+(
+    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    unique_id     VARCHAR2(21)                      NOT NULL,
+    resource_type INTEGER                           NOT NULL,
+    UNIQUE (unique_id)
+);
 -- Group
 CREATE TABLE IF NOT EXISTS groups
 (
@@ -112,7 +120,7 @@ VALUES (1, 'Root', 'ROOT', '"arn:aws:iam::000000000001:user/Root"', '/', 'AIDAHO
 CREATE TABLE IF NOT EXISTS user_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    parent_id INTEGER REFERENCES users (id),
+    parent_id INTEGER REFERENCES users (id)     NOT NULL,
     key       VARCHAR2(128)                     NOT NULL,
     value     VARCHAR2(256)                     NOT NULL,
     UNIQUE (parent_id, key)
@@ -149,12 +157,11 @@ END;
 CREATE TABLE IF NOT EXISTS policy_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    parent_id INTEGER REFERENCES policies (id),
+    parent_id INTEGER REFERENCES policies (id)  NOT NULL,
     key       VARCHAR2(128)                     NOT NULL,
     value     VARCHAR2(256)                     NOT NULL,
     UNIQUE (parent_id, key)
 );
-
 CREATE INDEX IF NOT EXISTS fk_policy_tags__parent_id ON policy_tags (parent_id ASC);
 -- Role
 CREATE TABLE IF NOT EXISTS roles
@@ -181,20 +188,12 @@ CREATE INDEX IF NOT EXISTS idx_roles__arn ON roles (arn ASC);
 CREATE TABLE IF NOT EXISTS role_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    parent_id INTEGER REFERENCES roles (id),
+    parent_id INTEGER REFERENCES roles (id)     NOT NULL,
     key       VARCHAR2(128)                     NOT NULL,
     value     VARCHAR2(256)                     NOT NULL,
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_role_tags__parent_id ON role_tags (parent_id ASC);
-
-CREATE TABLE IF NOT EXISTS unique_identifiers
-(
-    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    unique_id     VARCHAR2(21)                      NOT NULL,
-    resource_type INTEGER                           NOT NULL,
-    UNIQUE (unique_id)
-);
 
 CREATE TABLE IF NOT EXISTS group_users
 (
@@ -211,14 +210,13 @@ CREATE TABLE IF NOT EXISTS policy_groups
     group_id  INTEGER REFERENCES groups (id)   NOT NULL,
     UNIQUE (policy_id, group_id) ON CONFLICT IGNORE
 );
-
 CREATE INDEX IF NOT EXISTS fk_policy_groups__group_id ON policy_groups (group_id ASC);
 CREATE INDEX IF NOT EXISTS fk_policy_groups__policy_id ON policy_groups (policy_id ASC);
 
 CREATE TABLE IF NOT EXISTS policy_roles
 (
     policy_id INTEGER REFERENCES policies (id) NOT NULL,
-    role_id  INTEGER REFERENCES roles (id)   NOT NULL,
+    role_id   INTEGER REFERENCES roles (id)    NOT NULL,
     UNIQUE (policy_id, role_id) ON CONFLICT IGNORE
 );
 
@@ -228,9 +226,44 @@ CREATE INDEX IF NOT EXISTS fk_policy_roles__role_id ON policy_roles (role_id ASC
 CREATE TABLE IF NOT EXISTS policy_users
 (
     policy_id INTEGER REFERENCES policies (id) NOT NULL,
-    user_id  INTEGER REFERENCES users (id)   NOT NULL,
+    user_id   INTEGER REFERENCES users (id)    NOT NULL,
     UNIQUE (policy_id, user_id) ON CONFLICT IGNORE
 );
-
 CREATE INDEX IF NOT EXISTS fk_policy_users__policy_id ON policy_users (policy_id ASC);
 CREATE INDEX IF NOT EXISTS fk_policy_users__user_id ON policy_users (user_id ASC);
+-- Instance profile
+CREATE TABLE IF NOT EXISTS instance_profiles
+(
+    id                           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id                   INTEGER REFERENCES accounts (id)  NOT NULL,
+    instance_profile_name        VARCHAR2(128)                     NOT NULL,
+    unique_instance_profile_name VARCHAR2(128)                     NOT NULL,
+    instance_profile_id          VARCHAR(21)                       NOT NULL,
+    arn                          VARCHAR2(2048)                    NOT NULL,
+    path                         VARCHAR2(512)                     NOT NULL,
+    create_date                  INTEGER                           NOT NULL,
+    last_used_date               INTEGER,
+    last_used_region_id          INTEGER REFERENCES regions (id),
+    UNIQUE (account_id, unique_instance_profile_name),
+    UNIQUE (arn)
+);
+CREATE INDEX IF NOT EXISTS fk_instance_profiles__account_id ON instance_profiles (account_id ASC);
+CREATE INDEX IF NOT EXISTS idx_instance_profiles__arn ON instance_profiles (arn ASC);
+
+CREATE TABLE IF NOT EXISTS instance_profile_roles
+(
+    instance_profile_id INTEGER REFERENCES instance_profiles (id) NOT NULL,
+    role_id             INTEGER REFERENCES roles (id)             NOT NULL,
+    UNIQUE (instance_profile_id, role_id) ON CONFLICT IGNORE
+);
+CREATE INDEX IF NOT EXISTS fk_instance_profile_roles__instance_profile_id ON instance_profile_roles (instance_profile_id ASC);
+CREATE INDEX IF NOT EXISTS fk_instance_profile_roles__role_id ON instance_profile_roles (role_id ASC);
+CREATE TABLE IF NOT EXISTS instance_profile_tags
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    parent_id INTEGER REFERENCES instance_profiles (id)     NOT NULL,
+    key       VARCHAR2(128)                     NOT NULL,
+    value     VARCHAR2(256)                     NOT NULL,
+    UNIQUE (parent_id, key)
+);
+CREATE INDEX IF NOT EXISTS fk_instance_profile__parent_id ON instance_profile_tags (parent_id ASC);

@@ -27,7 +27,7 @@ impl<'de> Deserialize<'de> for MaxPasswordAgeType {
     {
         let buf: &str = Deserialize::deserialize(deserializer)?;
         buf.parse::<i32>()
-            .map(|v| MaxPasswordAgeType(v))
+            .map(MaxPasswordAgeType)
             .map_err(|_err| serde::de::Error::custom("Expected i32 but found string"))
     }
 }

@@ -6,6 +6,7 @@ use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
+use sqlx::{Executor, Sqlite};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
@@ -59,8 +60,7 @@ fn prepare_group_for_insert(
     let group_name = input.group_name().unwrap().trim();
     let arn = format!("arn:aws:iam::{:0>12}:group/{}", ctx.account_id, group_name);
     InsertGroupBuilder::default()
-        // The property will be initialized during insert
-        .id(None)
+        .id(None) // The property will be initialized during insert
         .account_id(ctx.account_id)
         .path(input.path().unwrap_or("/").to_owned())
         .arn(arn)
@@ -80,7 +80,7 @@ pub(crate) async fn list_groups(
     // obtain connection
     let mut connection = db.new_connection().await?;
 
-    let found_groups: Vec<SelectGroup> = db::group::list_groups((&mut connection).as_mut(), &query).await?;
+    let found_groups: Vec<SelectGroup> = db::group::list_groups(connection.as_mut(), &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
 
     let mut groups: Vec<Group> = vec![];
@@ -103,29 +103,32 @@ pub(crate) async fn list_groups(
     Ok(output)
 }
 
+pub(crate) async fn find_by_name<'a, E>(
+    ctx: &OperationCtx, executor: E, group_name: &str,
+) -> Result<SelectGroup, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::group::find_by_name(executor, ctx.account_id, group_name).await? {
+        Some(group) => Ok(group),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
+            ))
+        }
+    }
+}
+
 pub(crate) async fn add_user_to_group(
     ctx: &OperationCtx, input: &AddUserToGroupRequest, db: &LocalDb,
 ) -> Result<AddUserToGroupOutput, OperationError> {
     input.validate("$")?;
     let mut tx = db.new_tx().await?;
 
-    let found_group = db::group::find_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
-    if found_group.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("IAM group with name '{}' doesn't exist.", input.group_name().unwrap().trim()).as_str(),
-        ));
-    }
-
-    let found_user = db::user::find_by_name((&mut tx).as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
-    if found_user.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("IAM user with name '{}' doesn't exist.", input.user_name().unwrap().trim()).as_str(),
-        ));
-    }
-
-    db::group::assign_user_to_group(&mut tx, found_group.unwrap().id, found_user.unwrap().id).await?;
+    let found_group = find_by_name(ctx, tx.as_mut(), input.group_name().unwrap().trim()).await?;
+    let found_user = super::user::find_by_name(ctx, tx.as_mut(), input.user_name().unwrap().trim()).await?;
+    db::group::assign_user_to_group(&mut tx, found_group.id, found_user.id).await?;
     let output = AddUserToGroupOutput::builder().build();
 
     tx.commit().await?;
@@ -139,23 +142,10 @@ pub(crate) async fn attach_group_policy(
 
     let mut tx = db.new_tx().await?;
 
-    let found_group = db::group::find_by_name((&mut tx).as_mut(), ctx.account_id, input.group_name().unwrap()).await?;
-    if found_group.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("IAM group with name '{}' doesn't exist.", input.group_name().unwrap().trim()).as_str(),
-        ));
-    }
+    let found_group = find_by_name(ctx, tx.as_mut(), input.group_name().unwrap().trim()).await?;
+    let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), input.policy_arn().unwrap().trim()).await?;
 
-    let found_policy = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
-    if found_policy.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
-        ));
-    }
-
-    db::group::assign_policy_to_group(&mut tx, found_group.unwrap().id, found_policy.unwrap()).await?;
+    db::group::assign_policy_to_group(&mut tx, found_group.id, found_policy_id).await?;
 
     let output = AttachGroupPolicyOutput::builder().build();
 
@@ -171,9 +161,8 @@ pub(crate) async fn get_group(
     let group_name = input.group_name().unwrap().trim();
     // obtain connection
     let mut connection = db.new_connection().await?;
-    let found_group = db::group::find_by_name((&mut connection).as_mut(), ctx.account_id, group_name).await?;
 
-    match found_group {
+    match db::group::find_by_name(connection.as_mut(), ctx.account_id, group_name).await? {
         None => {
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
@@ -197,7 +186,7 @@ pub(crate) async fn get_group(
                 skip,
             };
 
-            let found_users = db::user::find_by_group_id(&mut connection, &query).await?;
+            let found_users = db::user::find_by_group_id(connection.as_mut(), &query).await?;
 
             let marker = super::common::create_encoded_marker(&query, found_users.len())?;
 

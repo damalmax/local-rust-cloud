@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::policy_document_type::PolicyDocumentType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct PutGroupPolicyRequest {
@@ -7,7 +8,7 @@ pub(crate) struct PutGroupPolicyRequest {
     #[serde(rename = "GroupName")]
     pub(crate) group_name: Option<types::group_name_type::GroupNameType>,
     #[serde(rename = "PolicyDocument")]
-    pub(crate) policy_document: Option<types::policy_document_type::PolicyDocumentType>,
+    pub(crate) policy_document: Option<PolicyDocumentType>,
 }
 
 impl PutGroupPolicyRequest {
@@ -18,7 +19,11 @@ impl PutGroupPolicyRequest {
         self.group_name.as_deref()
     }
     pub(crate) fn policy_document(&self) -> Option<&str> {
-        self.policy_document.as_deref()
+        // we expect that property is already validated, so, `unwrap` should be safe
+        self.policy_document_type().map(|doc| doc.document().unwrap())
+    }
+    pub(crate) fn policy_document_type(&self) -> Option<&PolicyDocumentType> {
+        self.policy_document.as_ref()
     }
 }
 
@@ -28,9 +33,12 @@ impl local_cloud_validate::NamedValidator for &PutGroupPolicyRequest {
         local_cloud_validate::validate_named(self.policy_name.as_ref(), format!("{at}.{}", "PolicyName").as_str())?;
         local_cloud_validate::validate_required(self.group_name(), format!("{at}.{}", "GroupName").as_str())?;
         local_cloud_validate::validate_named(self.group_name.as_ref(), format!("{at}.{}", "GroupName").as_str())?;
-        local_cloud_validate::validate_required(self.policy_document(), format!("{at}.{}", "PolicyDocument").as_str())?;
+        local_cloud_validate::validate_required(
+            self.policy_document_type(),
+            format!("{at}.{}", "PolicyDocument").as_str(),
+        )?;
         local_cloud_validate::validate_named(
-            self.policy_document.as_ref(),
+            self.policy_document_type(),
             format!("{at}.{}", "PolicyDocument").as_str(),
         )?;
         Ok(())

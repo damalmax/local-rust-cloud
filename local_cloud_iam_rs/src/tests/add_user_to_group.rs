@@ -7,7 +7,7 @@ async fn add_user_to_group() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_group_output = client
+    let _create_group_output = client
         .create_group()
         .group_name("test_group_1")
         .path("/")
@@ -26,7 +26,7 @@ async fn add_user_to_group() {
     .await
     .unwrap();
 
-    let create_user_output = super::fixture::create_user(
+    let _create_user_output = super::fixture::create_user(
         &client,
         "user1",
         "/",
@@ -40,7 +40,7 @@ async fn add_user_to_group() {
     .await
     .expect("Failed to create IAM user");
 
-    let response = client
+    let _response = client
         .add_user_to_group()
         .user_name("user1")
         .group_name("test_group_1")

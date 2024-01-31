@@ -16,9 +16,9 @@ impl Deref for RoleDescriptionType {
 
 impl local_cloud_validate::NamedValidator for &RoleDescriptionType {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_str_length_min(Some(&self), 0usize, at)?;
-        local_cloud_validate::validate_str_length_max(Some(&self), 1000usize, at)?;
-        local_cloud_validate::validate_regexp(Some(&self), REGEX.deref(), at)?;
+        local_cloud_validate::validate_str_length_min(Some(self), 0usize, at)?;
+        local_cloud_validate::validate_str_length_max(Some(self), 1000usize, at)?;
+        local_cloud_validate::validate_regexp(Some(self), REGEX.deref(), at)?;
         Ok(())
     }
 }

@@ -1,9 +1,10 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::policy_document_type::PolicyDocumentType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct CreateRoleRequest {
     #[serde(rename = "AssumeRolePolicyDocument")]
-    pub(crate) assume_role_policy_document: Option<types::policy_document_type::PolicyDocumentType>,
+    pub(crate) assume_role_policy_document: Option<PolicyDocumentType>,
     #[serde(rename = "Description")]
     pub(crate) description: Option<types::role_description_type::RoleDescriptionType>,
     #[serde(rename = "MaxSessionDuration")]
@@ -20,8 +21,14 @@ pub(crate) struct CreateRoleRequest {
 
 impl CreateRoleRequest {
     pub(crate) fn assume_role_policy_document(&self) -> Option<&str> {
-        self.assume_role_policy_document.as_deref()
+        // we expect that property is already validated, so, `unwrap` should be safe
+        self.assume_role_policy_document_type()
+            .map(|doc| doc.document().unwrap())
     }
+    pub(crate) fn assume_role_policy_document_type(&self) -> Option<&PolicyDocumentType> {
+        self.assume_role_policy_document.as_ref()
+    }
+
     pub(crate) fn description(&self) -> Option<&str> {
         self.description.as_deref()
     }
@@ -45,11 +52,11 @@ impl CreateRoleRequest {
 impl local_cloud_validate::NamedValidator for &CreateRoleRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         local_cloud_validate::validate_required(
-            self.assume_role_policy_document(),
+            self.assume_role_policy_document_type(),
             format!("{at}.{}", "AssumeRolePolicyDocument").as_str(),
         )?;
         local_cloud_validate::validate_named(
-            self.assume_role_policy_document.as_ref(),
+            self.assume_role_policy_document_type(),
             format!("{at}.{}", "AssumeRolePolicyDocument").as_str(),
         )?;
         local_cloud_validate::validate_named(self.description.as_ref(), format!("{at}.{}", "Description").as_str())?;

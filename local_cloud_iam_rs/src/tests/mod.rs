@@ -15,6 +15,7 @@ mod attach_role_policy;
 mod attach_user_policy;
 #[cfg(test)]
 mod create_group;
+mod create_instance_profile;
 #[cfg(test)]
 mod create_policy;
 #[cfg(test)]

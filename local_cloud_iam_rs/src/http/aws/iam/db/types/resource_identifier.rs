@@ -12,16 +12,18 @@ pub(crate) enum ResourceType {
     User,
     Role,
     Group,
+    InstanceProfile,
 }
 
 impl Into<i16> for ResourceType {
     fn into(self) -> i16 {
         match self {
-            ResourceType::Policy => 1,
-            ResourceType::PolicyVersion => 2,
-            ResourceType::User => 3,
-            ResourceType::Role => 4,
-            ResourceType::Group => 5,
+            Self::Policy => 1,
+            Self::PolicyVersion => 2,
+            Self::User => 3,
+            Self::Role => 4,
+            Self::Group => 5,
+            Self::InstanceProfile => 6,
         }
     }
 }

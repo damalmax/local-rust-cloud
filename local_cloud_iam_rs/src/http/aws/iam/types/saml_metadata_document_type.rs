@@ -12,8 +12,8 @@ impl Deref for SamlMetadataDocumentType {
 
 impl local_cloud_validate::NamedValidator for &SamlMetadataDocumentType {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_str_length_min(Some(&self), 1000usize, at)?;
-        local_cloud_validate::validate_str_length_max(Some(&self), 10000000usize, at)?;
+        local_cloud_validate::validate_str_length_min(Some(self), 1000usize, at)?;
+        local_cloud_validate::validate_str_length_max(Some(self), 10000000usize, at)?;
         Ok(())
     }
 }

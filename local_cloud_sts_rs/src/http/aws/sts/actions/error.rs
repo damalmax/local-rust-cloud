@@ -50,6 +50,6 @@ impl Into<XmlResponse> for StsApiError {
         );
         error_response_tag.finish();
 
-        return XmlResponse(out);
+        XmlResponse(out)
     }
 }

@@ -1,5 +1,6 @@
 pub(crate) mod common;
 pub(crate) mod group;
+pub(crate) mod instance_profile;
 pub(crate) mod policy;
 pub(crate) mod policy_type;
 pub(crate) mod policy_version;

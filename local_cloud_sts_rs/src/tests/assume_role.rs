@@ -31,7 +31,7 @@ async fn assume_role() {
         .expect("AssumedRoleUser property should be available in the response")
         .assumed_role_id();
 
-    let parts = assumed_role_id.split(":");
+    let parts = assumed_role_id.split(':');
 
     assert_eq!(test_role_session_name, parts.enumerate().last().unwrap().1);
     ctx.stop_server().await;

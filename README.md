@@ -26,7 +26,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] create_access_key
 - [ ] create_account_alias
 - [X] create_group
-- [ ] create_instance_profile
+- [X] create_instance_profile
 - [ ] create_login_profile
 - [ ] create_open_id_connect_provider
 - [X] create_policy
@@ -82,7 +82,6 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_mfa_device
 - [ ] get_open_id_connect_provider
 - [ ] get_organizations_access_report
-- [ ] get_paginator
 - [ ] get_policy
 - [ ] get_policy_version
 - [ ] get_role

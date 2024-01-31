@@ -1,4 +1,4 @@
-use crate::tests::fixture::{CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY, CREATE_USER_PERMISSIONS_BOUNDARY};
+use crate::tests::fixture::CREATE_USER_PERMISSIONS_BOUNDARY;
 
 #[actix_rt::test]
 async fn attach_user_policy() {

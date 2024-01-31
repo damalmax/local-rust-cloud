@@ -66,7 +66,7 @@ impl TestContext {
         };
         let server = start_server_fn(server_config).await;
 
-        return match server {
+        match server {
             Ok(server_handler) => {
                 let server_handle = server_handler.handle();
                 actix_rt::spawn(server_handler);
@@ -74,7 +74,7 @@ impl TestContext {
                 Ok(TestContext { port, server_handle })
             }
             Err(e) => Err(Error::new(e.kind(), e)),
-        };
+        }
     }
 
     pub async fn stop_server(&mut self) {

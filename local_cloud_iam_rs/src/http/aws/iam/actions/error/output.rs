@@ -26,6 +26,6 @@ impl Into<XmlResponse> for ApiError {
 
         // TODO: write extras for Error Metadata
         error_response_tag.finish();
-        return XmlResponse(out);
+        XmlResponse(out)
     }
 }

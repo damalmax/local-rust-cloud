@@ -24,7 +24,6 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
-use crate::http::aws::iam::validate;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_policy(
@@ -32,7 +31,7 @@ pub(crate) async fn create_policy(
 ) -> Result<CreatePolicyOutput, OperationError> {
     // validate
     input.validate("$")?;
-    let policy_document = validate::policy_document::validate_and_minify_managed(input.policy_document())?;
+    let policy_document = input.policy_document().unwrap();
 
     // init transaction
     let mut tx = db.new_tx().await?;
@@ -108,12 +107,12 @@ pub(crate) async fn create_policy_version(
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
     // validate
     input.validate("$")?;
-    let policy_document = validate::policy_document::validate_and_minify_managed(input.policy_document())?;
+    let policy_document = input.policy_document().unwrap();
 
     // init transaction
     let mut tx = db.new_tx().await?;
 
-    let policy_id = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
+    let policy_id = db::policy::find_id_by_arn(tx.as_mut(), input.policy_arn().unwrap()).await?;
     if policy_id.is_none() {
         return Err(OperationError::new(
             ApiErrorKind::NoSuchEntity,
@@ -169,6 +168,21 @@ async fn check_policy_version_count<'a>(
         ));
     }
     Ok(())
+}
+
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, arn: &str) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::policy::find_id_by_arn(executor, arn).await? {
+        Some(policy_id) => Ok(policy_id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("Unable to find policy with ARN '{}'.", arn).as_str(),
+            ))
+        }
+    }
 }
 
 pub(crate) async fn list_policies(
@@ -227,13 +241,13 @@ fn prepare_policy_for_insert(
 }
 
 fn prepare_policy_version_for_insert(
-    ctx: &OperationCtx, policy_document: String, policy_id: i64, policy_version_id: String, current_time: i64,
+    ctx: &OperationCtx, policy_document: &str, policy_id: i64, policy_version_id: String, current_time: i64,
 ) -> Result<InsertPolicyVersion, InsertPolicyVersionBuilderError> {
     InsertPolicyVersionBuilder::default()
         .id(None)
         .is_default(true)
         .policy_id(policy_id)
-        .policy_document(policy_document)
+        .policy_document(policy_document.to_owned())
         .policy_version_id(policy_version_id)
         .version(None)
         .account_id(ctx.account_id)

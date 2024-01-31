@@ -1,5 +1,7 @@
 pub(crate) mod constants;
 pub(crate) mod group;
+pub(crate) mod instance_profile;
+pub(crate) mod instance_profile_tag;
 pub(crate) mod policy;
 pub(crate) mod policy_tag;
 pub(crate) mod policy_version;

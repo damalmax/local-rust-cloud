@@ -84,10 +84,10 @@ impl Into<Policy> for &SelectPolicy {
         let tags = match &self.tags {
             None => None,
             Some(tags) => {
-                if tags.len() > 0 {
-                    Some(tags.iter().map(|tag| tag.into()).collect())
-                } else {
+                if tags.is_empty() {
                     None
+                } else {
+                    Some(tags.iter().map(|tag| tag.into()).collect())
                 }
             }
         };

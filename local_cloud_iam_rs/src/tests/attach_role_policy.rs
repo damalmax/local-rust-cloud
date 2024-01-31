@@ -7,7 +7,7 @@ async fn attach_role_policy() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_role_output = client
+    let _create_role_output = client
         .create_role()
         .role_name("Test-Role")
         .path("/")
@@ -27,7 +27,7 @@ async fn attach_role_policy() {
     .await
     .expect("Failed to create IAM policy");
 
-    let response = client
+    let _response = client
         .attach_role_policy()
         .role_name("Test-Role")
         .policy_arn(policy_output.policy().unwrap().arn().unwrap())

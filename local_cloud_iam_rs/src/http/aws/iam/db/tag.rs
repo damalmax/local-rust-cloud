@@ -25,7 +25,7 @@ pub(super) async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbTag, 
         )
         .as_str(),
     )
-    .bind(&tag.parent_id)
+    .bind(tag.parent_id)
     .bind(&tag.key)
     .bind(&tag.value)
     .map(|row: SqliteRow| row.get::<i64, &str>("id"))

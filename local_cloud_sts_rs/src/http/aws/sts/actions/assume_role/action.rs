@@ -42,7 +42,7 @@ impl LocalAssumeRole {
 
         repository::credentials::create(&mut tx, &mut credentials)
             .await
-            .map_err(|err| StsApiError {
+            .map_err(|_err| StsApiError {
                 error_code: Default::default(),
                 kind: StsErrorKind::InvalidInput,
                 request_id: aws_request_id.to_owned(),

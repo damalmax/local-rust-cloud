@@ -3,6 +3,7 @@ use aws_sdk_iam::operation::create_role::CreateRoleOutput;
 use aws_sdk_iam::types::Role;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
+use sqlx::{Executor, Sqlite};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
@@ -27,7 +28,7 @@ pub async fn create_role(
     let mut tx = db.new_tx().await?;
     let role_id = create_resource_id(&mut tx, constants::role::PREFIX, ResourceType::Role).await?;
 
-    let policy_id = super::policy::find_policy_id_by_arn((&mut tx).as_mut(), input.permissions_boundary()).await?;
+    let policy_id = super::policy::find_policy_id_by_arn(tx.as_mut(), input.permissions_boundary()).await?;
     let mut insert_role = prepare_role_for_insert(ctx, input, &role_id, policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
@@ -64,7 +65,7 @@ fn prepare_role_for_insert(
     let arn = format!("arn:aws:iam::{:0>12}:role/{}", ctx.account_id, role_name);
     let max_session_duration = input
         .max_session_duration()
-        .map(|v| v.clone())
+        .map(|v| *v)
         .unwrap_or(constants::role::DEFAULT_MAX_SESSION_DURATION) as i64;
     InsertRoleBuilder::default()
         .id(None)
@@ -80,6 +81,23 @@ fn prepare_role_for_insert(
         .build()
 }
 
+pub(crate) async fn find_id_by_name<'a, E>(
+    ctx: &OperationCtx, executor: E, role_name: &str,
+) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::role::find_id_by_name(executor, ctx.account_id, role_name).await? {
+        Some(role_id) => Ok(role_id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM role with name '{}' doesn't exist.", role_name).as_str(),
+            ))
+        }
+    }
+}
+
 pub(crate) async fn attach_role_policy(
     ctx: &OperationCtx, input: &AttachRolePolicyRequest, db: &LocalDb,
 ) -> Result<AttachRolePolicyOutput, OperationError> {
@@ -87,23 +105,11 @@ pub(crate) async fn attach_role_policy(
 
     let mut tx = db.new_tx().await?;
 
-    let found_role = db::role::find_id_by_name((&mut tx).as_mut(), ctx.account_id, input.role_name().unwrap()).await?;
-    if found_role.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("IAM role with name '{}' doesn't exist.", input.role_name().unwrap().trim()).as_str(),
-        ));
-    }
+    let found_role_id = find_id_by_name(ctx, tx.as_mut(), input.role_name().unwrap().trim()).await?;
+    let policy_arn = input.policy_arn().unwrap();
+    let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), policy_arn).await?;
 
-    let found_policy = db::policy::find_id_by_arn((&mut tx).as_mut(), input.policy_arn().unwrap()).await?;
-    if found_policy.is_none() {
-        return Err(OperationError::new(
-            ApiErrorKind::NoSuchEntity,
-            format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
-        ));
-    }
-
-    db::role::assign_policy_to_role(&mut tx, found_role.unwrap(), found_policy.unwrap()).await?;
+    db::role::assign_policy_to_role(&mut tx, found_role_id, found_policy_id).await?;
 
     let output = AttachRolePolicyOutput::builder().build();
 
