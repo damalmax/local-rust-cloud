@@ -17,9 +17,9 @@ pub(crate) async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Ve
     super::tag::save_all(tx, tags, "user_tags").await
 }
 
-pub(crate) async fn list_tags<'a, E>(executor: E, policy_id: i64, query: &ListTagsQuery) -> Result<Vec<DbTag>, Error>
+pub(crate) async fn list_tags<'a, E>(executor: E, user_id: i64, query: &ListTagsQuery) -> Result<Vec<DbTag>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    super::tag::list(executor, "user_tags", policy_id, query).await
+    super::tag::list(executor, "user_tags", user_id, query).await
 }

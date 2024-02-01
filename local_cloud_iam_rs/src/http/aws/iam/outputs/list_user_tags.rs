@@ -1,4 +1,3 @@
-use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
 use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_smithy_xml::encode::XmlWriter;
 

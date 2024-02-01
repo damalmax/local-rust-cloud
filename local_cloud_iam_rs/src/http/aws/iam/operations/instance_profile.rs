@@ -89,7 +89,7 @@ pub(crate) async fn add_role_to_instance_profile(
 
     let mut tx = db.new_tx().await?;
     let instance_profile_id = find_id_by_name(ctx, tx.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
-    let role_id = super::role::find_id_by_name(ctx, tx.as_mut(), input.role_name().unwrap().trim()).await?;
+    let role_id = super::role::find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
 
     db::instance_profile::assign_role_to_instance_profile(&mut tx, instance_profile_id, role_id).await?;
 

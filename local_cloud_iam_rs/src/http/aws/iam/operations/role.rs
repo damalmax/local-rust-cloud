@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
-use aws_sdk_iam::types::Role;
+use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
+use aws_sdk_iam::types::{Role, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
@@ -11,11 +12,13 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError};
+use crate::http::aws::iam::db::types::tag::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
+use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(
@@ -82,13 +85,11 @@ fn prepare_role_for_insert(
         .build()
 }
 
-pub(crate) async fn find_id_by_name<'a, E>(
-    ctx: &OperationCtx, executor: E, role_name: &str,
-) -> Result<i64, OperationError>
+pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, role_name: &str) -> Result<i64, OperationError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    match db::role::find_id_by_name(executor, ctx.account_id, role_name).await? {
+    match db::role::find_id_by_name(executor, account_id, role_name).await? {
         Some(role_id) => Ok(role_id),
         None => {
             return Err(OperationError::new(
@@ -106,7 +107,7 @@ pub(crate) async fn attach_role_policy(
 
     let mut tx = db.new_tx().await?;
 
-    let found_role_id = find_id_by_name(ctx, tx.as_mut(), input.role_name().unwrap().trim()).await?;
+    let found_role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
     let policy_arn = input.policy_arn().unwrap();
     let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
 
@@ -115,5 +116,39 @@ pub(crate) async fn attach_role_policy(
     let output = AttachRolePolicyOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn list_role_tags(
+    ctx: &OperationCtx, input: &ListRoleTagsRequest, db: &LocalDb,
+) -> Result<ListRoleTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+
+    let found_role_id = find_id_by_name(connection.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::role_tag::list_tags(connection.as_mut(), found_role_id, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let mut tags: Vec<Tag> = vec![];
+    for i in 0..(query.limit) {
+        let found_tag = found_tags.get(i as usize);
+        match found_tag {
+            None => break,
+            Some(tag) => {
+                tags.push(tag.into());
+            }
+        }
+    }
+
+    let output = ListRoleTagsOutput::builder()
+        .set_tags(Some(tags))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
