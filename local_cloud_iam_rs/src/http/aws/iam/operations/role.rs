@@ -28,7 +28,8 @@ pub async fn create_role(
     let mut tx = db.new_tx().await?;
     let role_id = create_resource_id(&mut tx, constants::role::PREFIX, ResourceType::Role).await?;
 
-    let policy_id = super::policy::find_policy_id_by_arn(tx.as_mut(), input.permissions_boundary()).await?;
+    let policy_id =
+        super::policy::find_policy_id_by_arn(tx.as_mut(), ctx.account_id, input.permissions_boundary()).await?;
     let mut insert_role = prepare_role_for_insert(ctx, input, &role_id, policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
@@ -107,7 +108,7 @@ pub(crate) async fn attach_role_policy(
 
     let found_role_id = find_id_by_name(ctx, tx.as_mut(), input.role_name().unwrap().trim()).await?;
     let policy_arn = input.policy_arn().unwrap();
-    let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), policy_arn).await?;
+    let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
 
     db::role::assign_policy_to_role(&mut tx, found_role_id, found_policy_id).await?;
 

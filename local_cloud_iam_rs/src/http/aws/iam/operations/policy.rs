@@ -80,14 +80,16 @@ pub(crate) async fn create_policy(
     Ok(output)
 }
 
-pub(crate) async fn find_policy_id_by_arn<'a, E>(executor: E, arn: Option<&str>) -> Result<Option<i64>, OperationError>
+pub(crate) async fn find_policy_id_by_arn<'a, E>(
+    executor: E, account_id: i64, arn: Option<&str>,
+) -> Result<Option<i64>, OperationError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     let policy_id = match arn {
         None => None,
         Some(policy_arn) => {
-            let policy = db::policy::find_id_by_arn(executor, policy_arn).await?;
+            let policy = db::policy::find_id_by_arn(executor, account_id, policy_arn).await?;
             match policy {
                 None => {
                     return Err(OperationError::new(
@@ -112,7 +114,7 @@ pub(crate) async fn create_policy_version(
     // init transaction
     let mut tx = db.new_tx().await?;
 
-    let policy_id = db::policy::find_id_by_arn(tx.as_mut(), input.policy_arn().unwrap()).await?;
+    let policy_id = db::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap()).await?;
     if policy_id.is_none() {
         return Err(OperationError::new(
             ApiErrorKind::NoSuchEntity,
@@ -170,11 +172,11 @@ async fn check_policy_version_count<'a>(
     Ok(())
 }
 
-pub(crate) async fn find_id_by_arn<'a, E>(executor: E, arn: &str) -> Result<i64, OperationError>
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    match db::policy::find_id_by_arn(executor, arn).await? {
+    match db::policy::find_id_by_arn(executor, account_id, arn).await? {
         Some(policy_id) => Ok(policy_id),
         None => {
             return Err(OperationError::new(
@@ -186,7 +188,7 @@ where
 }
 
 pub(crate) async fn list_policies(
-    _ctx: &OperationCtx, input: &ListPoliciesRequest, db: &LocalDb,
+    ctx: &OperationCtx, input: &ListPoliciesRequest, db: &LocalDb,
 ) -> Result<ListPoliciesOutput, OperationError> {
     input.validate("$")?;
 
@@ -195,7 +197,7 @@ pub(crate) async fn list_policies(
     // obtain connection
     let mut connection = db.new_connection().await?;
 
-    let found_policies: Vec<SelectPolicy> = db::policy::list_policies(&mut connection, &query).await?;
+    let found_policies: Vec<SelectPolicy> = db::policy::list(&mut connection, ctx.account_id, &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
     let mut policies: Vec<Policy> = vec![];

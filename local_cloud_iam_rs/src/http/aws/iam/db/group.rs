@@ -31,7 +31,7 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, group: &mut Ins
     Ok(())
 }
 
-pub(crate) async fn list_groups<'a, E>(executor: E, query: &ListGroupsQuery) -> Result<Vec<SelectGroup>, Error>
+pub(crate) async fn list<'a, E>(executor: E, query: &ListGroupsQuery) -> Result<Vec<SelectGroup>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {

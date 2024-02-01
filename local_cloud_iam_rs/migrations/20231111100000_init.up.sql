@@ -274,6 +274,6 @@ CREATE TABLE IF NOT EXISTS login_profiles
     create_date             INTEGER                           NOT NULL,
     password_hash           VARCHAR2(200)                     NOT NULL,
     password_reset_required BOOLEAN                           NOT NULL,
-    UNIQUE (user_id) ON CONFLICT FAIL
+    UNIQUE (user_id)
 );
 CREATE INDEX IF NOT EXISTS fk_login_profiles__user_id ON login_profiles (user_id ASC);

@@ -14,6 +14,7 @@ use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupReque
 use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
+use crate::http::aws::iam::types::change_password_request::ChangePasswordRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
 use crate::http::aws::iam::types::create_login_profile_request::CreateLoginProfileRequest;
@@ -24,6 +25,7 @@ use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
+use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
@@ -38,6 +40,8 @@ pub(crate) enum LocalAwsRequest {
     AttachRolePolicy(AttachRolePolicyRequest),
     #[serde(rename = "AttachUserPolicy")]
     AttachUserPolicy(AttachUserPolicyRequest),
+    #[serde(rename = "ChangePassword")]
+    ChangePassword(ChangePasswordRequest),
     #[serde(rename = "CreateGroup")]
     CreateGroup(CreateGroupRequest),
     #[serde(rename = "CreateInstanceProfile")]
@@ -58,6 +62,8 @@ pub(crate) enum LocalAwsRequest {
     ListGroups(ListGroupsRequest),
     #[serde(rename = "ListPolicies")]
     ListPolicies(ListPoliciesRequest),
+    #[serde(rename = "ListUsers")]
+    ListUsers(ListUsersRequest),
 }
 
 pub(crate) async fn handle(
@@ -85,6 +91,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::AttachUserPolicy(attach_user_policy) => attach_user_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ChangePassword(change_password) => change_password
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
@@ -125,6 +135,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListPolicies(list_policies) => list_policies
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListUsers(list_users) => list_users
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

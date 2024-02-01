@@ -5,7 +5,7 @@ use std::fmt::Display;
 use actix_web::http::StatusCode;
 use derive_more::Display;
 
-use local_cloud_validate::ValidationError;
+use local_cloud_validate::{ValidationError, ValidationErrorKind};
 
 pub(crate) mod output;
 
@@ -29,6 +29,7 @@ impl ApiError {
 
     pub(crate) fn from_validation_error(error: &ValidationError, aws_request_id: &str) -> Self {
         let kind = match error.kind {
+            ValidationErrorKind::Password => ApiErrorKind::PasswordPolicyViolation,
             _ => ApiErrorKind::InvalidInput,
         };
 

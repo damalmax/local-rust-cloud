@@ -41,11 +41,12 @@ pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, policy: &mut In
     Ok(())
 }
 
-pub(crate) async fn find_id_by_arn<'a, E>(executor: E, policy_arn: &str) -> Result<Option<i64>, Error>
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, policy_arn: &str) -> Result<Option<i64>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    let result = sqlx::query("SELECT id FROM policies WHERE arn = $1")
+    let result = sqlx::query("SELECT id FROM policies WHERE account_id = $1 AND arn = $2")
+        .bind(account_id)
         .bind(policy_arn)
         .map(|row: SqliteRow| row.get::<i64, &str>("id"))
         .fetch_optional(executor)
@@ -82,8 +83,8 @@ where
     Ok(result)
 }
 
-pub(crate) async fn list_policies(
-    connection: &mut PoolConnection<Sqlite>, query: &ListPoliciesQuery,
+pub(crate) async fn list(
+    connection: &mut PoolConnection<Sqlite>, account_id: i64, query: &ListPoliciesQuery,
 ) -> Result<Vec<SelectPolicy>, Error> {
     let scopes: Vec<i32> = query.policy_scope_types.iter().map(|v| v.as_i32()).collect();
 
@@ -113,9 +114,11 @@ pub(crate) async fn list_policies(
                     )
                 ) AS tags
             FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
-            WHERE path LIKE "#,
+            WHERE p.account_id = "#,
     );
     query_builder
+        .push_bind(account_id)
+        .push(" AND path LIKE ")
         .push_bind(format!("{}%", &query.path_prefix))
         .push(" AND policy_type in (");
     let mut separated = query_builder.separated(", ");

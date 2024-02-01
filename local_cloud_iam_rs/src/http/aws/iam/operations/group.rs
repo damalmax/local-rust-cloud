@@ -80,7 +80,7 @@ pub(crate) async fn list_groups(
     // obtain connection
     let mut connection = db.new_connection().await?;
 
-    let found_groups: Vec<SelectGroup> = db::group::list_groups(connection.as_mut(), &query).await?;
+    let found_groups: Vec<SelectGroup> = db::group::list(connection.as_mut(), &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
 
     let mut groups: Vec<Group> = vec![];
@@ -143,7 +143,8 @@ pub(crate) async fn attach_group_policy(
     let mut tx = db.new_tx().await?;
 
     let found_group = find_by_name(ctx, tx.as_mut(), input.group_name().unwrap().trim()).await?;
-    let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), input.policy_arn().unwrap().trim()).await?;
+    let found_policy_id =
+        super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
     db::group::assign_policy_to_group(&mut tx, found_group.id, found_policy_id).await?;
 
@@ -192,7 +193,7 @@ pub(crate) async fn get_group(
 
             let mut users = vec![];
             for found_user in found_users {
-                let user = found_user.into();
+                let user = (&found_user).into();
                 users.push(user);
             }
 

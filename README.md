@@ -125,9 +125,9 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_service_specific_credentials
 - [ ] list_signing_certificates
 - [ ] list_ssh_public_keys
-- [ ] list_user_policies/home/damal/Documents/projects/local-rust-cloud/README.md
+- [ ] list_user_policies
 - [ ] list_user_tags
-- [ ] list_users
+- [X] list_users
 - [ ] list_virtual_mfa_devices
 - [ ] put_group_policy
 - [ ] put_role_permissions_boundary

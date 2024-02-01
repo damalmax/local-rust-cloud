@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ValidationErrorKind {
+    Password,
     Required,
     Min,
     Max,

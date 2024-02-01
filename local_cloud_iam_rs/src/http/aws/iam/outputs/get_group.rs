@@ -29,35 +29,7 @@ impl From<LocalGetGroupOutput> for XmlResponse {
             write_tag_with_value(&mut group_tag, "GroupName", Some(group.group_name()));
             group_tag.finish();
         }
-
-        let mut users_tag = get_group_result_tag.start_el("Users").finish();
-        for user in val.inner.users() {
-            let mut user_tag = users_tag.start_el("member").finish();
-            write_tag_with_value(&mut user_tag, "Path", Some(user.path()));
-            write_tag_with_value(&mut user_tag, "UserName", Some(user.user_name()));
-            write_tag_with_value(&mut user_tag, "UserId", Some(user.user_id()));
-            write_tag_with_value(&mut user_tag, "Arn", Some(user.arn()));
-            write_iso8061_datetime_value_tag(&mut user_tag, "CreateDate", Some(user.create_date()));
-            if let Some(permissions_boundary) = user.permissions_boundary() {
-                let mut permissions_boundary_tag = user_tag.start_el("PermissionsBoundary").finish();
-                write_tag_with_value(
-                    &mut permissions_boundary_tag,
-                    "PermissionsBoundaryType",
-                    Some(permissions_boundary.permissions_boundary_type().unwrap().as_str()),
-                );
-                write_tag_with_value(
-                    &mut permissions_boundary_tag,
-                    "PermissionsBoundaryArn",
-                    permissions_boundary.permissions_boundary_arn(),
-                );
-                permissions_boundary_tag.finish();
-            }
-            write_iso8061_datetime_value_tag(&mut user_tag, "PasswordLastUsed", user.password_last_used());
-            super::tags::write(&mut user_tag, user.tags());
-            user_tag.finish();
-        }
-        users_tag.finish();
-
+        super::user::write_slice(&mut get_group_result_tag, val.inner.users());
         if let Some(token) = val.inner.marker() {
             write_tag_with_value(&mut get_group_result_tag, "Marker", Some(token));
         }

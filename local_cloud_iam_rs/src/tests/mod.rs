@@ -33,6 +33,7 @@ mod get_group;
 mod list_groups;
 #[cfg(test)]
 mod list_policies;
+mod list_users;
 
 pub fn credentials_provider() -> impl ProvideCredentials {
     aws_credential_types::Credentials::new("AKIAIOSFODNN201ADMIN", "secret_access_key", None, None, "provider_name")

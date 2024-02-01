@@ -2,7 +2,7 @@ use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
-use local_cloud_xml::{write_iso8061_datetime_value_tag, write_tag_with_value};
+use local_cloud_xml::write_tag_with_value;
 
 use crate::http::aws::iam::constants;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
@@ -20,18 +20,10 @@ impl From<LocalListGroupsOutput> for XmlResponse {
             .finish();
 
         let mut list_groups_result_tag = list_groups_response_tag.start_el("ListGroupsResult").finish();
+
         let groups = val.inner.groups();
-        let mut groups_tag = list_groups_result_tag.start_el("Groups").finish();
-        for group in groups {
-            let mut group_tag = groups_tag.start_el("member").finish();
-            write_tag_with_value(&mut group_tag, "Path", Some(group.path()));
-            write_iso8061_datetime_value_tag(&mut group_tag, "CreateDate", Some(group.create_date()));
-            write_tag_with_value(&mut group_tag, "GroupId", Some(group.group_id()));
-            write_tag_with_value(&mut group_tag, "Arn", Some(group.arn()));
-            write_tag_with_value(&mut group_tag, "GroupName", Some(group.group_name()));
-            group_tag.finish();
-        }
-        groups_tag.finish();
+        super::group::write_slice(&mut list_groups_result_tag, groups);
+
         if let Some(token) = val.inner.marker() {
             write_tag_with_value(&mut list_groups_result_tag, "Marker", Some(token));
         }

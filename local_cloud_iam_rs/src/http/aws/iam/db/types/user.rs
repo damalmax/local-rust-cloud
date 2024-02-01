@@ -7,6 +7,7 @@ use sqlx::{Error, FromRow, Row};
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::tag::DbTag;
 use crate::http::aws::iam::operations;
+use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 
 #[derive(Debug, Builder)]
 pub(crate) struct InsertUser {
@@ -82,7 +83,45 @@ impl Pageable for &ListUsersByGroupQuery {
     }
 }
 
-impl Into<User> for SelectUser {
+#[derive(Debug)]
+pub(crate) struct ListUsersQuery {
+    pub(crate) path_prefix: String,
+    pub(crate) limit: i32,
+    pub(crate) skip: i32,
+}
+
+impl Pageable for &ListUsersQuery {
+    fn limit(&self) -> i32 {
+        self.limit
+    }
+
+    fn skip(&self) -> i32 {
+        self.skip
+    }
+}
+
+impl Into<ListUsersQuery> for &ListUsersRequest {
+    fn into(self) -> ListUsersQuery {
+        let limit = match self.max_items() {
+            None => 10,
+            Some(v) => *v,
+        };
+
+        let skip = match self.marker_type() {
+            None => 0,
+            // unwrap is safe since marker must be validated before DB query preparation
+            Some(marker_type) => marker_type.marker().unwrap().truncate_amount,
+        };
+
+        ListUsersQuery {
+            path_prefix: self.path_prefix().unwrap_or("/").to_owned(),
+            limit: if limit < 1 { 10 } else { limit },
+            skip,
+        }
+    }
+}
+
+impl Into<User> for &SelectUser {
     fn into(self) -> User {
         let tags = match &self.tags {
             None => None,
