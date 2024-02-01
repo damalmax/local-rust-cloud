@@ -5,6 +5,7 @@ use aws_types::SdkConfig;
 
 mod test_suite;
 
+#[cfg(test)]
 mod add_role_to_instance_profile;
 #[cfg(test)]
 mod add_user_to_group;
@@ -16,7 +17,9 @@ mod attach_role_policy;
 mod attach_user_policy;
 #[cfg(test)]
 mod create_group;
+#[cfg(test)]
 mod create_instance_profile;
+#[cfg(test)]
 mod create_login_profile;
 #[cfg(test)]
 mod create_policy;
@@ -33,7 +36,11 @@ mod get_group;
 mod list_groups;
 #[cfg(test)]
 mod list_policies;
+#[cfg(test)]
 mod list_policy_tags;
+#[cfg(test)]
+mod list_user_tags;
+#[cfg(test)]
 mod list_users;
 
 pub fn credentials_provider() -> impl ProvideCredentials {

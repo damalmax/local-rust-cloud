@@ -125,7 +125,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_signing_certificates
 - [ ] list_ssh_public_keys
 - [ ] list_user_policies
-- [ ] list_user_tags
+- [X] list_user_tags
 - [X] list_users
 - [ ] list_virtual_mfa_devices
 - [ ] put_group_policy

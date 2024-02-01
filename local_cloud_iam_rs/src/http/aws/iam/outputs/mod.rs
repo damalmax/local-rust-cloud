@@ -17,6 +17,7 @@ mod group;
 mod list_groups;
 mod list_policies;
 mod list_policy_tags;
+mod list_user_tags;
 mod list_users;
 mod policy;
 mod roles;

@@ -1,7 +1,8 @@
 use aws_sdk_iam::operation::attach_user_policy::AttachUserPolicyOutput;
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
+use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
-use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
+use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, Tag, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
@@ -11,12 +12,14 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
+use crate::http::aws::iam::db::types::tag::ListTagsQuery;
 use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError, SelectUser};
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
+use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -166,5 +169,39 @@ pub(crate) async fn list_users(
         .build()
         .unwrap();
 
+    Ok(output)
+}
+
+pub(crate) async fn list_user_tags(
+    ctx: &OperationCtx, input: &ListUserTagsRequest, db: &LocalDb,
+) -> Result<ListUserTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+
+    let found_user_id = find_id_by_name(connection.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::user_tag::list_tags(connection.as_mut(), found_user_id, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let mut tags: Vec<Tag> = vec![];
+    for i in 0..(query.limit) {
+        let found_tag = found_tags.get(i as usize);
+        match found_tag {
+            None => break,
+            Some(tag) => {
+                tags.push(tag.into());
+            }
+        }
+    }
+
+    let output = ListUserTagsOutput::builder()
+        .set_tags(Some(tags))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }

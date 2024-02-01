@@ -14,6 +14,9 @@ impl ListUserTagsRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
     }
+    pub(crate) fn marker_type(&self) -> Option<&types::marker_type::MarkerType> {
+        self.marker.as_ref()
+    }
     pub(crate) fn max_items(&self) -> Option<&i32> {
         self.max_items.as_deref()
     }

@@ -61,4 +61,5 @@ action!(group, get_group, get_group_request, GetGroupRequest, GetGroupOutput);
 action!(group, list_groups, list_groups_request, ListGroupsRequest, ListGroupsOutput);
 action!(policy, list_policies, list_policies_request, ListPoliciesRequest, ListPoliciesOutput);
 action!(policy, list_policy_tags, list_policy_tags_request, ListPolicyTagsRequest, ListPolicyTagsOutput);
+action!(user, list_user_tags, list_user_tags_request, ListUserTagsRequest, ListUserTagsOutput);
 action!(user, list_users, list_users_request, ListUsersRequest, ListUsersOutput);

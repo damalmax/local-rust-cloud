@@ -8,7 +8,6 @@ use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::tag::DbTag;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
-use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
 use crate::http::aws::iam::types::policy_scope_type::PolicyScopeType;
 
 #[derive(Debug, Builder)]
