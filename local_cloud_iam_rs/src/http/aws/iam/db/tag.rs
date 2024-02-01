@@ -1,13 +1,13 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::tag::DbTag;
+use crate::http::aws::iam::db::types::tag::{DbTag, ListTagsQuery};
 
 pub(super) async fn find_by_parent_id<'a, E>(executor: E, parent_id: i64, table_name: &str) -> Result<Vec<DbTag>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    sqlx::query(format!("SELECT id, parent_id, key, value FROM {table_name} WHERE parent_id=$1").as_str())
+    sqlx::query(format!("SELECT id, parent_id, key, value FROM {table_name} WHERE parent_id=$1 ORDER BY key").as_str())
         .bind(parent_id)
         .map(|row: SqliteRow| DbTag::from_row(&row).unwrap())
         .fetch_all(executor)
@@ -53,4 +53,30 @@ pub(crate) async fn delete_by_parent_id<'a>(
         .execute(tx.as_mut())
         .await
         .map(|_| ())
+}
+
+pub(crate) async fn list<'a, E>(
+    executor: E, table_name: &str, parent_id: i64, query: &ListTagsQuery,
+) -> Result<Vec<DbTag>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+        r#"SELECT id, parent_id, key, value 
+               FROM "#,
+    );
+    let tags = query_builder
+        .push(table_name)
+        .push(" WHERE parent_id = ")
+        .push_bind(parent_id)
+        .push(" ORDER BY key")
+        .push(" LIMIT ")
+        .push_bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
+        .push(" OFFSET ")
+        .push_bind(query.skip)
+        .build()
+        .map(|row: SqliteRow| DbTag::from_row(&row).unwrap())
+        .fetch_all(executor)
+        .await?;
+    Ok(tags)
 }

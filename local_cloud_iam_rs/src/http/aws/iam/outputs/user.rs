@@ -35,6 +35,6 @@ pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, user: 
     if user.password_last_used().is_some() {
         write_iso8061_datetime_value_tag(&mut wrapper_tag, "PasswordLastUsed", user.password_last_used());
     }
-    super::tags::write(&mut wrapper_tag, user.tags());
+    super::tags::write_slice(&mut wrapper_tag, user.tags());
     wrapper_tag.finish();
 }

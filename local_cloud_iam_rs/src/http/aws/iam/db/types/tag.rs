@@ -1,6 +1,8 @@
 use sqlx::{Error, FromRow};
 
 use crate::http::aws::iam::db;
+use crate::http::aws::iam::db::types::common::Pageable;
+use crate::http::aws::iam::types::marker_type::MarkerType;
 
 #[derive(Clone, FromRow, Debug)]
 pub(crate) struct DbTag {
@@ -55,5 +57,40 @@ impl Into<aws_sdk_iam::types::Tag> for &DbTag {
             .value(&self.value)
             .build()
             .unwrap()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct ListTagsQuery {
+    pub(crate) limit: i32,
+    pub(crate) skip: i32,
+}
+
+impl Pageable for &ListTagsQuery {
+    fn limit(&self) -> i32 {
+        self.limit
+    }
+
+    fn skip(&self) -> i32 {
+        self.skip
+    }
+}
+
+impl ListTagsQuery {
+    pub(crate) fn new(max_items: Option<&i32>, marker_type: Option<&MarkerType>) -> Self {
+        let limit = match max_items {
+            None => 10,
+            Some(v) => *v,
+        };
+
+        let skip = match marker_type {
+            None => 0,
+            Some(marker_type) => marker_type.marker().unwrap().truncate_amount,
+        };
+
+        ListTagsQuery {
+            limit: if limit < 1 { 10 } else { limit },
+            skip,
+        }
     }
 }

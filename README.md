@@ -94,7 +94,6 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_ssh_public_key
 - [ ] get_user
 - [ ] get_user_policy
-- [ ] get_waiter
 - [ ] list_access_keys
 - [ ] list_account_aliases
 - [ ] list_attached_group_policies
@@ -113,7 +112,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_open_id_connect_providers
 - [X] list_policies
 - [ ] list_policies_granting_service_access
-- [ ] list_policy_tags
+- [X] list_policy_tags
 - [ ] list_policy_versions
 - [ ] list_role_policies
 - [ ] list_role_tags

@@ -33,6 +33,7 @@ mod get_group;
 mod list_groups;
 #[cfg(test)]
 mod list_policies;
+mod list_policy_tags;
 mod list_users;
 
 pub fn credentials_provider() -> impl ProvideCredentials {

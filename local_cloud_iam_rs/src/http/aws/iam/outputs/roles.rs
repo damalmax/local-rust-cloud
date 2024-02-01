@@ -31,6 +31,6 @@ pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, role: 
         "AssumeRolePolicyDocument",
         role.assume_role_policy_document(),
     );
-    super::tags::write(&mut wrapper_tag, role.tags());
+    super::tags::write_slice(&mut wrapper_tag, role.tags());
     wrapper_tag.finish();
 }

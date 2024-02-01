@@ -1,6 +1,6 @@
 use sqlx::{Error, Executor, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::tag::DbTag;
+use crate::http::aws::iam::db::types::tag::{DbTag, ListTagsQuery};
 
 pub(crate) async fn find_by_policy_id<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbTag>, Error>
 where
@@ -19,4 +19,11 @@ pub(crate) async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Ve
 
 pub(crate) async fn delete_by_policy_id<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<(), Error> {
     super::tag::delete_by_parent_id(tx, policy_id, "policy_tags").await
+}
+
+pub(crate) async fn list_tags<'a, E>(executor: E, policy_id: i64, query: &ListTagsQuery) -> Result<Vec<DbTag>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    super::tag::list(executor, "policy_tags", policy_id, query).await
 }

@@ -25,6 +25,7 @@ use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
+use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 
 #[derive(Deserialize, Debug)]
@@ -62,6 +63,8 @@ pub(crate) enum LocalAwsRequest {
     ListGroups(ListGroupsRequest),
     #[serde(rename = "ListPolicies")]
     ListPolicies(ListPoliciesRequest),
+    #[serde(rename = "ListPolicyTags")]
+    ListPolicyTags(ListPolicyTagsRequest),
     #[serde(rename = "ListUsers")]
     ListUsers(ListUsersRequest),
 }
@@ -135,6 +138,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListPolicies(list_policies) => list_policies
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListPolicyTags(list_policy_tags) => list_policy_tags
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

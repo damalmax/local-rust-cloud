@@ -29,6 +29,6 @@ pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, policy
     write_iso8061_datetime_value_tag(&mut wrapper_tag, "CreateDate", policy.create_date());
     write_iso8061_datetime_value_tag(&mut wrapper_tag, "UpdateDate", policy.update_date());
 
-    super::tags::write(&mut wrapper_tag, policy.tags());
+    super::tags::write_slice(&mut wrapper_tag, policy.tags());
     wrapper_tag.finish();
 }

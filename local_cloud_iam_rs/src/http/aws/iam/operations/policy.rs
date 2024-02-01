@@ -1,7 +1,8 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
 use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
-use aws_sdk_iam::types::{Policy, PolicyVersion};
+use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
+use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
@@ -18,12 +19,14 @@ use crate::http::aws::iam::db::types::policy_version::{
     InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError,
 };
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
+use crate::http::aws::iam::db::types::tag::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
+use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_policy(
@@ -217,6 +220,41 @@ pub(crate) async fn list_policies(
         .set_marker(marker)
         .build();
 
+    Ok(output)
+}
+
+pub(crate) async fn list_policy_tags(
+    ctx: &OperationCtx, input: &ListPolicyTagsRequest, db: &LocalDb,
+) -> Result<ListPolicyTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+
+    let found_policy_id =
+        find_id_by_arn(connection.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::policy_tag::list_tags(connection.as_mut(), found_policy_id, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let mut tags: Vec<Tag> = vec![];
+    for i in 0..(query.limit) {
+        let found_tag = found_tags.get(i as usize);
+        match found_tag {
+            None => break,
+            Some(tag) => {
+                tags.push(tag.into());
+            }
+        }
+    }
+
+    let output = ListPolicyTagsOutput::builder()
+        .set_tags(Some(tags))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
 

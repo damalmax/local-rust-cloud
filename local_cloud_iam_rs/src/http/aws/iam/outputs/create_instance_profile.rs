@@ -41,7 +41,7 @@ impl From<LocalCreateInstanceProfileOutput> for XmlResponse {
                 "CreateDate",
                 Some(instance_profile.create_date()),
             );
-            super::tags::write(&mut instance_profile_tag, instance_profile.tags());
+            super::tags::write_slice(&mut instance_profile_tag, instance_profile.tags());
 
             instance_profile_tag.finish();
         }
