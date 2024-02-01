@@ -179,7 +179,7 @@ where
         None => {
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
-                format!("Unable to find policy with ARN '{}'.", arn).as_str(),
+                format!("IAM policy with ARN '{}' doesn't exist.", arn).as_str(),
             ))
         }
     }

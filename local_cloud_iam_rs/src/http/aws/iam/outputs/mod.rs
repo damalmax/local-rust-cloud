@@ -1,3 +1,4 @@
+mod add_role_to_instance_profile;
 mod add_user_to_group;
 mod attach_group_policy;
 mod attach_role_policy;
@@ -5,6 +6,7 @@ mod attach_user_policy;
 mod common;
 mod create_group;
 mod create_instance_profile;
+mod create_login_profile;
 mod create_policy;
 mod create_policy_version;
 mod create_role;

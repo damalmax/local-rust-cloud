@@ -88,6 +88,7 @@ impl ApiErrorKind {
         match self {
             ApiErrorKind::ServiceFailure => StatusCode::INTERNAL_SERVER_ERROR,
             ApiErrorKind::ServiceNotSupported => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiErrorKind::EntityAlreadyExists => StatusCode::CONFLICT,
             _ => StatusCode::BAD_REQUEST,
         }
     }

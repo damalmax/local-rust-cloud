@@ -5,6 +5,7 @@ use aws_types::SdkConfig;
 
 mod test_suite;
 
+mod add_role_to_instance_profile;
 #[cfg(test)]
 mod add_user_to_group;
 #[cfg(test)]
@@ -16,6 +17,7 @@ mod attach_user_policy;
 #[cfg(test)]
 mod create_group;
 mod create_instance_profile;
+mod create_login_profile;
 #[cfg(test)]
 mod create_policy;
 #[cfg(test)]

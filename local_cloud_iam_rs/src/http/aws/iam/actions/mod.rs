@@ -1,10 +1,12 @@
 pub(crate) mod action;
+mod add_role_to_instance_profile;
 pub(crate) mod add_user_to_group;
 pub(crate) mod attach_group_policy;
 pub(crate) mod attach_role_policy;
 pub(crate) mod attach_user_policy;
 pub(crate) mod create_group;
 pub(crate) mod create_instance_profile;
+mod create_login_profile;
 pub(crate) mod create_policy;
 pub(crate) mod create_policy_version;
 pub(crate) mod create_role;

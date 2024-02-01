@@ -3,6 +3,8 @@ pub(crate) mod ctx;
 pub(crate) mod error;
 pub(crate) mod group;
 pub(crate) mod instance_profile;
+pub(crate) mod login_profile;
 pub(crate) mod policy;
 pub(crate) mod role;
+pub(crate) mod secure;
 pub(crate) mod user;

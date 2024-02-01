@@ -1,9 +1,7 @@
-use local_cloud_testing::assertions::assert_not_empty;
-
 use crate::tests::fixture::{tag, CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY, CREATE_USER_PERMISSIONS_BOUNDARY};
 
 #[actix_rt::test]
-async fn create_role() {
+async fn add_user_to_group() {
     let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
@@ -20,7 +18,7 @@ async fn create_role() {
     .await
     .unwrap();
 
-    let response = client
+    let role_output = client
         .create_role()
         .role_name("Test-Role")
         .path("/")
@@ -33,12 +31,23 @@ async fn create_role() {
         .await
         .expect("Failed to create IAM role");
 
-    assert!(response.role().is_some());
-    let role = response.role().unwrap();
-    assert_eq!(role.tags().len(), 3);
-    assert_not_empty(role.path());
-    assert_not_empty(role.arn());
-    assert_not_empty(role.role_name());
+    let instance_profile_output = client
+        .create_instance_profile()
+        .path("/")
+        .instance_profile_name("instance-profile-1")
+        .tags(tag("key1", "value1"))
+        .tags(tag("key2", "value2"))
+        .send()
+        .await
+        .expect("Failed to create IAM instance profile");
+
+    let _response = client
+        .add_role_to_instance_profile()
+        .instance_profile_name("instance-profile-1")
+        .role_name("Test-Role")
+        .send()
+        .await
+        .expect("Failed to add role to instance profile");
 
     ctx.stop_server().await;
 }

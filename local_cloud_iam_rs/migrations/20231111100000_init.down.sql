@@ -46,3 +46,6 @@ DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS unique_identifiers;
 DROP TABLE IF EXISTS regions;
 DROP TABLE IF EXISTS accounts;
+
+DROP INDEX IF EXISTS fk_login_profiles__user_id;
+DROP TABLE IF EXISTS login_profiles;
