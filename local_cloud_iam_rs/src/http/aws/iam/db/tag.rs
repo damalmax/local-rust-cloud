@@ -1,7 +1,7 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::tag::{DbTag, ListTagsQuery};
+use crate::http::aws::iam::db::types::tags::{DbTag, ListTagsQuery};
 
 pub(super) async fn find_by_parent_id<'a, E>(executor: E, parent_id: i64, table_name: &str) -> Result<Vec<DbTag>, Error>
 where

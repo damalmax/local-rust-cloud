@@ -116,7 +116,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_policy_versions
 - [ ] list_role_policies
 - [X] list_role_tags
-- [ ] list_roles
+- [X] list_roles
 - [ ] list_saml_provider_tags
 - [ ] list_saml_providers
 - [ ] list_server_certificate_tags

@@ -4,7 +4,7 @@ use sqlx::{Sqlite, Transaction};
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, ResourceType};
-use crate::http::aws::iam::db::types::tag::DbTag;
+use crate::http::aws::iam::db::types::tags::DbTag;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::marker_type::Marker;
 use crate::http::aws::iam::{db, types};

@@ -1,4 +1,4 @@
-use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
+use aws_sdk_iam::operation::create_saml_provider::CreateSamlProviderOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
@@ -7,27 +7,23 @@ use local_cloud_xml::{write_request_metadata_tag, write_tag_with_value};
 use crate::http::aws::iam::constants;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
 
-pub type LocalListGroupsOutput = OutputWrapper<ListGroupsOutput>;
+pub type LocalCreateSamlProviderOutput = OutputWrapper<CreateSamlProviderOutput>;
 
-impl From<LocalListGroupsOutput> for XmlResponse {
-    fn from(val: LocalListGroupsOutput) -> Self {
+impl From<LocalCreateSamlProviderOutput> for XmlResponse {
+    fn from(val: LocalCreateSamlProviderOutput) -> Self {
         let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);
 
         let mut response_tag = doc
-            .start_el("ListGroupsResponse")
+            .start_el("CreateSAMLProviderResponse ")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut result_tag = response_tag.start_el("ListGroupsResult").finish();
+        let mut result_tag = response_tag.start_el("CreateSAMLProviderResult").finish();
 
-        let groups = val.inner.groups();
-        super::groups::write_slice(&mut result_tag, groups);
+        write_tag_with_value(&mut result_tag, "SAMLProviderArn", val.inner.saml_provider_arn());
+        super::tags::write_slice(&mut result_tag, val.inner.tags());
 
-        if let Some(token) = val.inner.marker() {
-            write_tag_with_value(&mut result_tag, "Marker", Some(token));
-        }
-        write_tag_with_value(&mut result_tag, "IsTruncated", Some(val.inner.is_truncated.to_string()));
         result_tag.finish();
 
         write_request_metadata_tag(&mut response_tag, "ResponseMetadata", "RequestId", val.request_id);

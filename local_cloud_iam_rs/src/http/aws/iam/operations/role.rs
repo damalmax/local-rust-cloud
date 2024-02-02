@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
 use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
+use aws_sdk_iam::operation::list_roles::ListRolesOutput;
 use aws_sdk_iam::types::{Role, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -11,14 +12,15 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
-use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError};
-use crate::http::aws::iam::db::types::tag::ListTagsQuery;
+use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError, SelectRole};
+use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
+use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(
@@ -75,6 +77,7 @@ fn prepare_role_for_insert(
         .id(None)
         .account_id(ctx.account_id)
         .role_name(role_name.to_owned())
+        .assume_role_policy_document(input.assume_role_policy_document().unwrap().to_owned())
         .description(input.description().map(|s| s.to_owned()))
         .max_session_duration(max_session_duration)
         .arn(arn)
@@ -146,6 +149,49 @@ pub(crate) async fn list_role_tags(
 
     let output = ListRoleTagsOutput::builder()
         .set_tags(Some(tags))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn list_roles(
+    ctx: &OperationCtx, input: &ListRolesRequest, db: &LocalDb,
+) -> Result<ListRolesOutput, OperationError> {
+    input.validate("$")?;
+
+    let query = input.into();
+
+    // obtain connection
+    let mut connection = db.new_connection().await?;
+
+    let found_roles: Vec<SelectRole> = db::role::list(connection.as_mut(), ctx.account_id, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_roles.len())?;
+
+    let mut roles: Vec<Role> = vec![];
+    for i in 0..(query.limit) {
+        let found_role = found_roles.get(i as usize);
+        match found_role {
+            None => break,
+            Some(select_role) => {
+                let role = Role::builder()
+                    .role_id(&select_role.role_id)
+                    .assume_role_policy_document(&select_role.assume_role_policy_document)
+                    .role_name(&select_role.role_name)
+                    .path(&select_role.path)
+                    .arn(&select_role.arn)
+                    .set_description(select_role.description.as_ref().map(|s| s.to_owned()))
+                    .create_date(DateTime::from_secs(select_role.create_date))
+                    .build()
+                    .unwrap();
+                roles.push(role);
+            }
+        }
+    }
+
+    let output = ListRolesOutput::builder()
+        .set_roles(Some(roles))
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()

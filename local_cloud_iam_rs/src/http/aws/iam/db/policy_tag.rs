@@ -1,6 +1,6 @@
 use sqlx::{Error, Executor, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::tag::{DbTag, ListTagsQuery};
+use crate::http::aws::iam::db::types::tags::{DbTag, ListTagsQuery};
 
 pub(crate) async fn find_by_policy_id<'a, E>(executor: E, policy_id: i64) -> Result<Vec<DbTag>, Error>
 where

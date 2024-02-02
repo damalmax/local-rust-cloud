@@ -1,4 +1,5 @@
-use sqlx::{Error, FromRow};
+use sqlx::sqlite::SqliteRow;
+use sqlx::{Error, FromRow, Row};
 
 use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::common::Pageable;
@@ -40,6 +41,17 @@ impl DbTag {
             value,
         })
     }
+}
+
+pub(crate) fn from_row(row: &SqliteRow, column_name: &str) -> Result<Option<Vec<DbTag>>, Error> {
+    let result = match row.try_get::<Option<String>, &str>(column_name) {
+        Ok(raw_tags) => match raw_tags {
+            None => None,
+            Some(raw) => Some(parse_tags_from_raw(&raw)?),
+        },
+        Err(_) => None,
+    };
+    Ok(result)
 }
 
 pub(crate) fn parse_tags_from_raw(raw: &str) -> Result<Vec<DbTag>, Error> {

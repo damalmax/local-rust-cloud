@@ -19,7 +19,7 @@ use crate::http::aws::iam::db::types::policy_version::{
     InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError,
 };
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
-use crate::http::aws::iam::db::types::tag::ListTagsQuery;
+use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;

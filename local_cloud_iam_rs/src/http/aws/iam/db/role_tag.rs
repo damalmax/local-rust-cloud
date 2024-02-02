@@ -1,6 +1,6 @@
 use sqlx::{Error, Executor, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::tag::{DbTag, ListTagsQuery};
+use crate::http::aws::iam::db::types::tags::{DbTag, ListTagsQuery};
 
 pub(crate) async fn save<'a>(tx: &mut Transaction<'a, Sqlite>, tag: &mut DbTag) -> Result<(), Error> {
     super::tag::save(tx, tag, "role_tags").await

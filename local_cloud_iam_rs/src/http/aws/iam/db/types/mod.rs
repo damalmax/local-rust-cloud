@@ -7,5 +7,5 @@ pub(crate) mod policy_type;
 pub(crate) mod policy_version;
 pub(crate) mod resource_identifier;
 pub(crate) mod role;
-pub(crate) mod tag;
+pub(crate) mod tags;
 pub(crate) mod user;

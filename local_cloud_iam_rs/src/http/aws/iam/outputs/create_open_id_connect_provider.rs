@@ -1,4 +1,4 @@
-use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
+use aws_sdk_iam::operation::create_open_id_connect_provider::CreateOpenIdConnectProviderOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
@@ -7,27 +7,22 @@ use local_cloud_xml::{write_request_metadata_tag, write_tag_with_value};
 use crate::http::aws::iam::constants;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
 
-pub type LocalListGroupsOutput = OutputWrapper<ListGroupsOutput>;
+pub type LocalCreateOpenIdConnectProviderOutput = OutputWrapper<CreateOpenIdConnectProviderOutput>;
 
-impl From<LocalListGroupsOutput> for XmlResponse {
-    fn from(val: LocalListGroupsOutput) -> Self {
+impl From<LocalCreateOpenIdConnectProviderOutput> for XmlResponse {
+    fn from(val: LocalCreateOpenIdConnectProviderOutput) -> Self {
         let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);
 
         let mut response_tag = doc
-            .start_el("ListGroupsResponse")
+            .start_el("CreateOpenIdConnectProviderResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut result_tag = response_tag.start_el("ListGroupsResult").finish();
+        let mut result_tag = response_tag.start_el("CreateOpenIdConnectProviderResult").finish();
 
-        let groups = val.inner.groups();
-        super::groups::write_slice(&mut result_tag, groups);
+        write_tag_with_value(&mut result_tag, "OpenIDConnectProviderArn", val.inner.open_id_connect_provider_arn);
 
-        if let Some(token) = val.inner.marker() {
-            write_tag_with_value(&mut result_tag, "Marker", Some(token));
-        }
-        write_tag_with_value(&mut result_tag, "IsTruncated", Some(val.inner.is_truncated.to_string()));
         result_tag.finish();
 
         write_request_metadata_tag(&mut response_tag, "ResponseMetadata", "RequestId", val.request_id);

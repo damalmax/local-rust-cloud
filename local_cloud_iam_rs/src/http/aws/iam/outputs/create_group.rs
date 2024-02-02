@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::create_group::CreateGroupOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_xml::write_request_metadata_tag;
 
 use crate::http::aws::iam::constants;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
@@ -13,33 +14,22 @@ impl From<LocalCreateGroupOutput> for XmlResponse {
         let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);
 
-        let mut create_group_response_tag = doc
+        let mut response_tag = doc
             .start_el("CreateGroupResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut create_group_result_tag = create_group_response_tag.start_el("CreateGroupResult").finish();
+        let mut result_tag = response_tag.start_el("CreateGroupResult").finish();
 
         if let Some(group) = val.inner.group() {
-            let mut group_tag = create_group_result_tag.start_el("Group").finish();
-            local_cloud_xml::write_tag_with_value(&mut group_tag, "Path", Some(group.path()));
-            local_cloud_xml::write_iso8061_datetime_value_tag(&mut group_tag, "CreateDate", Some(group.create_date()));
-            local_cloud_xml::write_tag_with_value(&mut group_tag, "GroupId", Some(group.group_id()));
-            local_cloud_xml::write_tag_with_value(&mut group_tag, "Arn", Some(group.arn()));
-            local_cloud_xml::write_tag_with_value(&mut group_tag, "GroupName", Some(group.group_name()));
-            group_tag.finish();
+            super::groups::write(&mut result_tag, "Group", group);
         }
 
-        create_group_result_tag.finish();
+        result_tag.finish();
 
-        local_cloud_xml::write_request_metadata_tag(
-            &mut create_group_response_tag,
-            "ResponseMetadata",
-            "RequestId",
-            val.request_id,
-        );
+        write_request_metadata_tag(&mut response_tag, "ResponseMetadata", "RequestId", val.request_id);
 
-        create_group_response_tag.finish();
+        response_tag.finish();
         return XmlResponse(out);
     }
 }

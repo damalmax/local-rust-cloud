@@ -5,7 +5,7 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, FromRow, Row};
 
 use crate::http::aws::iam::db::types::common::Pageable;
-use crate::http::aws::iam::db::types::tag::DbTag;
+use crate::http::aws::iam::db::types::tags::DbTag;
 use crate::http::aws::iam::operations;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 
@@ -46,11 +46,7 @@ impl<'r> FromRow<'r, SqliteRow> for SelectUser {
         let username: String = row.try_get("username")?;
         let policy_id: Option<i64> = row.try_get("policy_id")?;
         let policy_arn: Option<String> = row.try_get("policy_arn")?;
-        let raw_tags: Option<String> = row.try_get("tags")?;
-        let tags = match raw_tags {
-            None => None,
-            Some(raw) => Some(super::tag::parse_tags_from_raw(&raw)?),
-        };
+        let tags = super::tags::from_row(&row, "tags")?;
         Ok(SelectUser {
             id,
             account_id,

@@ -41,6 +41,8 @@ mod list_policy_tags;
 #[cfg(test)]
 mod list_role_tags;
 #[cfg(test)]
+mod list_roles;
+#[cfg(test)]
 mod list_user_tags;
 #[cfg(test)]
 mod list_users;

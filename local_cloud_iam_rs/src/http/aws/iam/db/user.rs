@@ -51,16 +51,7 @@ where
             u.user_id AS user_id,
             u.policy_id AS policy_id,
             p.arn AS policy_arn,
-            u.create_date AS create_date,
-            (
-                SELECT group_concat(tag, '♫')
-                FROM (
-                    SELECT (ut.id || '♪' || ut.parent_id || '♪' || ut.key || '♪' || ut.value) AS tag
-                    FROM user_tags ut
-                    WHERE ut.parent_id = u.id
-                    ORDER BY ut.id
-                )
-            ) AS tags
+            u.create_date AS create_date
         FROM users u LEFT JOIN policies p ON u.policy_id = p.id 
         WHERE u.account_id = $1 AND u.unique_username = $2"#,
     )

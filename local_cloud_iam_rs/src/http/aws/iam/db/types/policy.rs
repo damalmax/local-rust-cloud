@@ -6,7 +6,7 @@ use sqlx::{Error, FromRow, Row};
 
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
-use crate::http::aws::iam::db::types::tag::DbTag;
+use crate::http::aws::iam::db::types::tags::DbTag;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::policy_scope_type::PolicyScopeType;
 
@@ -39,6 +39,8 @@ pub(crate) struct SelectPolicy {
     pub(crate) policy_type: PolicyType,
     pub(crate) description: Option<String>,
     pub(crate) is_attachable: bool,
+    pub(crate) attachment_count: i32,
+    pub(crate) permissions_boundary_usage_count: i32,
     pub(crate) tags: Option<Vec<DbTag>>,
 }
 
@@ -53,14 +55,13 @@ impl<'r> FromRow<'r, SqliteRow> for SelectPolicy {
         let version: i32 = row.try_get("version")?;
         let update_date: i64 = row.try_get("update_date")?;
         let policy_name: String = row.try_get("policy_name")?;
+        let attachment_count: i32 = row.try_get("attachment_count")?;
+        let permissions_boundary_usage_count: i32 = row.try_get("permissions_boundary_usage_count")?;
         let policy_type: i32 = row.try_get("policy_type")?;
         let description: Option<String> = row.try_get("description")?;
         let is_attachable: bool = row.try_get("is_attachable")?;
-        let raw_tags: Option<String> = row.try_get("tags")?;
-        let tags = match raw_tags {
-            None => None,
-            Some(raw) => Some(super::tag::parse_tags_from_raw(&raw)?),
-        };
+        let tags = super::tags::from_row(&row, "tags")?;
+
         Ok(SelectPolicy {
             id,
             account_id,
@@ -74,6 +75,8 @@ impl<'r> FromRow<'r, SqliteRow> for SelectPolicy {
             policy_type: PolicyType::from(policy_type),
             description,
             is_attachable,
+            attachment_count,
+            permissions_boundary_usage_count,
             tags,
         })
     }
@@ -103,8 +106,8 @@ impl Into<Policy> for &SelectPolicy {
             .set_description(description)
             .path(&self.path)
             .default_version_id(format!("v{}", &self.version))
-            .attachment_count(0) // TODO: Populate value from DB
-            .permissions_boundary_usage_count(0) // TODO: Populate value from DB
+            .attachment_count(self.attachment_count)
+            .permissions_boundary_usage_count(self.permissions_boundary_usage_count)
             .is_attachable(self.is_attachable)
             .create_date(DateTime::from_secs(self.create_date))
             .update_date(DateTime::from_secs(self.update_date))

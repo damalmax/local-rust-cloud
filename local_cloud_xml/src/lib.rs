@@ -29,12 +29,11 @@ pub fn write_iso8061_datetime_value_tag(
 
 #[inline]
 pub fn write_request_metadata_tag(
-    parent_tag: &mut ScopeWriter, response_metadata_tag_name: &str, request_id_tag_name: &str,
-    request_id: impl Into<String>,
+    parent_tag: &mut ScopeWriter, metadata_tag_name: &str, request_id_tag_name: &str, request_id: impl Into<String>,
 ) {
-    let mut response_metadata_tag = parent_tag.start_el(response_metadata_tag_name).finish();
-    write_tag_with_value(&mut response_metadata_tag, request_id_tag_name, Some(request_id.into()));
-    response_metadata_tag.finish();
+    let mut metadata_tag = parent_tag.start_el(metadata_tag_name).finish();
+    write_tag_with_value(&mut metadata_tag, request_id_tag_name, Some(request_id.into()));
+    metadata_tag.finish();
 }
 
 pub fn write_key_value_tags<T>(

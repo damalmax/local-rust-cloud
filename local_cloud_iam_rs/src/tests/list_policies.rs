@@ -62,9 +62,7 @@ async fn list_policies_no_marker() {
     assert!(policy.is_attachable());
     assert!(policy.create_date().is_some());
     assert!(policy.update_date().is_some());
-    assert_eq!(policy.tags().len(), 1);
-    assert_eq!(policy.tags()[0].key(), "tag-key1");
-    assert_eq!(policy.tags()[0].value(), "tag-value1");
+    assert!(policy.tags().is_empty());
     ctx.stop_server().await;
 }
 

@@ -1,9 +1,10 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::marker_type::MarkerType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListRolesRequest {
     #[serde(rename = "Marker")]
-    pub(crate) marker: Option<types::marker_type::MarkerType>,
+    pub(crate) marker: Option<MarkerType>,
     #[serde(rename = "PathPrefix")]
     pub(crate) path_prefix: Option<types::path_prefix_type::PathPrefixType>,
     #[serde(rename = "MaxItems")]
@@ -13,6 +14,9 @@ pub(crate) struct ListRolesRequest {
 impl ListRolesRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
+    }
+    pub(crate) fn marker_type(&self) -> Option<&MarkerType> {
+        self.marker.as_ref()
     }
     pub(crate) fn path_prefix(&self) -> Option<&str> {
         self.path_prefix.as_deref()

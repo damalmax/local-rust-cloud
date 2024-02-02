@@ -54,29 +54,37 @@ where
     Ok(result)
 }
 
-pub(crate) async fn find_by_id<'a, E>(executor: E, policy_id: i64) -> Result<Option<SelectPolicy>, Error>
+pub(crate) async fn find_by_id<'a, E>(
+    executor: E, account_id: i64, policy_id: i64,
+) -> Result<Option<SelectPolicy>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     let result = sqlx::query(
         r#"
             SELECT 
-                id,
-                account_id,
-                policy_name,
-                arn,
-                policy_id,
-                path,
-                create_date,
-                update_date,
-                policy_type,
-                description,
-                is_attachable,
-                version 
-            FROM policies 
-            WHERE id = $1"#,
+                p.id as id,
+                p.account_id as account_id,
+                p.policy_name as policy_name,
+                p.arn as arn,
+                p.policy_id as policy_id,
+                p.path as path,
+                p.create_date as create_date,
+                p.update_date as update_date,
+                p.policy_type as policy_type,
+                p.description as description,
+                p.is_attachable as is_attachable,
+                ((SELECT COUNT(pg.policy_id) FROM policy_groups pg WHERE pg.policy_id = p.id)
+                + (SELECT COUNT(pr.policy_id) FROM policy_roles pr WHERE pr.policy_id = p.id)
+                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) as attachment_count,
+                ((SELECT COUNT(r.policy_id) FROM roles r WHERE r.policy_id = p.id) 
+                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) as permissions_boundary_usage_count,
+                p.version as version 
+            FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
+            WHERE p.id = $1 AND p.account_id = $2"#,
     )
     .bind(policy_id)
+    .bind(account_id)
     .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
     .fetch_optional(executor)
     .await?;
@@ -103,24 +111,20 @@ pub(crate) async fn list(
                 p.policy_type AS policy_type,
                 p.description AS description,
                 p.is_attachable AS is_attachable,
-                pv.version AS version,
-                (
-                    SELECT group_concat(tag, '♫')
-                    FROM (
-                        SELECT (pt.id || '♪' || pt.parent_id || '♪' || pt.key || '♪' || pt.value) AS tag
-                        FROM policy_tags pt
-                        WHERE pt.parent_id = p.id
-                        ORDER BY pt.id
-                    )
-                ) AS tags
+                ((SELECT COUNT(pg.policy_id) FROM policy_groups pg WHERE pg.policy_id = p.id)
+                + (SELECT COUNT(pr.policy_id) FROM policy_roles pr WHERE pr.policy_id = p.id)
+                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) as attachment_count,
+                ((SELECT COUNT(r.policy_id) FROM roles r WHERE r.policy_id = p.id) 
+                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) as permissions_boundary_usage_count,
+                pv.version AS version
             FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
             WHERE p.account_id = "#,
     );
     query_builder
         .push_bind(account_id)
-        .push(" AND path LIKE ")
+        .push(" AND p.path LIKE ")
         .push_bind(format!("{}%", &query.path_prefix))
-        .push(" AND policy_type in (");
+        .push(" AND p.policy_type in (");
     let mut separated = query_builder.separated(", ");
     for scope in scopes {
         separated.push_bind(scope);

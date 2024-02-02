@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::create_login_profile::CreateLoginProfileOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
 use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_xml::write_request_metadata_tag;
 
 use crate::http::aws::iam::constants;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
@@ -13,17 +14,15 @@ impl From<LocalCreateLoginProfileOutput> for XmlResponse {
         let mut out = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         let mut doc = XmlWriter::new(&mut out);
 
-        let mut create_login_profile_response_tag = doc
+        let mut response_tag = doc
             .start_el("CreateLoginProfileResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut create_login_profile_result_tag = create_login_profile_response_tag
-            .start_el("CreateLoginProfileResult")
-            .finish();
+        let mut result_tag = response_tag.start_el("CreateLoginProfileResult").finish();
 
         if let Some(login_profile) = val.inner.login_profile() {
-            let mut login_profile_tag = create_login_profile_result_tag.start_el("LoginProfile").finish();
+            let mut login_profile_tag = result_tag.start_el("LoginProfile").finish();
             local_cloud_xml::write_tag_with_value(&mut login_profile_tag, "UserName", Some(login_profile.user_name()));
             local_cloud_xml::write_tag_with_value(
                 &mut login_profile_tag,
@@ -38,16 +37,11 @@ impl From<LocalCreateLoginProfileOutput> for XmlResponse {
             login_profile_tag.finish();
         }
 
-        create_login_profile_result_tag.finish();
+        result_tag.finish();
 
-        local_cloud_xml::write_request_metadata_tag(
-            &mut create_login_profile_response_tag,
-            "ResponseMetadata",
-            "RequestId",
-            val.request_id,
-        );
+        write_request_metadata_tag(&mut response_tag, "ResponseMetadata", "RequestId", val.request_id);
 
-        create_login_profile_response_tag.finish();
+        response_tag.finish();
         XmlResponse(out)
     }
 }
