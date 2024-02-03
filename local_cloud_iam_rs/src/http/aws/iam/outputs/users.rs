@@ -19,18 +19,7 @@ pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, user: 
     write_tag_with_value(&mut wrapper_tag, "Arn", Some(user.arn()));
     write_iso8061_datetime_value_tag(&mut wrapper_tag, "CreateDate", Some(user.create_date()));
     if let Some(permissions_boundary) = user.permissions_boundary() {
-        let mut permissions_boundary_tag = wrapper_tag.start_el("PermissionsBoundary").finish();
-        write_tag_with_value(
-            &mut permissions_boundary_tag,
-            "PermissionsBoundaryType",
-            Some(permissions_boundary.permissions_boundary_type().unwrap().as_str()),
-        );
-        write_tag_with_value(
-            &mut permissions_boundary_tag,
-            "PermissionsBoundaryArn",
-            permissions_boundary.permissions_boundary_arn(),
-        );
-        permissions_boundary_tag.finish();
+        super::attached_permissions_boundaries::write(&mut wrapper_tag, "PermissionsBoundary", permissions_boundary);
     }
     if user.password_last_used().is_some() {
         write_iso8061_datetime_value_tag(&mut wrapper_tag, "PasswordLastUsed", user.password_last_used());
