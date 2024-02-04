@@ -129,6 +129,7 @@ mod organizations_decision_details;
 mod permissions_boundary_decision_details;
 mod policies;
 mod policy_details;
+mod policy_evalution_decision_map;
 mod policy_granting_service_access;
 mod policy_groups;
 mod policy_roles;

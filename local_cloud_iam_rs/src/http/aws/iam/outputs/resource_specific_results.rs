@@ -18,7 +18,7 @@ pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, item: 
     super::statements::write_slice(&mut wrapper_tag, "MatchedStatements", item.matched_statements());
     super::strings::write_slice(&mut wrapper_tag, "MissingContextValues", item.missing_context_values());
     if let Some(eval_decision_details) = item.eval_decision_details() {
-        todo!();
+        super::policy_evalution_decision_map::write_map(&mut wrapper_tag, "EvalDecisionDetails", eval_decision_details);
     }
     if let Some(permissions_boundary_decision_detail) = item.permissions_boundary_decision_detail() {
         super::permissions_boundary_decision_details::write(
