@@ -80,3 +80,15 @@ where
         .await?;
     Ok(tags)
 }
+
+pub(crate) async fn count<'a, E>(executor: E, table_name: &str, parent_id: i64) -> Result<usize, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(format!("SELECT COUNT(id) as count FROM {table_name} WHERE parent_id = $1").as_str())
+        .bind(parent_id)
+        .map(|row: SqliteRow| row.get::<i32, &str>("count"))
+        .fetch_one(executor)
+        .await?;
+    Ok(result as usize)
+}

@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
 use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
 use aws_sdk_iam::operation::list_roles::ListRolesOutput;
+use aws_sdk_iam::operation::tag_role::TagRoleOutput;
 use aws_sdk_iam::types::{Role, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -21,6 +22,7 @@ use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRe
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
+use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(
@@ -196,5 +198,31 @@ pub(crate) async fn list_roles(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn tag_role(
+    ctx: &OperationCtx, input: &TagRoleRequest, db: &LocalDb,
+) -> Result<TagRoleOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
+    let mut role_tags = super::common::prepare_tags_for_insert(input.tags(), role_id);
+
+    db::role_tag::save_all(&mut tx, &mut role_tags).await?;
+    let count = db::role_tag::count(tx.as_mut(), role_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM role.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagRoleOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

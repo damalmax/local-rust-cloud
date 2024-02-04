@@ -15,3 +15,10 @@ where
 {
     super::tag::list(executor, "role_tags", role_id, query).await
 }
+
+pub(crate) async fn count<'a, E>(executor: E, role_id: i64) -> Result<usize, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    super::tag::count(executor, "role_tags", role_id).await
+}

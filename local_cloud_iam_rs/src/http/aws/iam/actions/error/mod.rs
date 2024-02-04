@@ -87,9 +87,10 @@ pub enum ApiErrorKind {
 impl ApiErrorKind {
     pub(crate) fn status_code(&self) -> StatusCode {
         match self {
+            ApiErrorKind::LimitExceeded => StatusCode::CONFLICT,
+            ApiErrorKind::EntityAlreadyExists => StatusCode::CONFLICT,
             ApiErrorKind::ServiceFailure => StatusCode::INTERNAL_SERVER_ERROR,
             ApiErrorKind::ServiceNotSupported => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiErrorKind::EntityAlreadyExists => StatusCode::CONFLICT,
             _ => StatusCode::BAD_REQUEST,
         }
     }

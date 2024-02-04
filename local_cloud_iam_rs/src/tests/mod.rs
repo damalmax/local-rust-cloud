@@ -5,47 +5,30 @@ use aws_types::SdkConfig;
 
 mod test_suite;
 
-#[cfg(test)]
 mod add_role_to_instance_profile;
-#[cfg(test)]
 mod add_user_to_group;
-#[cfg(test)]
 mod attach_group_policy;
-#[cfg(test)]
 mod attach_role_policy;
-#[cfg(test)]
 mod attach_user_policy;
-#[cfg(test)]
 mod create_group;
-#[cfg(test)]
 mod create_instance_profile;
-#[cfg(test)]
 mod create_login_profile;
-#[cfg(test)]
 mod create_policy;
-#[cfg(test)]
 mod create_policy_version;
-#[cfg(test)]
 mod create_role;
-#[cfg(test)]
 mod create_user;
 pub mod fixture;
-#[cfg(test)]
 mod get_group;
-#[cfg(test)]
 mod list_groups;
-#[cfg(test)]
 mod list_policies;
-#[cfg(test)]
 mod list_policy_tags;
-#[cfg(test)]
 mod list_role_tags;
-#[cfg(test)]
 mod list_roles;
-#[cfg(test)]
 mod list_user_tags;
-#[cfg(test)]
 mod list_users;
+mod tag_policy;
+mod tag_role;
+mod tag_user;
 
 pub fn credentials_provider() -> impl ProvideCredentials {
     aws_credential_types::Credentials::new("AKIAIOSFODNN201ADMIN", "secret_access_key", None, None, "provider_name")

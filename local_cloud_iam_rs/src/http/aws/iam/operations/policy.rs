@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
 use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
+use aws_sdk_iam::operation::tag_policy::TagPolicyOutput;
 use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -27,6 +28,7 @@ use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
+use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_policy(
@@ -235,7 +237,7 @@ pub(crate) async fn list_policy_tags(
         find_id_by_arn(connection.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::policy_tag::list_tags(connection.as_mut(), found_policy_id, &query).await?;
+    let found_tags = db::policy_tag::list(connection.as_mut(), found_policy_id, &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
     let mut tags: Vec<Tag> = vec![];
@@ -255,6 +257,32 @@ pub(crate) async fn list_policy_tags(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn tag_policy(
+    ctx: &OperationCtx, input: &TagPolicyRequest, db: &LocalDb,
+) -> Result<TagPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
+    let mut policy_tags = super::common::prepare_tags_for_insert(input.tags(), policy_id);
+
+    db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
+    let count = db::policy_tag::count(tx.as_mut(), policy_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM policy.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagPolicyOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }
 

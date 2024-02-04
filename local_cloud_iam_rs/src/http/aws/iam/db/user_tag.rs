@@ -23,3 +23,10 @@ where
 {
     super::tag::list(executor, "user_tags", user_id, query).await
 }
+
+pub(crate) async fn count<'a, E>(executor: E, user_id: i64) -> Result<usize, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    super::tag::count(executor, "user_tags", user_id).await
+}

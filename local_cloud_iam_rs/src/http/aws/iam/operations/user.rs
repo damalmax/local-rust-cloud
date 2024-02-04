@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::attach_user_policy::AttachUserPolicyOutput;
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
 use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
+use aws_sdk_iam::operation::tag_user::TagUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, Tag, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -21,6 +22,7 @@ use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRe
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_user(
@@ -203,5 +205,31 @@ pub(crate) async fn list_user_tags(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn tag_user(
+    ctx: &OperationCtx, input: &TagUserRequest, db: &LocalDb,
+) -> Result<TagUserOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
+    let mut user_tags = super::common::prepare_tags_for_insert(input.tags(), user_id);
+
+    db::user_tag::save_all(&mut tx, &mut user_tags).await?;
+    let count = db::user_tag::count(tx.as_mut(), user_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM user.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagUserOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

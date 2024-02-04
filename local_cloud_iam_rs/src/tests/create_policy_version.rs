@@ -78,7 +78,7 @@ async fn create_policy_version_limit_exceeded() {
 
     assert!(result.is_err());
     let sdk_error = result.unwrap_err();
-    assert_eq!(400u16, sdk_error.raw_response().unwrap().status().as_u16());
+    assert_eq!(409u16, sdk_error.raw_response().unwrap().status().as_u16());
 
     let error = sdk_error.into_service_error();
     assert!(error.is_limit_exceeded_exception());

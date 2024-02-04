@@ -21,9 +21,16 @@ pub(crate) async fn delete_by_policy_id<'a>(tx: &mut Transaction<'a, Sqlite>, po
     super::tag::delete_by_parent_id(tx, policy_id, "policy_tags").await
 }
 
-pub(crate) async fn list_tags<'a, E>(executor: E, policy_id: i64, query: &ListTagsQuery) -> Result<Vec<DbTag>, Error>
+pub(crate) async fn list<'a, E>(executor: E, policy_id: i64, query: &ListTagsQuery) -> Result<Vec<DbTag>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     super::tag::list(executor, "policy_tags", policy_id, query).await
+}
+
+pub(crate) async fn count<'a, E>(executor: E, policy_id: i64) -> Result<usize, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    super::tag::count(executor, "policy_tags", policy_id).await
 }

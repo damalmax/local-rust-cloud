@@ -30,6 +30,9 @@ use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
+use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
+use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
@@ -76,6 +79,12 @@ pub(crate) enum LocalAwsRequest {
     ListUserTags(ListUserTagsRequest),
     #[serde(rename = "ListUsers")]
     ListUsers(ListUsersRequest),
+    #[serde(rename = "TagPolicy")]
+    TagPolicy(TagPolicyRequest),
+    #[serde(rename = "TagRole")]
+    TagRole(TagRoleRequest),
+    #[serde(rename = "TagUser")]
+    TagUser(TagUserRequest),
 }
 
 pub(crate) async fn handle(
@@ -167,6 +176,18 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListUsers(list_users) => list_users
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::TagPolicy(tag_policy) => tag_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::TagRole(tag_role) => tag_role
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::TagUser(tag_user) => tag_user
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
