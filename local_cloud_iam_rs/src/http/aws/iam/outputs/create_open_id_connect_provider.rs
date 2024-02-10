@@ -15,13 +15,14 @@ impl From<LocalCreateOpenIdConnectProviderOutput> for XmlResponse {
         let mut doc = XmlWriter::new(&mut out);
 
         let mut response_tag = doc
-            .start_el("CreateOpenIdConnectProviderResponse")
+            .start_el("CreateOpenIDConnectProviderResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut result_tag = response_tag.start_el("CreateOpenIdConnectProviderResult").finish();
+        let mut result_tag = response_tag.start_el("CreateOpenIDConnectProviderResult").finish();
 
-        write_tag_with_value(&mut result_tag, "OpenIDConnectProviderArn", val.inner.open_id_connect_provider_arn);
+        write_tag_with_value(&mut result_tag, "OpenIDConnectProviderArn", val.inner.open_id_connect_provider_arn());
+        super::tags::write_slice(&mut result_tag, val.inner.tags());
 
         result_tag.finish();
 

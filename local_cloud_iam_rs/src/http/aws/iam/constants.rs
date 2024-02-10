@@ -40,3 +40,7 @@ pub(crate) mod role {
 pub(crate) mod instance_profile {
     pub(crate) const PREFIX: &str = "AIPA";
 }
+
+pub(crate) mod open_id_connect_provider {
+    pub(crate) const URL_PREFIX: &str = "https://";
+}

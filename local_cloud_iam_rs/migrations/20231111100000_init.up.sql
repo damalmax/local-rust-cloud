@@ -48,7 +48,6 @@ VALUES (1, 'eu-local-1', 'EU Local'),
        (31, 'me-south-1', 'Middle East (Bahrain)'),
        (32, 'me-central-1', 'Middle East (UAE)'),
        (33, 'sa-east-1', 'South America (São Paulo)');
-
 CREATE TABLE IF NOT EXISTS unique_identifiers
 (
     id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -94,7 +93,6 @@ CREATE TABLE IF NOT EXISTS policies
 CREATE INDEX IF NOT EXISTS idx_policies__arn ON policies (arn ASC);
 CREATE INDEX IF NOT EXISTS fk_policies__policy_id ON policies (policy_id ASC);
 CREATE INDEX IF NOT EXISTS fk_policies__policy_type ON policies (policy_type ASC);
-
 -- User
 CREATE TABLE IF NOT EXISTS users
 (
@@ -113,10 +111,20 @@ CREATE TABLE IF NOT EXISTS users
 );
 CREATE INDEX IF NOT EXISTS fk_users__account_id ON users (account_id ASC);
 CREATE INDEX IF NOT EXISTS idx_users__arn ON users (arn ASC);
-
-INSERT INTO users(account_id, username, unique_username, arn, path, user_id, create_date)
-VALUES (1, 'Root', 'ROOT', '"arn:aws:iam::000000000001:user/Root"', '/', 'AIDAHOMECLOUDROOT101A', 1706219306);
-
+INSERT INTO users(account_id,
+                  username,
+                  unique_username,
+                  arn,
+                  path,
+                  user_id,
+                  create_date)
+VALUES (1,
+        'Root',
+        'ROOT',
+        '"arn:aws:iam::000000000001:user/Root"',
+        '/',
+        'AIDAHOMECLOUDROOT101A',
+        1706219306);
 CREATE TABLE IF NOT EXISTS user_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -126,7 +134,6 @@ CREATE TABLE IF NOT EXISTS user_tags
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_user_tags__parent_id ON user_tags (parent_id ASC);
-
 CREATE TABLE IF NOT EXISTS policy_versions
 (
     id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -138,11 +145,10 @@ CREATE TABLE IF NOT EXISTS policy_versions
     create_date       INTEGER                           NOT NULL,
     is_default        BOOLEAN                           NOT NULL
 );
-
 CREATE INDEX IF NOT EXISTS fk_policy_versions__policy_id ON policy_versions (policy_id ASC);
-
 CREATE TRIGGER IF NOT EXISTS auto_increment_policy_version
-    AFTER INSERT
+    AFTER
+        INSERT
     ON policy_versions
     WHEN new.version IS NULL
 BEGIN
@@ -153,7 +159,6 @@ BEGIN
                      AND policy_id = new.policy_id)
     WHERE id = new.id;
 END;
-
 CREATE TABLE IF NOT EXISTS policy_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -195,7 +200,6 @@ CREATE TABLE IF NOT EXISTS role_tags
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_role_tags__parent_id ON role_tags (parent_id ASC);
-
 CREATE TABLE IF NOT EXISTS group_users
 (
     group_id INTEGER REFERENCES groups (id) NOT NULL,
@@ -204,7 +208,6 @@ CREATE TABLE IF NOT EXISTS group_users
 );
 CREATE INDEX IF NOT EXISTS fk_group_users__group_id ON group_users (group_id ASC);
 CREATE INDEX IF NOT EXISTS fk_group_users__user_id ON group_users (user_id ASC);
-
 CREATE TABLE IF NOT EXISTS policy_groups
 (
     policy_id INTEGER REFERENCES policies (id) NOT NULL,
@@ -213,17 +216,14 @@ CREATE TABLE IF NOT EXISTS policy_groups
 );
 CREATE INDEX IF NOT EXISTS fk_policy_groups__group_id ON policy_groups (group_id ASC);
 CREATE INDEX IF NOT EXISTS fk_policy_groups__policy_id ON policy_groups (policy_id ASC);
-
 CREATE TABLE IF NOT EXISTS policy_roles
 (
     policy_id INTEGER REFERENCES policies (id) NOT NULL,
     role_id   INTEGER REFERENCES roles (id)    NOT NULL,
     UNIQUE (policy_id, role_id) ON CONFLICT IGNORE
 );
-
 CREATE INDEX IF NOT EXISTS fk_policy_roles__policy_id ON policy_roles (policy_id ASC);
 CREATE INDEX IF NOT EXISTS fk_policy_roles__role_id ON policy_roles (role_id ASC);
-
 CREATE TABLE IF NOT EXISTS policy_users
 (
     policy_id INTEGER REFERENCES policies (id) NOT NULL,
@@ -250,7 +250,6 @@ CREATE TABLE IF NOT EXISTS instance_profiles
 );
 CREATE INDEX IF NOT EXISTS fk_instance_profiles__account_id ON instance_profiles (account_id ASC);
 CREATE INDEX IF NOT EXISTS idx_instance_profiles__arn ON instance_profiles (arn ASC);
-
 CREATE TABLE IF NOT EXISTS instance_profile_roles
 (
     instance_profile_id INTEGER REFERENCES instance_profiles (id) NOT NULL,
@@ -267,7 +266,7 @@ CREATE TABLE IF NOT EXISTS instance_profile_tags
     value     VARCHAR2(256)                             NOT NULL,
     UNIQUE (parent_id, key)
 );
-CREATE INDEX IF NOT EXISTS fk_instance_profile__parent_id ON instance_profile_tags (parent_id ASC);
+CREATE INDEX IF NOT EXISTS fk_instance_profile_tags__parent_id ON instance_profile_tags (parent_id ASC);
 CREATE TABLE IF NOT EXISTS login_profiles
 (
     id                      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -278,3 +277,40 @@ CREATE TABLE IF NOT EXISTS login_profiles
     UNIQUE (user_id)
 );
 CREATE INDEX IF NOT EXISTS fk_login_profiles__user_id ON login_profiles (user_id ASC);
+-- OpenID Connect Providers
+CREATE TABLE IF NOT EXISTS open_id_connect_providers
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id  INTEGER REFERENCES accounts (id)  NOT NULL,
+    arn         VARCHAR2(2048)                    NOT NULL,
+    url         VARCHAR2(255)                     NOT NULL,
+    create_date INTEGER                           NOT NULL,
+    UNIQUE (account_id, url),
+    UNIQUE (arn)
+);
+CREATE INDEX IF NOT EXISTS fk_open_id_connect_providers__account_id ON open_id_connect_providers (account_id ASC);
+CREATE TABLE IF NOT EXISTS open_id_connect_provider_client_ids
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT                 NOT NULL,
+    provider_id INTEGER REFERENCES open_id_connect_providers (id) NOT NULL,
+    client_id   VARCHAR2(255)                                     NOT NULL,
+    UNIQUE (provider_id, client_id)
+);
+CREATE INDEX IF NOT EXISTS fk_open_id_connect_provider_client_ids__provider_id ON open_id_connect_provider_client_ids (provider_id ASC);
+CREATE TABLE IF NOT EXISTS open_id_connect_provider_thumbprints
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT                 NOT NULL,
+    provider_id INTEGER REFERENCES open_id_connect_providers (id) NOT NULL,
+    thumbprint  VARCHAR(40)                                       NOT NULL,
+    UNIQUE (provider_id, thumbprint)
+);
+CREATE INDEX IF NOT EXISTS fk_open_id_connect_provider_thumbprints__provider_id ON open_id_connect_provider_thumbprints (provider_id ASC);
+CREATE TABLE IF NOT EXISTS open_id_connect_provider_tags
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT                 NOT NULL,
+    parent_id INTEGER REFERENCES open_id_connect_providers (id) NOT NULL,
+    key       VARCHAR2(128)                                     NOT NULL,
+    value     VARCHAR2(256)                                     NOT NULL,
+    UNIQUE (parent_id, key)
+);
+CREATE INDEX IF NOT EXISTS fk_open_id_connect_provider_tags__parent_id ON open_id_connect_provider_tags (parent_id ASC);

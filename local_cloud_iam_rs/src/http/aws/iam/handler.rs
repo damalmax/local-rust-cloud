@@ -18,6 +18,7 @@ use crate::http::aws::iam::types::change_password_request::ChangePasswordRequest
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
 use crate::http::aws::iam::types::create_login_profile_request::CreateLoginProfileRequest;
+use crate::http::aws::iam::types::create_open_id_connect_provider_request::CreateOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
@@ -30,6 +31,7 @@ use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
@@ -37,53 +39,31 @@ use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
 pub(crate) enum LocalAwsRequest {
-    #[serde(rename = "AddRoleToInstanceProfile")]
     AddRoleToInstanceProfile(AddRoleToInstanceProfileRequest),
-    #[serde(rename = "AddUserToGroup")]
     AddUserToGroup(AddUserToGroupRequest),
-    #[serde(rename = "AttachGroupPolicy")]
     AttachGroupPolicy(AttachGroupPolicyRequest),
-    #[serde(rename = "AttachRolePolicy")]
     AttachRolePolicy(AttachRolePolicyRequest),
-    #[serde(rename = "AttachUserPolicy")]
     AttachUserPolicy(AttachUserPolicyRequest),
-    #[serde(rename = "ChangePassword")]
     ChangePassword(ChangePasswordRequest),
-    #[serde(rename = "CreateGroup")]
     CreateGroup(CreateGroupRequest),
-    #[serde(rename = "CreateInstanceProfile")]
     CreateInstanceProfile(CreateInstanceProfileRequest),
-    #[serde(rename = "CreateLoginProfile")]
     CreateLoginProfile(CreateLoginProfileRequest),
-    #[serde(rename = "CreatePolicy")]
+    CreateOpenIDConnectProvider(CreateOpenIdConnectProviderRequest),
     CreatePolicy(CreatePolicyRequest),
-    #[serde(rename = "CreatePolicyVersion")]
     CreatePolicyVersion(CreatePolicyVersionRequest),
-    #[serde(rename = "CreateRole")]
     CreateRole(CreateRoleRequest),
-    #[serde(rename = "CreateUser")]
     CreateUser(CreateUserRequest),
-    #[serde(rename = "GetGroup")]
-    GetGroupRequest(GetGroupRequest),
-    #[serde(rename = "ListGroups")]
+    GetGroup(GetGroupRequest),
     ListGroups(ListGroupsRequest),
-    #[serde(rename = "ListPolicies")]
     ListPolicies(ListPoliciesRequest),
-    #[serde(rename = "ListPolicyTags")]
     ListPolicyTags(ListPolicyTagsRequest),
-    #[serde(rename = "ListRoles")]
     ListRoles(ListRolesRequest),
-    #[serde(rename = "ListRoleTags")]
     ListRoleTags(ListRoleTagsRequest),
-    #[serde(rename = "ListUserTags")]
     ListUserTags(ListUserTagsRequest),
-    #[serde(rename = "ListUsers")]
     ListUsers(ListUsersRequest),
-    #[serde(rename = "TagPolicy")]
+    TagInstanceProfile(TagInstanceProfileRequest),
     TagPolicy(TagPolicyRequest),
-    #[serde(rename = "TagRole")]
     TagRole(TagRoleRequest),
-    #[serde(rename = "TagUser")]
     TagUser(TagUserRequest),
 }
 
@@ -127,6 +107,10 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
+        LocalAwsRequest::CreateOpenIDConnectProvider(create_open_id_provider) => create_open_id_provider
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
         LocalAwsRequest::CreateLoginProfile(create_login_profile) => create_login_profile
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
@@ -147,7 +131,7 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
-        LocalAwsRequest::GetGroupRequest(get_group) => get_group
+        LocalAwsRequest::GetGroup(get_group) => get_group
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
@@ -176,6 +160,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListUsers(list_users) => list_users
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::TagInstanceProfile(tag_instance_profile) => tag_instance_profile
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

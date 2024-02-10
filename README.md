@@ -28,7 +28,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] create_group
 - [X] create_instance_profile
 - [X] create_login_profile
-- [ ] create_open_id_connect_provider
+- [X] create_open_id_connect_provider
 - [X] create_policy
 - [X] create_policy_version
 - [X] create_role
@@ -142,7 +142,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] set_security_token_service_preferences
 - [ ] simulate_custom_policy
 - [ ] simulate_principal_policy
-- [ ] tag_instance_profile
+- [X] tag_instance_profile
 - [ ] tag_mfa_device
 - [ ] tag_open_id_connect_provider
 - [X] tag_policy

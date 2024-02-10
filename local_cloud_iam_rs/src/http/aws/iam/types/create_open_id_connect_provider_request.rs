@@ -1,3 +1,7 @@
+use local_cloud_validate::{
+    validate_array_size_max, validate_array_size_min, validate_named, validate_required, NamedValidator,
+};
+
 use crate::http::aws::iam::types;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
@@ -27,32 +31,27 @@ impl CreateOpenIdConnectProviderRequest {
     }
 }
 
-impl local_cloud_validate::NamedValidator for &CreateOpenIdConnectProviderRequest {
+impl NamedValidator for &CreateOpenIdConnectProviderRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
         if let Some(client_id_list) = self.client_id_list() {
             for (id, member) in client_id_list.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "ClientIDList").as_str(),
-                )?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "ClientIDList").as_str())?;
             }
         }
-        local_cloud_validate::validate_required(self.url(), format!("{at}.{}", "Url").as_str())?;
-        local_cloud_validate::validate_named(self.url.as_ref(), format!("{at}.{}", "Url").as_str())?;
-        local_cloud_validate::validate_array_size_min(self.tags(), 0usize, format!("{at}.{}", "Tags").as_str())?;
-        local_cloud_validate::validate_array_size_max(self.tags(), 50usize, format!("{at}.{}", "Tags").as_str())?;
+        validate_required(self.url(), format!("{at}.{}", "Url").as_str())?;
+        validate_named(self.url.as_ref(), format!("{at}.{}", "Url").as_str())?;
+
+        validate_array_size_min(self.tags(), 0usize, format!("{at}.{}", "Tags").as_str())?;
+        validate_array_size_max(self.tags(), 50usize, format!("{at}.{}", "Tags").as_str())?;
         if let Some(tags) = self.tags() {
             for (id, member) in tags.iter().enumerate() {
-                local_cloud_validate::validate_named(Some(member), format!("{at}.{}.member.{id}", "Tags").as_str())?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "Tags").as_str())?;
             }
         }
-        local_cloud_validate::validate_required(self.thumbprint_list(), format!("{at}.{}", "ThumbprintList").as_str())?;
+        validate_required(self.thumbprint_list(), format!("{at}.{}", "ThumbprintList").as_str())?;
         if let Some(thumbprint_list) = self.thumbprint_list() {
             for (id, member) in thumbprint_list.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "ThumbprintList").as_str(),
-                )?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "ThumbprintList").as_str())?;
             }
         }
         Ok(())

@@ -1,5 +1,6 @@
 use aws_sdk_iam::operation::add_role_to_instance_profile::AddRoleToInstanceProfileOutput;
 use aws_sdk_iam::operation::create_instance_profile::CreateInstanceProfileOutput;
+use aws_sdk_iam::operation::tag_instance_profile::TagInstanceProfileOutput;
 use aws_sdk_iam::types::InstanceProfile;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -16,6 +17,7 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_role_to_instance_profile_request::AddRoleToInstanceProfileRequest;
 use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
+use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_instance_profile(
@@ -96,5 +98,31 @@ pub(crate) async fn add_role_to_instance_profile(
     let output = AddRoleToInstanceProfileOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn tag_instance_profile(
+    ctx: &OperationCtx, input: &TagInstanceProfileRequest, db: &LocalDb,
+) -> Result<TagInstanceProfileOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let instance_profile_id = find_id_by_name(ctx, tx.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
+    let mut instance_profile_tags = super::common::prepare_tags_for_insert(input.tags(), instance_profile_id);
+
+    db::instance_profile_tag::save_all(&mut tx, &mut instance_profile_tags).await?;
+    let count = db::instance_profile_tag::count(tx.as_mut(), instance_profile_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM instance profile.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagInstanceProfileOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

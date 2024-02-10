@@ -2,6 +2,7 @@ pub(crate) mod action;
 pub(crate) mod create_group;
 pub(crate) mod create_instance_profile;
 pub(crate) mod create_login_profile;
+pub(crate) mod create_open_id_connect_provider;
 pub(crate) mod create_policy;
 pub(crate) mod create_policy_version;
 pub(crate) mod create_role;
@@ -51,6 +52,13 @@ action!(
     add_role_to_instance_profile_request,
     AddRoleToInstanceProfileRequest,
     AddRoleToInstanceProfileOutput
+);
+action!(
+    instance_profile,
+    tag_instance_profile,
+    tag_instance_profile_request,
+    TagInstanceProfileRequest,
+    TagInstanceProfileOutput
 );
 action!(group, add_user_to_group, add_user_to_group_request, AddUserToGroupRequest, AddUserToGroupOutput);
 action!(group, attach_group_policy, attach_group_policy_request, AttachGroupPolicyRequest, AttachGroupPolicyOutput);
