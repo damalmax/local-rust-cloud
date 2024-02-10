@@ -1,6 +1,6 @@
 use sqlx::{Error, Executor, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::tags::DbTag;
+use crate::http::aws::iam::db::types::tags::{DbTag, ListTagsQuery};
 
 pub(crate) async fn find_by_open_id_connect_provider_id<'a, E>(
     executor: E, open_id_connect_provider_id: i64,
@@ -24,4 +24,13 @@ where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     super::tag::count(executor, "open_id_connect_provider_tags", open_id_connect_provider_id).await
+}
+
+pub(crate) async fn list<'a, E>(
+    executor: E, open_id_connect_provider_id: i64, query: &ListTagsQuery,
+) -> Result<Vec<DbTag>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    super::tag::list(executor, "open_id_connect_provider_tags", open_id_connect_provider_id, query).await
 }

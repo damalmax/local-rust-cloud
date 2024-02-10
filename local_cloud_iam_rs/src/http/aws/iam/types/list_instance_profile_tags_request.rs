@@ -1,9 +1,10 @@
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::marker_type::MarkerType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListInstanceProfileTagsRequest {
     #[serde(rename = "Marker")]
-    pub(crate) marker: Option<types::marker_type::MarkerType>,
+    pub(crate) marker: Option<MarkerType>,
     #[serde(rename = "MaxItems")]
     pub(crate) max_items: Option<types::max_items_type::MaxItemsType>,
     #[serde(rename = "InstanceProfileName")]
@@ -13,6 +14,9 @@ pub(crate) struct ListInstanceProfileTagsRequest {
 impl ListInstanceProfileTagsRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
+    }
+    pub(crate) fn marker_type(&self) -> Option<&MarkerType> {
+        self.marker.as_ref()
     }
     pub(crate) fn max_items(&self) -> Option<&i32> {
         self.max_items.as_deref()

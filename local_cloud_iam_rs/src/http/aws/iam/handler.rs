@@ -25,6 +25,7 @@ use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
+use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
@@ -55,6 +56,7 @@ pub(crate) enum LocalAwsRequest {
     CreateUser(CreateUserRequest),
     GetGroup(GetGroupRequest),
     ListGroups(ListGroupsRequest),
+    ListInstanceProfileTags(ListInstanceProfileTagsRequest),
     ListPolicies(ListPoliciesRequest),
     ListPolicyTags(ListPolicyTagsRequest),
     ListRoles(ListRolesRequest),
@@ -136,6 +138,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListGroups(list_groups) => list_groups
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListInstanceProfileTags(list_instance_profile_tags) => list_instance_profile_tags
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

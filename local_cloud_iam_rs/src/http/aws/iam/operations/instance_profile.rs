@@ -1,7 +1,8 @@
 use aws_sdk_iam::operation::add_role_to_instance_profile::AddRoleToInstanceProfileOutput;
 use aws_sdk_iam::operation::create_instance_profile::CreateInstanceProfileOutput;
+use aws_sdk_iam::operation::list_instance_profile_tags::ListInstanceProfileTagsOutput;
 use aws_sdk_iam::operation::tag_instance_profile::TagInstanceProfileOutput;
-use aws_sdk_iam::types::InstanceProfile;
+use aws_sdk_iam::types::{InstanceProfile, Tag};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
@@ -12,11 +13,13 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::instance_profile::InsertInstanceProfile;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
+use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_role_to_instance_profile_request::AddRoleToInstanceProfileRequest;
 use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
+use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
 use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -79,7 +82,7 @@ where
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM instance profile with name '{}' doesn't exist.", instance_profile_name).as_str(),
-            ))
+            ));
         }
     }
 }
@@ -123,6 +126,41 @@ pub(crate) async fn tag_instance_profile(
     let output = TagInstanceProfileOutput::builder().build();
 
     tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn list_instance_profile_tags(
+    ctx: &OperationCtx, input: &ListInstanceProfileTagsRequest, db: &LocalDb,
+) -> Result<ListInstanceProfileTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let found_instance_profile_id =
+        find_id_by_name(ctx, connection.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::instance_profile_tag::list(connection.as_mut(), found_instance_profile_id, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let mut tags: Vec<Tag> = vec![];
+    for i in 0..(query.limit) {
+        let found_tag = found_tags.get(i as usize);
+        match found_tag {
+            None => break,
+            Some(tag) => {
+                tags.push(tag.into());
+            }
+        }
+    }
+
+    let output = ListInstanceProfileTagsOutput::builder()
+        .set_tags(Some(tags))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
 
     Ok(output)
 }

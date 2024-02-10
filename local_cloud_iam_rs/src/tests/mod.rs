@@ -21,6 +21,7 @@ mod create_user;
 pub mod fixture;
 mod get_group;
 mod list_groups;
+mod list_instance_profile_tags;
 mod list_policies;
 mod list_policy_tags;
 mod list_role_tags;

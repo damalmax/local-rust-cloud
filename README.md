@@ -103,7 +103,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_group_policies
 - [X] list_groups
 - [ ] list_groups_for_user
-- [ ] list_instance_profile_tags
+- [X] list_instance_profile_tags
 - [ ] list_instance_profiles
 - [ ] list_instance_profiles_for_role
 - [ ] list_mfa_device_tags
