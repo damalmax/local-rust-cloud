@@ -111,7 +111,7 @@ pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, user_na
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    let group = sqlx::query(
+    let user_id = sqlx::query(
         r#"
             SELECT 
                 id
@@ -125,7 +125,7 @@ where
     .fetch_optional(executor)
     .await?;
 
-    Ok(group)
+    Ok(user_id)
 }
 
 pub(crate) async fn assign_policy_to_user<'a>(

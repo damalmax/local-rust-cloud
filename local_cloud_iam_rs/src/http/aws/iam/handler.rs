@@ -23,7 +23,10 @@ use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
+use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
+use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
+use crate::http::aws::iam::types::get_user_policy_request::GetUserPolicyRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
@@ -32,6 +35,9 @@ use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
+use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
+use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
@@ -55,6 +61,9 @@ pub(crate) enum LocalAwsRequest {
     CreateRole(CreateRoleRequest),
     CreateUser(CreateUserRequest),
     GetGroup(GetGroupRequest),
+    GetGroupPolicy(GetGroupPolicyRequest),
+    GetRolePolicy(GetRolePolicyRequest),
+    GetUserPolicy(GetUserPolicyRequest),
     ListGroups(ListGroupsRequest),
     ListInstanceProfileTags(ListInstanceProfileTagsRequest),
     ListPolicies(ListPoliciesRequest),
@@ -63,6 +72,9 @@ pub(crate) enum LocalAwsRequest {
     ListRoleTags(ListRoleTagsRequest),
     ListUserTags(ListUserTagsRequest),
     ListUsers(ListUsersRequest),
+    PutGroupPolicy(PutGroupPolicyRequest),
+    PutRolePolicy(PutRolePolicyRequest),
+    PutUserPolicy(PutUserPolicyRequest),
     TagInstanceProfile(TagInstanceProfileRequest),
     TagPolicy(TagPolicyRequest),
     TagRole(TagRoleRequest),
@@ -137,6 +149,18 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
+        LocalAwsRequest::GetGroupPolicy(get_group_policy) => get_group_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::GetRolePolicy(get_role_policy) => get_role_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::GetUserPolicy(get_user_policy) => get_user_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
         LocalAwsRequest::ListGroups(list_groups) => list_groups
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
@@ -166,6 +190,18 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListUsers(list_users) => list_users
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::PutGroupPolicy(put_group_policy) => put_group_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::PutRolePolicy(put_role_policy) => put_role_policy
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::PutUserPolicy(put_user_policy) => put_user_policy
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

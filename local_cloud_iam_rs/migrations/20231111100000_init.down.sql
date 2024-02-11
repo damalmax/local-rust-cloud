@@ -1,3 +1,10 @@
+DROP INDEX IF EXISTS fk_role_inline_policies__parent_id;
+DROP TABLE IF EXISTS role_inline_policies;
+DROP INDEX IF EXISTS fk_user_inline_policies__parent_id;
+DROP TABLE IF EXISTS user_inline_policies;
+DROP INDEX IF EXISTS fk_group_inline_policies__parent_id;
+DROP TABLE IF EXISTS group_inline_policies;
+
 DROP INDEX IF EXISTS fk_policy_users__user_id;
 DROP INDEX IF EXISTS fk_policy_users__policy_id;
 DROP TABLE IF EXISTS policy_users;

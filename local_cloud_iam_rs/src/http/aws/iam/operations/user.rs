@@ -1,7 +1,9 @@
 use aws_sdk_iam::operation::attach_user_policy::AttachUserPolicyOutput;
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
+use aws_sdk_iam::operation::get_user_policy::GetUserPolicyOutput;
 use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
+use aws_sdk_iam::operation::put_user_policy::PutUserPolicyOutput;
 use aws_sdk_iam::operation::tag_user::TagUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, Tag, User};
 use aws_smithy_types::DateTime;
@@ -12,6 +14,7 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
+use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError, SelectUser};
@@ -20,8 +23,10 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
+use crate::http::aws::iam::types::get_user_policy_request::GetUserPolicyRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -100,7 +105,7 @@ where
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
-            ))
+            ));
         }
     }
 }
@@ -115,7 +120,7 @@ where
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
-            ))
+            ));
         }
     }
 }
@@ -231,5 +236,56 @@ pub(crate) async fn tag_user(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn get_user_policy(
+    ctx: &OperationCtx, input: &GetUserPolicyRequest, db: &LocalDb,
+) -> Result<GetUserPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let user_name = input.user_name().unwrap().trim();
+    let user_id = find_id_by_name(connection.as_mut(), ctx.account_id, user_name).await?;
+
+    let policy_name = input.policy_name().unwrap().trim();
+    let inline_policy =
+        db::user_inline_policy::find_by_user_id_and_name(connection.as_mut(), user_id, policy_name).await?;
+
+    match inline_policy {
+        None => Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM inline policy with name '{policy_name}' not found for user with name '{user_name}'.").as_str(),
+        )),
+        Some(policy) => {
+            let output = GetUserPolicyOutput::builder()
+                .user_name(user_name)
+                .policy_name(&policy.policy_name)
+                .policy_document(&policy.policy_document)
+                .build()
+                .unwrap();
+            Ok(output)
+        }
+    }
+}
+
+pub(crate) async fn put_user_policy(
+    ctx: &OperationCtx, input: &PutUserPolicyRequest, db: &LocalDb,
+) -> Result<PutUserPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
+
+    let mut inline_policy =
+        DbInlinePolicy::new(user_id, input.policy_name().unwrap(), input.policy_document().unwrap());
+
+    db::user_inline_policy::save(&mut tx, &mut inline_policy).await?;
+
+    let output = PutUserPolicyOutput::builder().build();
+
+    tx.commit().await?;
     Ok(output)
 }

@@ -71,6 +71,16 @@ CREATE TABLE IF NOT EXISTS groups
     UNIQUE (account_id, unique_group_name)
 );
 CREATE INDEX IF NOT EXISTS idx_groups__arn ON groups (arn ASC);
+CREATE TABLE IF NOT EXISTS group_inline_policies
+(
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    parent_id          INTEGER REFERENCES groups (id)    NOT NULL,
+    policy_name        VARCHAR2(128)                     NOT NULL,
+    unique_policy_name VARCHAR2(128)                     NOT NULL,
+    policy_document    VARCHAR2(131072)                  NOT NULL,
+    UNIQUE (parent_id, unique_policy_name)
+);
+CREATE INDEX IF NOT EXISTS fk_group_inline_policies__parent_id ON group_inline_policies (parent_id ASC);
 -- Policy
 CREATE TABLE IF NOT EXISTS policies
 (
@@ -125,6 +135,16 @@ VALUES (1,
         '/',
         'AIDAHOMECLOUDROOT101A',
         1706219306);
+CREATE TABLE IF NOT EXISTS user_inline_policies
+(
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    parent_id          INTEGER REFERENCES users (id)     NOT NULL,
+    policy_name        VARCHAR2(128)                     NOT NULL,
+    unique_policy_name VARCHAR2(128)                     NOT NULL,
+    policy_document    VARCHAR2(131072)                  NOT NULL,
+    UNIQUE (parent_id, unique_policy_name)
+);
+CREATE INDEX IF NOT EXISTS fk_user_inline_policies__parent_id ON user_inline_policies (parent_id ASC);
 CREATE TABLE IF NOT EXISTS user_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -191,6 +211,16 @@ CREATE TABLE IF NOT EXISTS roles
 );
 CREATE INDEX IF NOT EXISTS fk_roles__account_id ON roles (account_id ASC);
 CREATE INDEX IF NOT EXISTS idx_roles__arn ON roles (arn ASC);
+CREATE TABLE IF NOT EXISTS role_inline_policies
+(
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    parent_id          INTEGER REFERENCES roles (id)     NOT NULL,
+    policy_name        VARCHAR2(128)                     NOT NULL,
+    unique_policy_name VARCHAR2(128)                     NOT NULL,
+    policy_document    VARCHAR2(131072)                  NOT NULL,
+    UNIQUE (parent_id, unique_policy_name)
+);
+CREATE INDEX IF NOT EXISTS fk_role_inline_policies__parent_id ON role_inline_policies (parent_id ASC);
 CREATE TABLE IF NOT EXISTS role_tags
 (
     id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

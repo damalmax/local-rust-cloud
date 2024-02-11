@@ -1,4 +1,4 @@
-use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
+use crate::tests::fixture::tag;
 
 use super::fixture;
 

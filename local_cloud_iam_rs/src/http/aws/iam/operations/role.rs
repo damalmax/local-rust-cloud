@@ -1,7 +1,9 @@
 use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
+use aws_sdk_iam::operation::get_role_policy::GetRolePolicyOutput;
 use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
 use aws_sdk_iam::operation::list_roles::ListRolesOutput;
+use aws_sdk_iam::operation::put_role_policy::PutRolePolicyOutput;
 use aws_sdk_iam::operation::tag_role::TagRoleOutput;
 use aws_sdk_iam::types::{Role, Tag};
 use aws_smithy_types::DateTime;
@@ -12,6 +14,7 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
+use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError, SelectRole};
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
@@ -20,8 +23,10 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
+use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
+use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -100,7 +105,7 @@ where
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM role with name '{}' doesn't exist.", role_name).as_str(),
-            ))
+            ));
         }
     }
 }
@@ -224,5 +229,56 @@ pub(crate) async fn tag_role(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn get_role_policy(
+    ctx: &OperationCtx, input: &GetRolePolicyRequest, db: &LocalDb,
+) -> Result<GetRolePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let role_name = input.role_name().unwrap().trim();
+    let role_id = find_id_by_name(connection.as_mut(), ctx.account_id, role_name).await?;
+
+    let policy_name = input.policy_name().unwrap().trim();
+    let inline_policy =
+        db::role_inline_policy::find_by_role_id_and_name(connection.as_mut(), role_id, policy_name).await?;
+
+    match inline_policy {
+        None => Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM inline policy with name '{policy_name}' not found for role with name '{role_name}'.").as_str(),
+        )),
+        Some(policy) => {
+            let output = GetRolePolicyOutput::builder()
+                .role_name(role_name)
+                .policy_name(&policy.policy_name)
+                .policy_document(&policy.policy_document)
+                .build()
+                .unwrap();
+            Ok(output)
+        }
+    }
+}
+
+pub(crate) async fn put_role_policy(
+    ctx: &OperationCtx, input: &PutRolePolicyRequest, db: &LocalDb,
+) -> Result<PutRolePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
+
+    let mut inline_policy =
+        DbInlinePolicy::new(role_id, input.policy_name().unwrap(), input.policy_document().unwrap());
+
+    db::role_inline_policy::save(&mut tx, &mut inline_policy).await?;
+
+    let output = PutRolePolicyOutput::builder().build();
+
+    tx.commit().await?;
     Ok(output)
 }

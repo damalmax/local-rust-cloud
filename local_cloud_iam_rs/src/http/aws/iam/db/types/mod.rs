@@ -1,5 +1,6 @@
 pub(crate) mod common;
 pub(crate) mod group;
+pub(crate) mod inline_policy;
 pub(crate) mod instance_profile;
 pub(crate) mod login_profile;
 pub(crate) mod open_id_connect_provider;

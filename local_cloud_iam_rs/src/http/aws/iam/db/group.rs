@@ -94,6 +94,27 @@ where
     Ok(group)
 }
 
+pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, group_name: &str) -> Result<Option<i64>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let group_id = sqlx::query(
+        r#"
+            SELECT 
+                id
+            FROM groups
+            WHERE account_id = $1 AND unique_group_name = $2
+    "#,
+    )
+    .bind(account_id)
+    .bind(group_name.to_uppercase())
+    .map(|row: SqliteRow| row.get::<i64, &str>("id"))
+    .fetch_optional(executor)
+    .await?;
+
+    Ok(group_id)
+}
+
 pub(crate) async fn assign_user_to_group<'a>(
     tx: &mut Transaction<'a, Sqlite>, group_id: i64, user_id: i64,
 ) -> Result<(), Error> {

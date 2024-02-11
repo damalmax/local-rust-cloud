@@ -76,7 +76,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_context_keys_for_principal_policy
 - [ ] get_credential_report
 - [X] get_group
-- [ ] get_group_policy
+- [X] get_group_policy
 - [ ] get_instance_profile
 - [ ] get_login_profile
 - [ ] get_mfa_device
@@ -85,7 +85,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_policy
 - [ ] get_policy_version
 - [ ] get_role
-- [ ] get_role_policy
+- [X] get_role_policy
 - [ ] get_saml_provider
 - [ ] get_server_certificate
 - [ ] get_service_last_accessed_details
@@ -93,7 +93,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_service_linked_role_deletion_status
 - [ ] get_ssh_public_key
 - [ ] get_user
-- [ ] get_user_policy
+- [X] get_user_policy
 - [ ] list_access_keys
 - [ ] list_account_aliases
 - [ ] list_attached_group_policies
@@ -128,11 +128,11 @@ The project is created to help with serverless apps testing on local environment
 - [X] list_user_tags
 - [X] list_users
 - [ ] list_virtual_mfa_devices
-- [ ] put_group_policy
+- [X] put_group_policy
 - [ ] put_role_permissions_boundary
-- [ ] put_role_policy
+- [X] put_role_policy
 - [ ] put_user_permissions_boundary
-- [ ] put_user_policy
+- [X] put_user_policy
 - [ ] remove_client_id_from_open_id_connect_provider
 - [ ] remove_role_from_instance_profile
 - [ ] remove_user_from_group

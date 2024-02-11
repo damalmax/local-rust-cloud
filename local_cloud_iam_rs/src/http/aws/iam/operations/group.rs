@@ -2,7 +2,9 @@ use aws_sdk_iam::operation::add_user_to_group::AddUserToGroupOutput;
 use aws_sdk_iam::operation::attach_group_policy::AttachGroupPolicyOutput;
 use aws_sdk_iam::operation::create_group::CreateGroupOutput;
 use aws_sdk_iam::operation::get_group::GetGroupOutput;
+use aws_sdk_iam::operation::get_group_policy::GetGroupPolicyOutput;
 use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
+use aws_sdk_iam::operation::put_group_policy::PutGroupPolicyOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -13,6 +15,7 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::group::{InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, SelectGroup};
+use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
@@ -21,8 +24,10 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
 use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
+use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
+use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_group(
@@ -115,7 +120,24 @@ where
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
-            ))
+            ));
+        }
+    }
+}
+
+pub(crate) async fn find_id_by_name<'a, E>(
+    executor: E, account_id: i64, group_name: &str,
+) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::group::find_id_by_name(executor, account_id, group_name).await? {
+        Some(id) => Ok(id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
+            ));
         }
     }
 }
@@ -168,7 +190,7 @@ pub(crate) async fn get_group(
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
-            ))
+            ));
         }
         Some(group) => {
             let limit = match input.max_items() {
@@ -207,4 +229,56 @@ pub(crate) async fn get_group(
             Ok(output)
         }
     }
+}
+
+pub(crate) async fn get_group_policy(
+    ctx: &OperationCtx, input: &GetGroupPolicyRequest, db: &LocalDb,
+) -> Result<GetGroupPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let group_name = input.group_name().unwrap().trim();
+    let group_id = find_id_by_name(connection.as_mut(), ctx.account_id, group_name).await?;
+
+    let policy_name = input.policy_name().unwrap().trim();
+    let inline_policy =
+        db::group_inline_policy::find_by_group_id_and_name(connection.as_mut(), group_id, policy_name).await?;
+
+    match inline_policy {
+        None => Err(OperationError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM inline policy with name '{policy_name}' not found for group with name '{group_name}'.")
+                .as_str(),
+        )),
+        Some(policy) => {
+            let output = GetGroupPolicyOutput::builder()
+                .group_name(group_name)
+                .policy_name(&policy.policy_name)
+                .policy_document(&policy.policy_document)
+                .build()
+                .unwrap();
+            Ok(output)
+        }
+    }
+}
+
+pub(crate) async fn put_group_policy(
+    ctx: &OperationCtx, input: &PutGroupPolicyRequest, db: &LocalDb,
+) -> Result<PutGroupPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.group_name().unwrap().trim()).await?;
+
+    let mut inline_policy =
+        DbInlinePolicy::new(group_id, input.policy_name().unwrap(), input.policy_document().unwrap());
+
+    db::group_inline_policy::save(&mut tx, &mut inline_policy).await?;
+
+    let output = PutGroupPolicyOutput::builder().build();
+
+    tx.commit().await?;
+    Ok(output)
 }
