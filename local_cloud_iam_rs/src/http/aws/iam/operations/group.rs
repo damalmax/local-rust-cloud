@@ -4,6 +4,7 @@ use aws_sdk_iam::operation::create_group::CreateGroupOutput;
 use aws_sdk_iam::operation::get_group::GetGroupOutput;
 use aws_sdk_iam::operation::get_group_policy::GetGroupPolicyOutput;
 use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
+use aws_sdk_iam::operation::list_groups_for_user::ListGroupsForUserOutput;
 use aws_sdk_iam::operation::put_group_policy::PutGroupPolicyOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
@@ -14,7 +15,9 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::group::{InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, SelectGroup};
+use crate::http::aws::iam::db::types::group::{
+    InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, ListGroupsByUserQuery, SelectGroup,
+};
 use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
@@ -26,6 +29,7 @@ use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicy
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
+use crate::http::aws::iam::types::list_groups_for_user_request::ListGroupsForUserRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
 use crate::http::aws::iam::{constants, db};
@@ -154,6 +158,51 @@ pub(crate) async fn add_user_to_group(
     let output = AddUserToGroupOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn list_groups_for_user(
+    ctx: &OperationCtx, input: &ListGroupsForUserRequest, db: &LocalDb,
+) -> Result<ListGroupsForUserOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_tx().await?;
+
+    let user_id = super::user::find_id_by_name(connection.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+
+    let query = ListGroupsByUserQuery {
+        user_id,
+        limit: match input.max_items() {
+            None => 10,
+            Some(v) => *v,
+        },
+        skip: match input.marker_type() {
+            None => 0,
+            // unwrap is safe since marker must be validated before DB query preparation
+            Some(marker_type) => marker_type.marker().unwrap().truncate_amount,
+        },
+    };
+
+    let found_groups = db::group::find_by_user_id(connection.as_mut(), &query).await?;
+
+    let mut groups: Vec<Group> = vec![];
+    for i in 0..(query.limit) {
+        let group = found_groups.get(i as usize);
+        match group {
+            None => break,
+            Some(select_group) => {
+                groups.push(select_group.into());
+            }
+        }
+    }
+    let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
+
+    let output = ListGroupsForUserOutput::builder()
+        .set_groups(Some(groups))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
 

@@ -79,6 +79,7 @@ action!(policy, tag_policy, tag_policy_request, TagPolicyRequest, TagPolicyOutpu
 action!(user, attach_user_policy, attach_user_policy_request, AttachUserPolicyRequest, AttachUserPolicyOutput);
 action!(user, get_user_policy, get_user_policy_request, GetUserPolicyRequest, GetUserPolicyOutput);
 action!(user, list_users, list_users_request, ListUsersRequest, ListUsersOutput);
+action!(group, list_groups_for_user, list_groups_for_user_request, ListGroupsForUserRequest, ListGroupsForUserOutput);
 action!(user, list_user_tags, list_user_tags_request, ListUserTagsRequest, ListUserTagsOutput);
 action!(user, tag_user, tag_user_request, TagUserRequest, TagUserOutput);
 action!(user, put_user_policy, put_user_policy_request, PutUserPolicyRequest, PutUserPolicyOutput);

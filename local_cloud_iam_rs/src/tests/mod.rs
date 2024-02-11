@@ -24,6 +24,7 @@ mod get_group_policy;
 mod get_role_policy;
 mod get_user_policy;
 mod list_groups;
+mod list_groups_for_user;
 mod list_instance_profile_tags;
 mod list_policies;
 mod list_policy_tags;

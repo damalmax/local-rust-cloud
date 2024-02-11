@@ -29,6 +29,23 @@ pub(crate) struct SelectGroup {
 }
 
 #[derive(Debug)]
+pub(crate) struct ListGroupsByUserQuery {
+    pub(crate) user_id: i64,
+    pub(crate) limit: i32,
+    pub(crate) skip: i32,
+}
+
+impl Pageable for &ListGroupsByUserQuery {
+    fn limit(&self) -> i32 {
+        self.limit
+    }
+
+    fn skip(&self) -> i32 {
+        self.skip
+    }
+}
+
+#[derive(Debug)]
 pub(crate) struct ListGroupsQuery {
     pub(crate) path_prefix: String,
     pub(crate) limit: i32,

@@ -1,7 +1,8 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::group::{InsertGroup, ListGroupsQuery, SelectGroup};
+use crate::http::aws::iam::db::types::common::Pageable;
+use crate::http::aws::iam::db::types::group::{InsertGroup, ListGroupsByUserQuery, ListGroupsQuery, SelectGroup};
 
 pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, group: &mut InsertGroup) -> Result<(), Error> {
     let result = sqlx::query(
@@ -135,4 +136,38 @@ pub(crate) async fn assign_policy_to_group<'a>(
         .execute(tx.as_mut())
         .await?;
     Ok(())
+}
+
+pub(crate) async fn find_by_user_id<'a, E>(
+    executor: E, query: &ListGroupsByUserQuery,
+) -> Result<Vec<SelectGroup>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let groups = sqlx::query(
+        r#"
+            SELECT 
+                g.id as id,
+                g.account_id as account_id,
+                g.group_name as group_name,
+                g.unique_group_name as unique_group_name,
+                g.arn as arn,
+                g.path as path,
+                g.group_id as group_id,
+                g.create_date as create_date
+            FROM users u 
+            LEFT JOIN group_users gu ON u.id = gu.user_id 
+            LEFT JOIN groups g ON gu.group_id = g.id 
+            WHERE u.id = $1 ORDER BY g.unique_group_name
+            LIMIT $2 OFFSET $3
+    "#,
+    )
+    .bind(query.user_id)
+    .bind(query.limit() + 1)
+    .bind(query.skip())
+    .map(|row: SqliteRow| SelectGroup::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
+
+    Ok(groups)
 }

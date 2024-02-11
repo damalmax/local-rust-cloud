@@ -1,6 +1,4 @@
-use crate::tests::fixture::{tag, CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY, CREATE_USER_PERMISSIONS_BOUNDARY};
-
-use super::fixture;
+use crate::tests::fixture::{tag, CREATE_ROLE_ASSUME_ROLE_PERMISSIONS_BOUNDARY};
 
 #[actix_rt::test]
 async fn test_tag_role() {

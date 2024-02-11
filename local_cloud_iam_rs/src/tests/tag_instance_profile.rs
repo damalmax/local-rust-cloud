@@ -1,6 +1,4 @@
-use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
-
-use super::fixture;
+use crate::tests::fixture::tag;
 
 #[actix_rt::test]
 async fn test_tag_instance_profile() {
