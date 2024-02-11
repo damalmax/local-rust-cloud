@@ -44,8 +44,8 @@ impl<'r> FromRow<'r, SqliteRow> for SelectUser {
         let path: String = row.try_get("path")?;
         let create_date: i64 = row.try_get("create_date")?;
         let username: String = row.try_get("username")?;
-        let policy_id: Option<i64> = row.try_get("policy_id")?;
-        let policy_arn: Option<String> = row.try_get("policy_arn")?;
+        let policy_id: Option<i64> = row.try_get("policy_id").unwrap_or_else(|_| None);
+        let policy_arn: Option<String> = row.try_get("policy_arn").unwrap_or_else(|_| None);
         let tags = super::tags::from_row(&row, "tags")?;
         Ok(SelectUser {
             id,

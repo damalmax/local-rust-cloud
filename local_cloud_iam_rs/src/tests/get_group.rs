@@ -122,13 +122,12 @@ async fn get_group_with_users() {
 
     assert_eq!(response.users.len(), 1);
     let user = &response.users[0];
-    assert_eq!(user.tags().len(), 3);
+    assert_eq!(user.tags().len(), 0);
     assert_not_empty(user.path());
     assert_not_empty(user.arn());
     assert_not_empty(user.user_name());
     assert_not_empty(user.user_id());
-    assert!(user.permissions_boundary.is_some());
-    assert_not_empty(user.permissions_boundary.clone().unwrap().permissions_boundary_arn);
+    assert!(user.permissions_boundary.is_none());
 
     assert!(!response.is_truncated);
     assert!(response.marker.is_none());

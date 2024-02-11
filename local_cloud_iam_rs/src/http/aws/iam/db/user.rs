@@ -78,19 +78,8 @@ where
             u.arn AS arn,
             u.path AS path,
             u.user_id AS user_id,
-            u.policy_id AS policy_id,
-            p.arn AS policy_arn,
-            u.create_date as create_date,
-            (
-                SELECT group_concat(tag, '♫')
-                FROM (
-                    SELECT (ut.id || '♪' || ut.parent_id || '♪' || ut.key || '♪' || ut.value) AS tag
-                    FROM user_tags ut
-                    WHERE ut.parent_id = u.id
-                    ORDER BY ut.id
-                )
-            ) AS tags
-        FROM group_users gu LEFT JOIN users u ON gu.user_id = u.id LEFT JOIN policies p ON u.policy_id = p.id
+            u.create_date as create_date
+        FROM group_users gu LEFT JOIN users u ON gu.user_id = u.id
         WHERE gu.group_id ="#,
     );
     let users = query_builder
@@ -152,19 +141,8 @@ where
             u.arn AS arn,
             u.path AS path,
             u.user_id AS user_id,
-            u.policy_id AS policy_id,
-            p.arn AS policy_arn,
-            u.create_date as create_date,
-            (
-                SELECT group_concat(tag, '♫')
-                FROM (
-                    SELECT (ut.id || '♪' || ut.parent_id || '♪' || ut.key || '♪' || ut.value) AS tag
-                    FROM user_tags ut
-                    WHERE ut.parent_id = u.id
-                    ORDER BY ut.id
-                )
-            ) AS tags
-        FROM group_users gu LEFT JOIN users u ON gu.user_id = u.id LEFT JOIN policies p ON u.policy_id = p.id
+            u.create_date as create_date
+        FROM group_users gu LEFT JOIN users u ON gu.user_id = u.id
         WHERE u.account_id = "#,
     );
     let users = query_builder
