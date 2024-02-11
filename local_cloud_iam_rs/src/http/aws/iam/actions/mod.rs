@@ -74,6 +74,13 @@ action!(group, get_group_policy, get_group_policy_request, GetGroupPolicyRequest
 action!(group, list_groups, list_groups_request, ListGroupsRequest, ListGroupsOutput);
 action!(group, put_group_policy, put_group_policy_request, PutGroupPolicyRequest, PutGroupPolicyOutput);
 action!(policy, list_policies, list_policies_request, ListPoliciesRequest, ListPoliciesOutput);
+action!(
+    policy,
+    list_policy_versions,
+    list_policy_versions_request,
+    ListPolicyVersionsRequest,
+    ListPolicyVersionsOutput
+);
 action!(policy, list_policy_tags, list_policy_tags_request, ListPolicyTagsRequest, ListPolicyTagsOutput);
 action!(policy, tag_policy, tag_policy_request, TagPolicyRequest, TagPolicyOutput);
 action!(user, attach_user_policy, attach_user_policy_request, AttachUserPolicyRequest, AttachUserPolicyOutput);

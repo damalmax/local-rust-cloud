@@ -39,8 +39,12 @@ pub async fn create_user(
     let mut tx = db.new_tx().await?;
     let user_id = create_resource_id(&mut tx, constants::user::PREFIX, ResourceType::User).await?;
 
-    let policy_id =
-        super::policy::find_policy_id_by_arn(tx.as_mut(), ctx.account_id, input.permissions_boundary()).await?;
+    let policy_id = match input.permissions_boundary() {
+        None => None,
+        Some(permissions_boundary) => {
+            Some(super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, permissions_boundary).await?)
+        }
+    };
 
     let mut insert_user = prepare_user_for_insert(ctx, input, &user_id, policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;

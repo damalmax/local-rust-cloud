@@ -147,14 +147,14 @@ where
     let groups = sqlx::query(
         r#"
             SELECT 
-                g.id as id,
-                g.account_id as account_id,
-                g.group_name as group_name,
-                g.unique_group_name as unique_group_name,
-                g.arn as arn,
-                g.path as path,
-                g.group_id as group_id,
-                g.create_date as create_date
+                g.id AS id,
+                g.account_id AS account_id,
+                g.group_name AS group_name,
+                g.unique_group_name AS unique_group_name,
+                g.arn AS arn,
+                g.path AS path,
+                g.group_id AS group_id,
+                g.create_date AS create_date
             FROM users u 
             LEFT JOIN group_users gu ON u.id = gu.user_id 
             LEFT JOIN groups g ON gu.group_id = g.id 

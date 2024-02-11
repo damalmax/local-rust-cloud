@@ -63,23 +63,23 @@ where
     let result = sqlx::query(
         r#"
             SELECT 
-                p.id as id,
-                p.account_id as account_id,
-                p.policy_name as policy_name,
-                p.arn as arn,
-                p.policy_id as policy_id,
-                p.path as path,
-                p.create_date as create_date,
-                p.update_date as update_date,
-                p.policy_type as policy_type,
-                p.description as description,
-                p.is_attachable as is_attachable,
+                p.id AS id,
+                p.account_id AS account_id,
+                p.policy_name AS policy_name,
+                p.arn AS arn,
+                p.policy_id AS policy_id,
+                p.path AS path,
+                p.create_date AS create_date,
+                p.update_date AS update_date,
+                p.policy_type AS policy_type,
+                p.description AS description,
+                p.is_attachable AS is_attachable,
                 ((SELECT COUNT(pg.policy_id) FROM policy_groups pg WHERE pg.policy_id = p.id)
                 + (SELECT COUNT(pr.policy_id) FROM policy_roles pr WHERE pr.policy_id = p.id)
-                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) as attachment_count,
+                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) AS attachment_count,
                 ((SELECT COUNT(r.policy_id) FROM roles r WHERE r.policy_id = p.id) 
-                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) as permissions_boundary_usage_count,
-                p.version as version 
+                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) AS permissions_boundary_usage_count,
+                p.version AS version 
             FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
             WHERE p.id = $1 AND p.account_id = $2"#,
     )
@@ -113,9 +113,9 @@ pub(crate) async fn list(
                 p.is_attachable AS is_attachable,
                 ((SELECT COUNT(pg.policy_id) FROM policy_groups pg WHERE pg.policy_id = p.id)
                 + (SELECT COUNT(pr.policy_id) FROM policy_roles pr WHERE pr.policy_id = p.id)
-                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) as attachment_count,
+                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) AS attachment_count,
                 ((SELECT COUNT(r.policy_id) FROM roles r WHERE r.policy_id = p.id) 
-                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) as permissions_boundary_usage_count,
+                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) AS permissions_boundary_usage_count,
                 pv.version AS version
             FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
             WHERE p.account_id = "#,

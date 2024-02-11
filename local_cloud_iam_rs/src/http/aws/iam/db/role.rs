@@ -78,20 +78,20 @@ where
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
         r#"
             SELECT 
-                r.id as id,
-                r.account_id as account_id,
-                r.role_name as role_name,
-                r.unique_role_name as unique_role_name,
-                r.description as description,
-                r.max_session_duration as max_session_duration,
-                r.assume_role_policy_document as assume_role_policy_document,
-                r.arn as arn,
-                r.path as path,
-                r.role_id as role_id,
-                r.policy_id as policy_id,
-                r.create_date as create_date,
-                r.last_used_date as last_used_date,
-                r.last_used_region_id as last_used_region_id
+                r.id AS id,
+                r.account_id AS account_id,
+                r.role_name AS role_name,
+                r.unique_role_name AS unique_role_name,
+                r.description AS description,
+                r.max_session_duration AS max_session_duration,
+                r.assume_role_policy_document AS assume_role_policy_document,
+                r.arn AS arn,
+                r.path AS path,
+                r.role_id AS role_id,
+                r.policy_id AS policy_id,
+                r.create_date AS create_date,
+                r.last_used_date AS last_used_date,
+                r.last_used_region_id AS last_used_region_id
             FROM roles r 
                 LEFT JOIN policies p ON r.policy_id = p.id
             WHERE r.account_id = "#,

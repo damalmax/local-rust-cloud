@@ -28,6 +28,7 @@ mod list_groups_for_user;
 mod list_instance_profile_tags;
 mod list_policies;
 mod list_policy_tags;
+mod list_policy_versions;
 mod list_role_tags;
 mod list_roles;
 mod list_user_tags;

@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
 use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
+use aws_sdk_iam::operation::list_policy_versions::ListPolicyVersionsOutput;
 use aws_sdk_iam::operation::tag_policy::TagPolicyOutput;
 use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
 use aws_smithy_types::DateTime;
@@ -17,7 +18,7 @@ use crate::http::aws::iam::db::types::policy::{
 };
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::policy_version::{
-    InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError,
+    InsertPolicyVersion, InsertPolicyVersionBuilder, InsertPolicyVersionBuilderError, ListPolicyVersionsQuery,
 };
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
@@ -28,6 +29,7 @@ use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
+use crate::http::aws::iam::types::list_policy_versions_request::ListPolicyVersionsRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -85,30 +87,6 @@ pub(crate) async fn create_policy(
     Ok(output)
 }
 
-pub(crate) async fn find_policy_id_by_arn<'a, E>(
-    executor: E, account_id: i64, arn: Option<&str>,
-) -> Result<Option<i64>, OperationError>
-where
-    E: 'a + Executor<'a, Database = Sqlite>,
-{
-    let policy_id = match arn {
-        None => None,
-        Some(policy_arn) => {
-            let policy = db::policy::find_id_by_arn(executor, account_id, policy_arn).await?;
-            match policy {
-                None => {
-                    return Err(OperationError::new(
-                        ApiErrorKind::NoSuchEntity,
-                        "Policy with the given Permissions Boundary doesn't exist.",
-                    ));
-                }
-                Some(id) => Some(id),
-            }
-        }
-    };
-    Ok(policy_id)
-}
-
 pub(crate) async fn create_policy_version(
     ctx: &OperationCtx, input: &CreatePolicyVersionRequest, db: &LocalDb,
 ) -> Result<CreatePolicyVersionOutput, OperationError> {
@@ -159,6 +137,51 @@ pub(crate) async fn create_policy_version(
     Ok(output)
 }
 
+pub(crate) async fn list_policy_versions(
+    ctx: &OperationCtx, input: &ListPolicyVersionsRequest, db: &LocalDb,
+) -> Result<ListPolicyVersionsOutput, OperationError> {
+    input.validate("$")?;
+
+    let policy_arn = input.policy_arn().unwrap().trim();
+
+    let mut connection = db.new_connection().await?;
+
+    let policy_id = find_id_by_arn(connection.as_mut(), ctx.account_id, policy_arn).await?;
+
+    let query = ListPolicyVersionsQuery {
+        policy_id,
+        limit: match input.max_items() {
+            None => 10,
+            Some(v) => *v,
+        },
+        skip: match input.marker_type() {
+            None => 0,
+            Some(marker_type) => marker_type.marker().unwrap().truncate_amount,
+        },
+    };
+
+    let found_policy_versions = db::policy_version::find_by_policy_id(connection.as_mut(), &query).await?;
+
+    let mut policy_versions: Vec<PolicyVersion> = vec![];
+    for i in 0..(query.limit) {
+        let policy = found_policy_versions.get(i as usize);
+        match policy {
+            None => break,
+            Some(policy_version) => {
+                policy_versions.push(policy_version.into());
+            }
+        }
+    }
+    let marker = super::common::create_encoded_marker(&query, found_policy_versions.len())?;
+
+    let output = ListPolicyVersionsOutput::builder()
+        .set_versions(Some(policy_versions))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build();
+    Ok(output)
+}
+
 async fn check_policy_version_count<'a>(
     tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
 ) -> Result<(), OperationError> {
@@ -187,7 +210,7 @@ where
             return Err(OperationError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM policy with ARN '{}' doesn't exist.", arn).as_str(),
-            ))
+            ));
         }
     }
 }

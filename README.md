@@ -113,7 +113,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] list_policies
 - [ ] list_policies_granting_service_access
 - [X] list_policy_tags
-- [ ] list_policy_versions
+- [X] list_policy_versions
 - [ ] list_role_policies
 - [X] list_role_tags
 - [X] list_roles

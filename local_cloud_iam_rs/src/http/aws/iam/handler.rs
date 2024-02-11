@@ -32,6 +32,7 @@ use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
+use crate::http::aws::iam::types::list_policy_versions_request::ListPolicyVersionsRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
@@ -69,6 +70,7 @@ pub(crate) enum LocalAwsRequest {
     ListGroupsForUser(ListGroupsForUserRequest),
     ListInstanceProfileTags(ListInstanceProfileTagsRequest),
     ListPolicies(ListPoliciesRequest),
+    ListPolicyVersions(ListPolicyVersionsRequest),
     ListPolicyTags(ListPolicyTagsRequest),
     ListRoles(ListRolesRequest),
     ListRoleTags(ListRoleTagsRequest),
@@ -176,6 +178,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::ListPolicies(list_policies) => list_policies
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListPolicyVersions(list_policy_versions) => list_policy_versions
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

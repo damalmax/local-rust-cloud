@@ -40,8 +40,13 @@ pub async fn create_role(
     let mut tx = db.new_tx().await?;
     let role_id = create_resource_id(&mut tx, constants::role::PREFIX, ResourceType::Role).await?;
 
-    let policy_id =
-        super::policy::find_policy_id_by_arn(tx.as_mut(), ctx.account_id, input.permissions_boundary()).await?;
+    let policy_id = match input.permissions_boundary() {
+        None => None,
+        Some(permissions_boundary) => {
+            Some(super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, permissions_boundary).await?)
+        }
+    };
+
     let mut insert_role = prepare_role_for_insert(ctx, input, &role_id, policy_id, current_time)
         .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 

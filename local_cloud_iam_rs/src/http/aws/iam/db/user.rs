@@ -72,12 +72,12 @@ where
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
         r#"
         SELECT 
-            u.id as id,
-            u.account_id as account_id,
-            u.username as username,
-            u.arn as arn,
-            u.path as path,
-            u.user_id as user_id,
+            u.id AS id,
+            u.account_id AS account_id,
+            u.username AS username,
+            u.arn AS arn,
+            u.path AS path,
+            u.user_id AS user_id,
             u.policy_id AS policy_id,
             p.arn AS policy_arn,
             u.create_date as create_date,
@@ -146,12 +146,12 @@ where
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
         r#"
         SELECT 
-            u.id as id,
-            u.account_id as account_id,
-            u.username as username,
-            u.arn as arn,
-            u.path as path,
-            u.user_id as user_id,
+            u.id AS id,
+            u.account_id AS account_id,
+            u.username AS username,
+            u.arn AS arn,
+            u.path AS path,
+            u.user_id AS user_id,
             u.policy_id AS policy_id,
             p.arn AS policy_arn,
             u.create_date as create_date,

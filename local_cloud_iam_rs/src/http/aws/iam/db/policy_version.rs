@@ -1,7 +1,9 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::policy_version::InsertPolicyVersion;
+use crate::http::aws::iam::db::types::policy_version::{
+    InsertPolicyVersion, ListPolicyVersionsQuery, SelectPolicyVersion,
+};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, policy_version: &mut InsertPolicyVersion,
@@ -46,6 +48,36 @@ pub(crate) async fn count_by_policy_id<'a>(tx: &mut Transaction<'a, Sqlite>, pol
         .fetch_one(tx.as_mut())
         .await?;
     Ok(result as usize)
+}
+
+pub(crate) async fn find_by_policy_id<'a, E>(
+    executor: E, query: &ListPolicyVersionsQuery,
+) -> Result<Vec<SelectPolicyVersion>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        r#"SELECT 
+                pv.id AS id,
+                pv.account_id AS account_id,
+                pv.policy_id AS policy_id,
+                pv.policy_version_id AS policy_version_id,
+                pv.policy_document AS policy_document,
+                pv.create_date AS create_date,
+                pv.is_default AS is_default,
+                pv.version AS version
+              FROM policies p 
+              LEFT JOIN policy_versions pv ON p.id = pv.policy_id
+              WHERE p.id = $1 ORDER BY pv.version
+              LIMIT $2 OFFSET $3"#,
+    )
+    .bind(query.policy_id)
+    .bind(query.limit + 1)
+    .bind(query.skip)
+    .map(|row: SqliteRow| SelectPolicyVersion::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
+    Ok(result)
 }
 
 pub(crate) async fn disable_default_by_policy_id<'a>(
