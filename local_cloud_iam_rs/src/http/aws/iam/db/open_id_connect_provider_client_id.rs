@@ -7,7 +7,8 @@ pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, open_id_connect_provider_id: i64, client_id_type: &str,
 ) -> Result<i64, Error> {
     let result = sqlx::query(
-        "INSERT INTO open_id_connect_provider_client_ids (provider_id, client_id) VALUES ($1, $2) RETURNING id",
+        "INSERT INTO open_id_connect_provider_client_ids (provider_id, client_id) \
+             VALUES ($1, $2) ON CONFLICT (provider_id, client_id) DO UPDATE SET client_id = $2 RETURNING id",
     )
     .bind(open_id_connect_provider_id)
     .bind(client_id_type)

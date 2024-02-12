@@ -1,14 +1,46 @@
+use aws_sdk_iam::operation::add_client_id_to_open_id_connect_provider::AddClientIdToOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::create_open_id_connect_provider::CreateOpenIdConnectProviderOutput;
 use chrono::Utc;
+use sqlx::{Executor, Sqlite};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
+use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::open_id_connect_provider::InsertOpenIdConnectProvider;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider_request::AddClientIdToOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::create_open_id_connect_provider_request::CreateOpenIdConnectProviderRequest;
 use crate::http::aws::iam::{constants, db};
+
+pub(crate) async fn add_client_id_to_open_id_connect_provider(
+    ctx: &OperationCtx, input: &AddClientIdToOpenIdConnectProviderRequest, db: &LocalDb,
+) -> Result<AddClientIdToOpenIdConnectProviderOutput, OperationError> {
+    input.validate("$")?;
+    let mut tx = db.new_tx().await?;
+    let arn = input.open_id_connect_provider_arn().unwrap();
+    let provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
+    db::open_id_connect_provider_client_id::create(&mut tx, provider_id, input.client_id().unwrap()).await?;
+    let output = AddClientIdToOpenIdConnectProviderOutput::builder().build();
+    tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::open_id_connect_provider::find_id_by_arn(executor, account_id, arn).await? {
+        Some(provider_id) => Ok(provider_id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM OpenID connect provider with ARN '{}' doesn't exist.", arn).as_str(),
+            ));
+        }
+    }
+}
 
 pub(crate) async fn create_open_id_connect_provider(
     ctx: &OperationCtx, input: &CreateOpenIdConnectProviderRequest, db: &LocalDb,

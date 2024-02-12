@@ -9,6 +9,7 @@ use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::action::Action;
 use crate::http::aws::iam::actions::error::ApiError;
+use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider_request::AddClientIdToOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::add_role_to_instance_profile_request::AddRoleToInstanceProfileRequest;
 use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
 use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
@@ -52,6 +53,7 @@ use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
 pub(crate) enum LocalAwsRequest {
+    AddClientIDToOpenIDConnectProvider(AddClientIdToOpenIdConnectProviderRequest),
     AddRoleToInstanceProfile(AddRoleToInstanceProfileRequest),
     AddUserToGroup(AddUserToGroupRequest),
     AttachGroupPolicy(AttachGroupPolicyRequest),
@@ -101,6 +103,10 @@ pub(crate) async fn handle(
     let aws_request = aws_query.into_inner();
     let aws_request_id = Uuid::new_v4().to_string();
     let output: Result<XmlResponse, ApiError> = match aws_request {
+        LocalAwsRequest::AddClientIDToOpenIDConnectProvider(add_client_id_request) => add_client_id_request
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
         LocalAwsRequest::AddRoleToInstanceProfile(add_role_to_instance_profile) => add_role_to_instance_profile
             .execute(account_id, &aws_request_id, db.as_ref())
             .await

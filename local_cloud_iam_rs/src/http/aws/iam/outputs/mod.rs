@@ -1,6 +1,7 @@
 mod access_details;
 mod access_key_metadata;
 mod access_keys;
+mod add_client_id_to_open_id_connect_provider;
 mod add_role_to_instance_profile;
 mod add_user_to_group;
 mod attach_group_policy;

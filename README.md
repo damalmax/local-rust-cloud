@@ -16,7 +16,7 @@ The project is created to help with serverless apps testing on local environment
 <details>
 <summary>1. IAM</summary>
 
-- [ ] add_client_id_to_open_id_connect_provider
+- [X] add_client_id_to_open_id_connect_provider
 - [X] add_role_to_instance_profile
 - [X] add_user_to_group
 - [X] attach_group_policy

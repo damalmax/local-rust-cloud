@@ -101,3 +101,10 @@ action!(role, list_role_policies, list_role_policies_request, ListRolePoliciesRe
 action!(role, list_roles, list_roles_request, ListRolesRequest, ListRolesOutput);
 action!(role, put_role_policy, put_role_policy_request, PutRolePolicyRequest, PutRolePolicyOutput);
 action!(role, tag_role, tag_role_request, TagRoleRequest, TagRoleOutput);
+action!(
+    open_id_connect_provider,
+    add_client_id_to_open_id_connect_provider,
+    add_client_id_to_open_id_connect_provider_request,
+    AddClientIdToOpenIdConnectProviderRequest,
+    AddClientIdToOpenIdConnectProviderOutput
+);

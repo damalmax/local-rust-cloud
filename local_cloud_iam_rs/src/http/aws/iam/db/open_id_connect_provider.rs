@@ -1,4 +1,4 @@
-use sqlx::{sqlite::SqliteRow, Error, Row, Sqlite, Transaction};
+use sqlx::{sqlite::SqliteRow, Error, Executor, Row, Sqlite, Transaction};
 
 use super::types::open_id_connect_provider::InsertOpenIdConnectProvider;
 
@@ -17,4 +17,17 @@ pub(crate) async fn create<'a>(
         .await?;
     provider.id = Some(result);
     Ok(())
+}
+
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<Option<i64>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query("SELECT id FROM open_id_connect_providers WHERE account_id = $1 AND arn = $2")
+        .bind(account_id)
+        .bind(arn)
+        .map(|row: SqliteRow| row.get::<i64, &str>("id"))
+        .fetch_optional(executor)
+        .await?;
+    Ok(result)
 }
