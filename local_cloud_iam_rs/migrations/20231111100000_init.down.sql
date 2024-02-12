@@ -1,3 +1,9 @@
+DROP INDEX IF EXISTS fk_saml_provider_tags__parent_id;
+DROP TABLE IF EXISTS saml_provider_tags;
+
+DROP INDEX IF EXISTS fk_saml_providers__account_id;
+DROP TABLE IF EXISTS saml_providers;
+
 DROP INDEX IF EXISTS fk_role_inline_policies__parent_id;
 DROP TABLE IF EXISTS role_inline_policies;
 DROP INDEX IF EXISTS fk_user_inline_policies__parent_id;

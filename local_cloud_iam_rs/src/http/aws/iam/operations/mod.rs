@@ -7,5 +7,6 @@ pub(crate) mod login_profile;
 pub(crate) mod open_id_connect_provider;
 pub(crate) mod policy;
 pub(crate) mod role;
+pub(crate) mod saml_provider;
 pub(crate) mod secure;
 pub(crate) mod user;

@@ -17,6 +17,7 @@ mod create_open_id_connect_provider;
 mod create_policy;
 mod create_policy_version;
 mod create_role;
+mod create_saml_provider;
 mod create_user;
 pub mod fixture;
 mod get_group;

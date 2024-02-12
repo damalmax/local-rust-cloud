@@ -16,6 +16,8 @@ pub(crate) mod resource_identifier;
 pub(crate) mod role;
 pub(crate) mod role_inline_policy;
 pub(crate) mod role_tag;
+pub(crate) mod saml_provider;
+pub(crate) mod saml_provider_tag;
 pub(crate) mod tag;
 pub(crate) mod types;
 pub(crate) mod user;

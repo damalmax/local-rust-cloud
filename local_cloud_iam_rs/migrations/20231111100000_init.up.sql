@@ -344,3 +344,28 @@ CREATE TABLE IF NOT EXISTS open_id_connect_provider_tags
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_open_id_connect_provider_tags__parent_id ON open_id_connect_provider_tags (parent_id ASC);
+-- SAML provider
+CREATE TABLE IF NOT EXISTS saml_providers
+(
+    id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id        INTEGER REFERENCES accounts (id)  NOT NULL,
+    name              VARCHAR2(128)                     NOT NULL,
+    unique_name       VARCHAR2(128)                     NOT NULL,
+    arn               VARCHAR2(2048)                    NOT NULL,
+    create_date       INTEGER                           NOT NULL,
+    valid_until       INTEGER,
+    metadata_document VARCHAR2(10000000)                NOT NULL,
+    UNIQUE (arn),
+    UNIQUE (account_id, unique_name)
+);
+CREATE INDEX IF NOT EXISTS fk_saml_providers__account_id ON saml_providers (account_id ASC);
+CREATE TABLE IF NOT EXISTS saml_provider_tags
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT      NOT NULL,
+    parent_id INTEGER REFERENCES saml_providers (id) NOT NULL,
+    key       VARCHAR2(128)                          NOT NULL,
+    value     VARCHAR2(256)                          NOT NULL,
+    UNIQUE (parent_id, key)
+);
+CREATE INDEX IF NOT EXISTS fk_saml_provider_tags__parent_id ON saml_provider_tags (parent_id ASC);
+

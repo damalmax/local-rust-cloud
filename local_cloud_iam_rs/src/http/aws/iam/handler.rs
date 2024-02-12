@@ -22,6 +22,7 @@ use crate::http::aws::iam::types::create_open_id_connect_provider_request::Creat
 use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
+use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
@@ -64,6 +65,7 @@ pub(crate) enum LocalAwsRequest {
     CreatePolicy(CreatePolicyRequest),
     CreatePolicyVersion(CreatePolicyVersionRequest),
     CreateRole(CreateRoleRequest),
+    CreateSAMLProvider(CreateSamlProviderRequest),
     CreateUser(CreateUserRequest),
     GetGroup(GetGroupRequest),
     GetGroupPolicy(GetGroupPolicyRequest),
@@ -148,6 +150,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::CreateRole(create_role) => create_role
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::CreateSAMLProvider(create_saml_provider) => create_saml_provider
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
