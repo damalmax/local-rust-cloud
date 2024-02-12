@@ -72,6 +72,8 @@ action!(group, attach_group_policy, attach_group_policy_request, AttachGroupPoli
 action!(group, get_group, get_group_request, GetGroupRequest, GetGroupOutput);
 action!(group, get_group_policy, get_group_policy_request, GetGroupPolicyRequest, GetGroupPolicyOutput);
 action!(group, list_groups, list_groups_request, ListGroupsRequest, ListGroupsOutput);
+action!(group, list_group_policies, list_group_policies_request, ListGroupPoliciesRequest, ListGroupPoliciesOutput);
+action!(group, list_groups_for_user, list_groups_for_user_request, ListGroupsForUserRequest, ListGroupsForUserOutput);
 action!(group, put_group_policy, put_group_policy_request, PutGroupPolicyRequest, PutGroupPolicyOutput);
 action!(policy, list_policies, list_policies_request, ListPoliciesRequest, ListPoliciesOutput);
 action!(
@@ -86,7 +88,7 @@ action!(policy, tag_policy, tag_policy_request, TagPolicyRequest, TagPolicyOutpu
 action!(user, attach_user_policy, attach_user_policy_request, AttachUserPolicyRequest, AttachUserPolicyOutput);
 action!(user, get_user_policy, get_user_policy_request, GetUserPolicyRequest, GetUserPolicyOutput);
 action!(user, list_users, list_users_request, ListUsersRequest, ListUsersOutput);
-action!(group, list_groups_for_user, list_groups_for_user_request, ListGroupsForUserRequest, ListGroupsForUserOutput);
+action!(user, list_user_policies, list_user_policies_request, ListUserPoliciesRequest, ListUserPoliciesOutput);
 action!(user, list_user_tags, list_user_tags_request, ListUserTagsRequest, ListUserTagsOutput);
 action!(user, tag_user, tag_user_request, TagUserRequest, TagUserOutput);
 action!(user, put_user_policy, put_user_policy_request, PutUserPolicyRequest, PutUserPolicyOutput);
@@ -94,6 +96,7 @@ action!(login_profile, change_password, change_password_request, ChangePasswordR
 action!(role, attach_role_policy, attach_role_policy_request, AttachRolePolicyRequest, AttachRolePolicyOutput);
 action!(role, get_role_policy, get_role_policy_request, GetRolePolicyRequest, GetRolePolicyOutput);
 action!(role, list_role_tags, list_role_tags_request, ListRoleTagsRequest, ListRoleTagsOutput);
+action!(role, list_role_policies, list_role_policies_request, ListRolePoliciesRequest, ListRolePoliciesOutput);
 action!(role, list_roles, list_roles_request, ListRolesRequest, ListRolesOutput);
 action!(role, put_role_policy, put_role_policy_request, PutRolePolicyRequest, PutRolePolicyOutput);
 action!(role, tag_role, tag_role_request, TagRoleRequest, TagRoleOutput);

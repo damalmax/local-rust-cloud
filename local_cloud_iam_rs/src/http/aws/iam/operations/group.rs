@@ -3,6 +3,7 @@ use aws_sdk_iam::operation::attach_group_policy::AttachGroupPolicyOutput;
 use aws_sdk_iam::operation::create_group::CreateGroupOutput;
 use aws_sdk_iam::operation::get_group::GetGroupOutput;
 use aws_sdk_iam::operation::get_group_policy::GetGroupPolicyOutput;
+use aws_sdk_iam::operation::list_group_policies::ListGroupPoliciesOutput;
 use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
 use aws_sdk_iam::operation::list_groups_for_user::ListGroupsForUserOutput;
 use aws_sdk_iam::operation::put_group_policy::PutGroupPolicyOutput;
@@ -18,7 +19,7 @@ use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::group::{
     InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, ListGroupsByUserQuery, SelectGroup,
 };
-use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
+use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
@@ -29,6 +30,7 @@ use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicy
 use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
 use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
+use crate::http::aws::iam::types::list_group_policies_request::ListGroupPoliciesRequest;
 use crate::http::aws::iam::types::list_groups_for_user_request::ListGroupsForUserRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
@@ -329,5 +331,40 @@ pub(crate) async fn put_group_policy(
     let output = PutGroupPolicyOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn list_group_policies(
+    ctx: &OperationCtx, input: &ListGroupPoliciesRequest, db: &LocalDb,
+) -> Result<ListGroupPoliciesOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let group_name = input.group_name().unwrap().trim();
+    let group_id = find_id_by_name(connection.as_mut(), ctx.account_id, group_name).await?;
+
+    let query = ListInlinePoliciesQuery::new(group_id, input.max_items(), input.marker_type());
+    let found_policies = db::group_inline_policy::find_by_group_id(connection.as_mut(), &query).await?;
+
+    let mut policy_names: Vec<String> = vec![];
+    for i in 0..(query.limit) {
+        let policy = found_policies.get(i as usize);
+        match policy {
+            None => break,
+            Some(policy) => {
+                policy_names.push(policy.policy_name.to_owned());
+            }
+        }
+    }
+
+    let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
+
+    let output = ListGroupPoliciesOutput::builder()
+        .set_policy_names(Some(policy_names))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }

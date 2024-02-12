@@ -27,14 +27,17 @@ use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyReques
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
 use crate::http::aws::iam::types::get_user_policy_request::GetUserPolicyRequest;
+use crate::http::aws::iam::types::list_group_policies_request::ListGroupPoliciesRequest;
 use crate::http::aws::iam::types::list_groups_for_user_request::ListGroupsForUserRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
 use crate::http::aws::iam::types::list_policy_versions_request::ListPolicyVersionsRequest;
+use crate::http::aws::iam::types::list_role_policies_request::ListRolePoliciesRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
+use crate::http::aws::iam::types::list_user_policies_request::ListUserPoliciesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
@@ -68,12 +71,15 @@ pub(crate) enum LocalAwsRequest {
     GetUserPolicy(GetUserPolicyRequest),
     ListGroups(ListGroupsRequest),
     ListGroupsForUser(ListGroupsForUserRequest),
+    ListGroupPolicies(ListGroupPoliciesRequest),
     ListInstanceProfileTags(ListInstanceProfileTagsRequest),
     ListPolicies(ListPoliciesRequest),
     ListPolicyVersions(ListPolicyVersionsRequest),
     ListPolicyTags(ListPolicyTagsRequest),
     ListRoles(ListRolesRequest),
+    ListRolePolicies(ListRolePoliciesRequest),
     ListRoleTags(ListRoleTagsRequest),
+    ListUserPolicies(ListUserPoliciesRequest),
     ListUserTags(ListUserTagsRequest),
     ListUsers(ListUsersRequest),
     PutGroupPolicy(PutGroupPolicyRequest),
@@ -173,6 +179,10 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
+        LocalAwsRequest::ListGroupPolicies(list_group_policies) => list_group_policies
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
         LocalAwsRequest::ListInstanceProfileTags(list_instance_profile_tags) => list_instance_profile_tags
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
@@ -193,7 +203,15 @@ pub(crate) async fn handle(
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),
+        LocalAwsRequest::ListRolePolicies(list_role_policies) => list_role_policies
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
         LocalAwsRequest::ListRoleTags(list_role_tags) => list_role_tags
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::ListUserPolicies(list_user_policies) => list_user_policies
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

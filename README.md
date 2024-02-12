@@ -100,7 +100,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_attached_role_policies
 - [ ] list_attached_user_policies
 - [ ] list_entities_for_policy
-- [ ] list_group_policies
+- [X] list_group_policies
 - [X] list_groups
 - [X] list_groups_for_user
 - [X] list_instance_profile_tags
@@ -114,7 +114,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_policies_granting_service_access
 - [X] list_policy_tags
 - [X] list_policy_versions
-- [ ] list_role_policies
+- [X] list_role_policies
 - [X] list_role_tags
 - [X] list_roles
 - [ ] list_saml_provider_tags
@@ -124,7 +124,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_service_specific_credentials
 - [ ] list_signing_certificates
 - [ ] list_ssh_public_keys
-- [ ] list_user_policies
+- [X] list_user_policies
 - [X] list_user_tags
 - [X] list_users
 - [ ] list_virtual_mfa_devices

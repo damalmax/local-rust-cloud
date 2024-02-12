@@ -1,9 +1,12 @@
+use local_cloud_validate::{validate_named, validate_required};
+
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::marker_type::MarkerType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListUserPoliciesRequest {
     #[serde(rename = "Marker")]
-    pub(crate) marker: Option<types::marker_type::MarkerType>,
+    pub(crate) marker: Option<MarkerType>,
     #[serde(rename = "UserName")]
     pub(crate) user_name: Option<types::existing_user_name_type::ExistingUserNameType>,
     #[serde(rename = "MaxItems")]
@@ -13,6 +16,9 @@ pub(crate) struct ListUserPoliciesRequest {
 impl ListUserPoliciesRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
+    }
+    pub(crate) fn marker_type(&self) -> Option<&MarkerType> {
+        self.marker.as_ref()
     }
     pub(crate) fn user_name(&self) -> Option<&str> {
         self.user_name.as_deref()
@@ -24,10 +30,10 @@ impl ListUserPoliciesRequest {
 
 impl local_cloud_validate::NamedValidator for &ListUserPoliciesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
-        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
-        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
-        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
+        validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
+        validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
+        validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
         Ok(())
     }
 }

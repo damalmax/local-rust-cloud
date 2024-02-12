@@ -1,7 +1,8 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
+use crate::http::aws::iam::db::types::common::Pageable;
+use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 
 pub(crate) async fn save<'a>(
     tx: &mut Transaction<'a, Sqlite>, table_name: &str, inline_policy: &mut DbInlinePolicy,
@@ -59,4 +60,35 @@ where
     .await?;
 
     Ok(policy)
+}
+
+pub(crate) async fn find_by_parent_id<'a, E>(
+    executor: E, parent_table_name: &str, table_name: &str, query: &ListInlinePoliciesQuery,
+) -> Result<Vec<DbInlinePolicy>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let policies = sqlx::query(
+        format!(
+            "SELECT \
+                t.id AS id, \
+                t.parent_id AS parent_id, \
+                t.policy_name AS policy_name, \
+                t.policy_document AS policy_document \
+             FROM {parent_table_name} p \
+             LEFT JOIN {table_name} t ON p.id = t.parent_id \
+             WHERE p.id = $1 \
+             ORDER BY t.unique_policy_name \
+             LIMIT $2 OFFSET $3"
+        )
+        .as_str(),
+    )
+    .bind(query.parent_id)
+    .bind(query.limit() + 1)
+    .bind(query.skip())
+    .map(|row: SqliteRow| DbInlinePolicy::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
+
+    Ok(policies)
 }

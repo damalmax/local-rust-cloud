@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
 use aws_sdk_iam::operation::get_role_policy::GetRolePolicyOutput;
+use aws_sdk_iam::operation::list_role_policies::ListRolePoliciesOutput;
 use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
 use aws_sdk_iam::operation::list_roles::ListRolesOutput;
 use aws_sdk_iam::operation::put_role_policy::PutRolePolicyOutput;
@@ -14,7 +15,7 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
+use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError, SelectRole};
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
@@ -24,6 +25,7 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
+use crate::http::aws::iam::types::list_role_policies_request::ListRolePoliciesRequest;
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
@@ -204,6 +206,41 @@ pub(crate) async fn list_roles(
 
     let output = ListRolesOutput::builder()
         .set_roles(Some(roles))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn list_role_policies(
+    ctx: &OperationCtx, input: &ListRolePoliciesRequest, db: &LocalDb,
+) -> Result<ListRolePoliciesOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let role_name = input.role_name().unwrap().trim();
+    let role_id = find_id_by_name(connection.as_mut(), ctx.account_id, role_name).await?;
+
+    let query = ListInlinePoliciesQuery::new(role_id, input.max_items(), input.marker_type());
+    let found_policies = db::role_inline_policy::find_by_role_id(connection.as_mut(), &query).await?;
+
+    let mut policy_names: Vec<String> = vec![];
+    for i in 0..(query.limit) {
+        let policy = found_policies.get(i as usize);
+        match policy {
+            None => break,
+            Some(policy) => {
+                policy_names.push(policy.policy_name.to_owned());
+            }
+        }
+    }
+
+    let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
+
+    let output = ListRolePoliciesOutput::builder()
+        .set_policy_names(Some(policy_names))
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()

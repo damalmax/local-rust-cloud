@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::attach_user_policy::AttachUserPolicyOutput;
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
 use aws_sdk_iam::operation::get_user_policy::GetUserPolicyOutput;
+use aws_sdk_iam::operation::list_user_policies::ListUserPoliciesOutput;
 use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
 use aws_sdk_iam::operation::put_user_policy::PutUserPolicyOutput;
@@ -14,7 +15,7 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
+use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError, SelectUser};
@@ -24,6 +25,7 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::get_user_policy_request::GetUserPolicyRequest;
+use crate::http::aws::iam::types::list_user_policies_request::ListUserPoliciesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
@@ -291,5 +293,40 @@ pub(crate) async fn put_user_policy(
     let output = PutUserPolicyOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn list_user_policies(
+    ctx: &OperationCtx, input: &ListUserPoliciesRequest, db: &LocalDb,
+) -> Result<ListUserPoliciesOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let user_name = input.user_name().unwrap().trim();
+    let user_id = find_id_by_name(connection.as_mut(), ctx.account_id, user_name).await?;
+
+    let query = ListInlinePoliciesQuery::new(user_id, input.max_items(), input.marker_type());
+    let found_policies = db::user_inline_policy::find_by_user_id(connection.as_mut(), &query).await?;
+
+    let mut policy_names: Vec<String> = vec![];
+    for i in 0..(query.limit) {
+        let policy = found_policies.get(i as usize);
+        match policy {
+            None => break,
+            Some(policy) => {
+                policy_names.push(policy.policy_name.to_owned());
+            }
+        }
+    }
+
+    let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
+
+    let output = ListUserPoliciesOutput::builder()
+        .set_policy_names(Some(policy_names))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
