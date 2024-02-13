@@ -116,6 +116,13 @@ action!(
     ListOpenIdConnectProviderTagsOutput
 );
 action!(
+    open_id_connect_provider,
+    tag_open_id_connect_provider,
+    tag_open_id_connect_provider_request,
+    TagOpenIdConnectProviderRequest,
+    TagOpenIdConnectProviderOutput
+);
+action!(
     saml_provider,
     list_saml_provider_tags,
     list_saml_provider_tags_request,

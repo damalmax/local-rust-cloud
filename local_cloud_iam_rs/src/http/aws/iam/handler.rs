@@ -48,6 +48,7 @@ use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyReques
 use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
 use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
+use crate::http::aws::iam::types::tag_open_id_connect_provider_request::TagOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
@@ -95,10 +96,19 @@ pub(crate) enum LocalAwsRequest {
     PutRolePolicy(PutRolePolicyRequest),
     PutUserPolicy(PutUserPolicyRequest),
     TagInstanceProfile(TagInstanceProfileRequest),
+    TagOpenIDConnectProvider(TagOpenIdConnectProviderRequest),
     TagPolicy(TagPolicyRequest),
     TagRole(TagRoleRequest),
     TagSAMLProvider(TagSamlProviderRequest),
     TagUser(TagUserRequest),
+}
+
+macro_rules! execute {
+    ($var:ident, $account_id:ident, $aws_request_id:ident, $db:ident) => {
+        $var.execute($account_id, &$aws_request_id, $db.as_ref())
+            .await
+            .map(|out| out.into())
+    };
 }
 
 pub(crate) async fn handle(
@@ -109,178 +119,52 @@ pub(crate) async fn handle(
     let aws_request = aws_query.into_inner();
     let aws_request_id = Uuid::new_v4().to_string();
     let output: Result<XmlResponse, ApiError> = match aws_request {
-        LocalAwsRequest::AddClientIDToOpenIDConnectProvider(add_client_id_request) => add_client_id_request
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::AddRoleToInstanceProfile(add_role_to_instance_profile) => add_role_to_instance_profile
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::AddUserToGroup(add_user_to_group) => add_user_to_group
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::AttachGroupPolicy(attach_group_policy) => attach_group_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::AttachRolePolicy(attach_role_policy) => attach_role_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::AttachUserPolicy(attach_user_policy) => attach_user_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ChangePassword(change_password) => change_password
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateGroup(create_group) => create_group
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateInstanceProfile(create_instance_profile) => create_instance_profile
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateOpenIDConnectProvider(create_open_id_provider) => create_open_id_provider
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateLoginProfile(create_login_profile) => create_login_profile
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreatePolicy(create_policy) => create_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreatePolicyVersion(create_policy_version) => create_policy_version
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateRole(create_role) => create_role
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateSAMLProvider(create_saml_provider) => create_saml_provider
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::CreateUser(create_user) => create_user
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::GetGroup(get_group) => get_group
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::GetGroupPolicy(get_group_policy) => get_group_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::GetRolePolicy(get_role_policy) => get_role_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::GetUserPolicy(get_user_policy) => get_user_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListGroups(list_groups) => list_groups
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListGroupsForUser(list_groups_for_user) => list_groups_for_user
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListGroupPolicies(list_group_policies) => list_group_policies
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListInstanceProfileTags(list_instance_profile_tags) => list_instance_profile_tags
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListOpenIDConnectProviderTags(provider_tags) => provider_tags
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListPolicies(list_policies) => list_policies
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListPolicyVersions(list_policy_versions) => list_policy_versions
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListPolicyTags(list_policy_tags) => list_policy_tags
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListRoles(list_roles) => list_roles
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListSAMLProviderTags(list_saml_provider_tags) => list_saml_provider_tags
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListRolePolicies(list_role_policies) => list_role_policies
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListRoleTags(list_role_tags) => list_role_tags
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListUserPolicies(list_user_policies) => list_user_policies
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListUserTags(list_user_tags) => list_user_tags
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::ListUsers(list_users) => list_users
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::PutGroupPolicy(put_group_policy) => put_group_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::PutRolePolicy(put_role_policy) => put_role_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::PutUserPolicy(put_user_policy) => put_user_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::TagInstanceProfile(tag_instance_profile) => tag_instance_profile
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::TagPolicy(tag_policy) => tag_policy
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::TagRole(tag_role) => tag_role
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::TagSAMLProvider(tag_saml_provider) => tag_saml_provider
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
-        LocalAwsRequest::TagUser(tag_user) => tag_user
-            .execute(account_id, &aws_request_id, db.as_ref())
-            .await
-            .map(|out| out.into()),
+        LocalAwsRequest::AddClientIDToOpenIDConnectProvider(request) => {
+            execute!(request, account_id, aws_request_id, db)
+        }
+        LocalAwsRequest::AddRoleToInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::AddUserToGroup(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::AttachGroupPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::AttachRolePolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::AttachUserPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ChangePassword(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateGroup(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateOpenIDConnectProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateLoginProfile(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreatePolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreatePolicyVersion(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateRole(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateUser(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::GetGroup(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::GetGroupPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::GetRolePolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::GetUserPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListGroups(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListGroupsForUser(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListGroupPolicies(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListInstanceProfileTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListOpenIDConnectProviderTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListPolicies(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListPolicyVersions(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListPolicyTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListRoles(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListSAMLProviderTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListRolePolicies(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListRoleTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListUserPolicies(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListUserTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListUsers(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::PutGroupPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::PutRolePolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::PutUserPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagOpenIDConnectProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagRole(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagUser(request) => execute!(request, account_id, aws_request_id, db),
     };
 
     match output {

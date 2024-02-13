@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::add_client_id_to_open_id_connect_provider::AddClientIdToOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::create_open_id_connect_provider::CreateOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::list_open_id_connect_provider_tags::ListOpenIdConnectProviderTagsOutput;
+use aws_sdk_iam::operation::tag_open_id_connect_provider::TagOpenIdConnectProviderOutput;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
 
@@ -15,6 +16,7 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider_request::AddClientIdToOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::create_open_id_connect_provider_request::CreateOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::list_open_id_connect_provider_tags_request::ListOpenIdConnectProviderTagsRequest;
+use crate::http::aws::iam::types::tag_open_id_connect_provider_request::TagOpenIdConnectProviderRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn add_client_id_to_open_id_connect_provider(
@@ -116,5 +118,33 @@ pub(crate) async fn list_open_id_connect_provider_tags(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn tag_open_id_connect_provider(
+    ctx: &OperationCtx, input: &TagOpenIdConnectProviderRequest, db: &LocalDb,
+) -> Result<TagOpenIdConnectProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let provider_id =
+        find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
+    let mut provider_tags = super::tag::prepare_for_insert(input.tags(), provider_id);
+
+    db::open_id_connect_provider_tag::save_all(&mut tx, &mut provider_tags).await?;
+    let count = db::open_id_connect_provider_tag::count(tx.as_mut(), provider_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM OpenID connect provider.", constants::tag::MAX_COUNT)
+                .as_str(),
+        ));
+    }
+
+    let output = TagOpenIdConnectProviderOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

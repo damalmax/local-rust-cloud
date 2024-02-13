@@ -44,6 +44,7 @@ mod put_group_policy;
 mod put_role_policy;
 mod put_user_policy;
 mod tag_instance_profile;
+mod tag_open_id_connect_provider;
 mod tag_policy;
 mod tag_role;
 mod tag_saml_provider;
