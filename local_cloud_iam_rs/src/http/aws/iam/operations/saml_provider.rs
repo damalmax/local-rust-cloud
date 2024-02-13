@@ -1,14 +1,34 @@
 use aws_sdk_iam::operation::create_saml_provider::CreateSamlProviderOutput;
+use aws_sdk_iam::operation::list_saml_provider_tags::ListSamlProviderTagsOutput;
 use chrono::Utc;
+use sqlx::{Executor, Sqlite};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
+use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::saml_provider::InsertSamlProvider;
+use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
+use crate::http::aws::iam::types::list_saml_provider_tags_request::ListSamlProviderTagsRequest;
+
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::saml_provider::find_id_by_arn(executor, account_id, arn).await? {
+        Some(provider_id) => Ok(provider_id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM SAML provider with ARN '{}' doesn't exist.", arn).as_str(),
+            ));
+        }
+    }
+}
 
 pub(crate) async fn create_saml_provider(
     ctx: &OperationCtx, input: &CreateSamlProviderRequest, db: &LocalDb,
@@ -42,5 +62,29 @@ pub(crate) async fn create_saml_provider(
         .build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn list_saml_provider_tags(
+    ctx: &OperationCtx, input: &ListSamlProviderTagsRequest, db: &LocalDb,
+) -> Result<ListSamlProviderTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let provider_id = find_id_by_arn(connection.as_mut(), ctx.account_id, input.saml_provider_arn().unwrap()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::saml_provider_tag::list(connection.as_mut(), provider_id, &query).await?;
+
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let output = ListSamlProviderTagsOutput::builder()
+        .set_tags(tags)
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }

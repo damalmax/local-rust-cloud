@@ -36,6 +36,7 @@ mod list_policy_versions;
 mod list_role_policies;
 mod list_role_tags;
 mod list_roles;
+mod list_saml_provider_tags;
 mod list_user_policies;
 mod list_user_tags;
 mod list_users;
