@@ -144,7 +144,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] simulate_principal_policy
 - [X] tag_instance_profile
 - [ ] tag_mfa_device
-- [ ] tag_open_id_connect_provider
+- [X] tag_open_id_connect_provider
 - [X] tag_policy
 - [X] tag_role
 - [X] tag_saml_provider
