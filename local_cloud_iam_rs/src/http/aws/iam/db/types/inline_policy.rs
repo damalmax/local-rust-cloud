@@ -22,6 +22,12 @@ impl DbInlinePolicy {
     }
 }
 
+impl From<&DbInlinePolicy> for String {
+    fn from(value: &DbInlinePolicy) -> Self {
+        value.policy_name.to_owned()
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct ListInlinePoliciesQuery {
     pub(crate) parent_id: i64,

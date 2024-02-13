@@ -29,6 +29,7 @@ mod list_group_policies;
 mod list_groups;
 mod list_groups_for_user;
 mod list_instance_profile_tags;
+mod list_open_id_connect_provider_tags;
 mod list_policies;
 mod list_policy_tags;
 mod list_policy_versions;

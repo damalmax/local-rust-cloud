@@ -91,19 +91,10 @@ pub(crate) async fn list_groups(
     // obtain connection
     let mut connection = db.new_connection().await?;
 
-    let found_groups: Vec<SelectGroup> = db::group::list(connection.as_mut(), &query).await?;
-    let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
+    let found_groups: Vec<SelectGroup> = db::group::list(connection.as_mut(), ctx.account_id, &query).await?;
 
-    let mut groups: Vec<Group> = vec![];
-    for i in 0..(query.limit) {
-        let group = found_groups.get(i as usize);
-        match group {
-            None => break,
-            Some(select_group) => {
-                groups.push(select_group.into());
-            }
-        }
-    }
+    let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
+    let groups = super::common::convert_and_limit(&found_groups, query.limit).unwrap_or_default();
 
     let output = ListGroupsOutput::builder()
         .set_groups(Some(groups))
@@ -187,20 +178,11 @@ pub(crate) async fn list_groups_for_user(
 
     let found_groups = db::group::find_by_user_id(connection.as_mut(), &query).await?;
 
-    let mut groups: Vec<Group> = vec![];
-    for i in 0..(query.limit) {
-        let group = found_groups.get(i as usize);
-        match group {
-            None => break,
-            Some(select_group) => {
-                groups.push(select_group.into());
-            }
-        }
-    }
+    let groups = super::common::convert_and_limit(&found_groups, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
 
     let output = ListGroupsForUserOutput::builder()
-        .set_groups(Some(groups))
+        .set_groups(groups)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()
@@ -347,21 +329,11 @@ pub(crate) async fn list_group_policies(
     let query = ListInlinePoliciesQuery::new(group_id, input.max_items(), input.marker_type());
     let found_policies = db::group_inline_policy::find_by_group_id(connection.as_mut(), &query).await?;
 
-    let mut policy_names: Vec<String> = vec![];
-    for i in 0..(query.limit) {
-        let policy = found_policies.get(i as usize);
-        match policy {
-            None => break,
-            Some(policy) => {
-                policy_names.push(policy.policy_name.to_owned());
-            }
-        }
-    }
-
+    let policy_names = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
     let output = ListGroupPoliciesOutput::builder()
-        .set_policy_names(Some(policy_names))
+        .set_policy_names(policy_names)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()

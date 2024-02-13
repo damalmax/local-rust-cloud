@@ -108,7 +108,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_instance_profiles_for_role
 - [ ] list_mfa_device_tags
 - [ ] list_mfa_devices
-- [ ] list_open_id_connect_provider_tags
+- [X] list_open_id_connect_provider_tags
 - [ ] list_open_id_connect_providers
 - [X] list_policies
 - [ ] list_policies_granting_service_access

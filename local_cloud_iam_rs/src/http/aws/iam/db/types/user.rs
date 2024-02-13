@@ -117,14 +117,14 @@ impl Into<ListUsersQuery> for &ListUsersRequest {
     }
 }
 
-impl Into<User> for &SelectUser {
-    fn into(self) -> User {
-        let tags = match &self.tags {
+impl From<&SelectUser> for User {
+    fn from(value: &SelectUser) -> Self {
+        let tags = match &value.tags {
             None => None,
-            Some(tags) => operations::common::prepare_tags_for_output(tags),
+            Some(tags) => operations::tag::prepare_for_output(tags),
         };
 
-        let permissions_boundary = match &self.policy_arn {
+        let permissions_boundary = match &value.policy_arn {
             None => None,
             Some(arn) => Some(
                 AttachedPermissionsBoundary::builder()
@@ -135,11 +135,11 @@ impl Into<User> for &SelectUser {
         };
 
         User::builder()
-            .path(&self.path)
-            .user_name(&self.username)
-            .user_id(&self.user_id)
-            .create_date(DateTime::from_secs(self.create_date))
-            .arn(&self.arn)
+            .path(&value.path)
+            .user_name(&value.username)
+            .user_id(&value.user_id)
+            .create_date(DateTime::from_secs(value.create_date))
+            .arn(&value.arn)
             .set_permissions_boundary(permissions_boundary)
             .set_tags(tags)
             .build()

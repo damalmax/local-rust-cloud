@@ -15,11 +15,11 @@ impl From<LocalListOpenIdConnectProviderTagsOutput> for XmlResponse {
         let mut doc = XmlWriter::new(&mut out);
 
         let mut response_tag = doc
-            .start_el("ListOpenIdConnectProviderTagsResponse")
+            .start_el("ListOpenIDConnectProviderTagsResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut result_tag = response_tag.start_el("ListOpenIdConnectProviderTagsResult").finish();
+        let mut result_tag = response_tag.start_el("ListOpenIDConnectProviderTagsResult").finish();
 
         super::tags::write_slice(&mut result_tag, val.inner.tags());
         if let Some(token) = val.inner.marker() {

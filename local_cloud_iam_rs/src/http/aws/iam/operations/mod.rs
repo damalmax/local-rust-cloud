@@ -9,4 +9,5 @@ pub(crate) mod policy;
 pub(crate) mod role;
 pub(crate) mod saml_provider;
 pub(crate) mod secure;
+pub(crate) mod tag;
 pub(crate) mod user;

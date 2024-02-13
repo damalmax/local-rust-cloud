@@ -4,7 +4,7 @@ use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
 use aws_sdk_iam::operation::list_policy_versions::ListPolicyVersionsOutput;
 use aws_sdk_iam::operation::tag_policy::TagPolicyOutput;
-use aws_sdk_iam::types::{Policy, PolicyVersion, Tag};
+use aws_sdk_iam::types::{Policy, PolicyVersion};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
@@ -62,7 +62,7 @@ pub(crate) async fn create_policy(
     .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
     db::policy_version::create(&mut tx, &mut policy_version).await?;
 
-    let mut policy_tags = super::common::prepare_tags_for_insert(input.tags(), insert_policy.id.unwrap());
+    let mut policy_tags = super::tag::prepare_for_insert(input.tags(), insert_policy.id.unwrap());
 
     db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
 
@@ -76,7 +76,7 @@ pub(crate) async fn create_policy(
         .set_description(insert_policy.description)
         .attachment_count(0)
         .permissions_boundary_usage_count(0)
-        .set_tags(super::common::prepare_tags_for_output(&policy_tags))
+        .set_tags(super::tag::prepare_for_output(&policy_tags))
         .set_default_version_id(Some(format!("v{}", policy_version.version.unwrap())))
         .policy_name(&insert_policy.policy_name);
     let policy = response_policy_builder.build();
@@ -162,20 +162,11 @@ pub(crate) async fn list_policy_versions(
 
     let found_policy_versions = db::policy_version::find_by_policy_id(connection.as_mut(), &query).await?;
 
-    let mut policy_versions: Vec<PolicyVersion> = vec![];
-    for i in 0..(query.limit) {
-        let policy = found_policy_versions.get(i as usize);
-        match policy {
-            None => break,
-            Some(policy_version) => {
-                policy_versions.push(policy_version.into());
-            }
-        }
-    }
+    let policy_versions = super::common::convert_and_limit(&found_policy_versions, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policy_versions.len())?;
 
     let output = ListPolicyVersionsOutput::builder()
-        .set_versions(Some(policy_versions))
+        .set_versions(policy_versions)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build();
@@ -226,21 +217,12 @@ pub(crate) async fn list_policies(
     let mut connection = db.new_connection().await?;
 
     let found_policies: Vec<SelectPolicy> = db::policy::list(&mut connection, ctx.account_id, &query).await?;
+
+    let policies = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
-    let mut policies: Vec<Policy> = vec![];
-    for i in 0..(query.limit) {
-        let policy = found_policies.get(i as usize);
-        match policy {
-            None => break,
-            Some(select_policy) => {
-                policies.push(select_policy.into());
-            }
-        }
-    }
-
     let output = ListPoliciesOutput::builder()
-        .set_policies(Some(policies))
+        .set_policies(policies)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build();
@@ -260,22 +242,13 @@ pub(crate) async fn list_policy_tags(
         find_id_by_arn(connection.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+
     let found_tags = db::policy_tag::list(connection.as_mut(), found_policy_id, &query).await?;
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
-    let mut tags: Vec<Tag> = vec![];
-    for i in 0..(query.limit) {
-        let found_tag = found_tags.get(i as usize);
-        match found_tag {
-            None => break,
-            Some(tag) => {
-                tags.push(tag.into());
-            }
-        }
-    }
-
     let output = ListPolicyTagsOutput::builder()
-        .set_tags(Some(tags))
+        .set_tags(tags)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()
@@ -291,7 +264,7 @@ pub(crate) async fn tag_policy(
     let mut tx = db.new_tx().await?;
 
     let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
-    let mut policy_tags = super::common::prepare_tags_for_insert(input.tags(), policy_id);
+    let mut policy_tags = super::tag::prepare_for_insert(input.tags(), policy_id);
 
     db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
     let count = db::policy_tag::count(tx.as_mut(), policy_id).await?;

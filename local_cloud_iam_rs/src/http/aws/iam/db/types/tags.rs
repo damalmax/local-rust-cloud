@@ -62,11 +62,11 @@ pub(crate) fn parse_tags_from_raw(raw: &str) -> Result<Vec<DbTag>, Error> {
     Ok(tags)
 }
 
-impl Into<aws_sdk_iam::types::Tag> for &DbTag {
-    fn into(self) -> aws_sdk_iam::types::Tag {
+impl From<&DbTag> for aws_sdk_iam::types::Tag {
+    fn from(value: &DbTag) -> Self {
         aws_sdk_iam::types::Tag::builder()
-            .key(&self.key)
-            .value(&self.value)
+            .key(&value.key)
+            .value(&value.value)
             .build()
             .unwrap()
     }

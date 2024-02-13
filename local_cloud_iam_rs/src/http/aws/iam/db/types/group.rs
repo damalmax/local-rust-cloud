@@ -83,14 +83,14 @@ impl Into<ListGroupsQuery> for &ListGroupsRequest {
     }
 }
 
-impl Into<Group> for &SelectGroup {
-    fn into(self) -> Group {
+impl From<&SelectGroup> for Group {
+    fn from(value: &SelectGroup) -> Self {
         Group::builder()
-            .group_name(&self.group_name)
-            .group_id(&self.group_id)
-            .path(&self.path)
-            .arn(&self.arn)
-            .create_date(DateTime::from_secs(self.create_date))
+            .group_name(&value.group_name)
+            .group_id(&value.group_id)
+            .path(&value.path)
+            .arn(&value.arn)
+            .create_date(DateTime::from_secs(value.create_date))
             .build()
             .unwrap()
     }

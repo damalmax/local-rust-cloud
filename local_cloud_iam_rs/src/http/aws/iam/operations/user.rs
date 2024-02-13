@@ -6,7 +6,7 @@ use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
 use aws_sdk_iam::operation::put_user_policy::PutUserPolicyOutput;
 use aws_sdk_iam::operation::tag_user::TagUserOutput;
-use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, Tag, User};
+use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
@@ -53,7 +53,7 @@ pub async fn create_user(
 
     db::user::create(&mut tx, &mut insert_user).await?;
 
-    let mut user_tags = super::common::prepare_tags_for_insert(input.tags(), insert_user.id.unwrap());
+    let mut user_tags = super::tag::prepare_for_insert(input.tags(), insert_user.id.unwrap());
     db::user_tag::save_all(&mut tx, &mut user_tags).await?;
 
     let permissions_boundary = match policy_id {
@@ -73,7 +73,7 @@ pub async fn create_user(
         .arn(&insert_user.arn)
         .create_date(DateTime::from_secs(insert_user.create_date))
         .set_permissions_boundary(permissions_boundary)
-        .set_tags(super::common::prepare_tags_for_output(&user_tags))
+        .set_tags(super::tag::prepare_for_output(&user_tags))
         .build()
         .unwrap();
     let output = CreateUserOutput::builder().user(user).build();
@@ -162,18 +162,9 @@ pub(crate) async fn list_users(
     let query = input.into();
 
     let found_users: Vec<SelectUser> = db::user::list(connection.as_mut(), ctx.account_id, &query).await?;
-    let marker = super::common::create_encoded_marker(&query, found_users.len())?;
 
-    let mut users: Vec<User> = vec![];
-    for i in 0..(query.limit) {
-        let user = found_users.get(i as usize);
-        match user {
-            None => break,
-            Some(select_user) => {
-                users.push(select_user.into());
-            }
-        }
-    }
+    let users = super::common::convert_and_limit(&found_users, query.limit).unwrap_or_default();
+    let marker = super::common::create_encoded_marker(&query, found_users.len())?;
 
     let output = ListUsersOutput::builder()
         .set_users(Some(users))
@@ -197,21 +188,12 @@ pub(crate) async fn list_user_tags(
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
     let found_tags = db::user_tag::list_tags(connection.as_mut(), found_user_id, &query).await?;
+
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
-    let mut tags: Vec<Tag> = vec![];
-    for i in 0..(query.limit) {
-        let found_tag = found_tags.get(i as usize);
-        match found_tag {
-            None => break,
-            Some(tag) => {
-                tags.push(tag.into());
-            }
-        }
-    }
-
     let output = ListUserTagsOutput::builder()
-        .set_tags(Some(tags))
+        .set_tags(tags)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()
@@ -227,7 +209,7 @@ pub(crate) async fn tag_user(
     let mut tx = db.new_tx().await?;
 
     let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
-    let mut user_tags = super::common::prepare_tags_for_insert(input.tags(), user_id);
+    let mut user_tags = super::tag::prepare_for_insert(input.tags(), user_id);
 
     db::user_tag::save_all(&mut tx, &mut user_tags).await?;
     let count = db::user_tag::count(tx.as_mut(), user_id).await?;
@@ -309,21 +291,11 @@ pub(crate) async fn list_user_policies(
     let query = ListInlinePoliciesQuery::new(user_id, input.max_items(), input.marker_type());
     let found_policies = db::user_inline_policy::find_by_user_id(connection.as_mut(), &query).await?;
 
-    let mut policy_names: Vec<String> = vec![];
-    for i in 0..(query.limit) {
-        let policy = found_policies.get(i as usize);
-        match policy {
-            None => break,
-            Some(policy) => {
-                policy_names.push(policy.policy_name.to_owned());
-            }
-        }
-    }
-
+    let policy_names = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
     let output = ListUserPoliciesOutput::builder()
-        .set_policy_names(Some(policy_names))
+        .set_policy_names(policy_names)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()

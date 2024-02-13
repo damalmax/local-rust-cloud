@@ -108,3 +108,10 @@ action!(
     AddClientIdToOpenIdConnectProviderRequest,
     AddClientIdToOpenIdConnectProviderOutput
 );
+action!(
+    open_id_connect_provider,
+    list_open_id_connect_provider_tags,
+    list_open_id_connect_provider_tags_request,
+    ListOpenIdConnectProviderTagsRequest,
+    ListOpenIdConnectProviderTagsOutput
+);

@@ -1,6 +1,5 @@
 use crate::config::{AppConfig, AppConfigFactory};
 use actix_server::Server;
-use aws_credential_types::provider::ProvideCredentials;
 use local_cloud_testing::suite::TestAppConfig;
 
 pub(crate) struct TestAppConfigFactory {

@@ -2,7 +2,7 @@ use aws_sdk_iam::operation::add_role_to_instance_profile::AddRoleToInstanceProfi
 use aws_sdk_iam::operation::create_instance_profile::CreateInstanceProfileOutput;
 use aws_sdk_iam::operation::list_instance_profile_tags::ListInstanceProfileTagsOutput;
 use aws_sdk_iam::operation::tag_instance_profile::TagInstanceProfileOutput;
-use aws_sdk_iam::types::{InstanceProfile, Tag};
+use aws_sdk_iam::types::InstanceProfile;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
@@ -48,7 +48,7 @@ pub(crate) async fn create_instance_profile(
 
     db::instance_profile::create(&mut tx, &mut insert_instance_profile).await?;
 
-    let mut tags = super::common::prepare_tags_for_insert(input.tags(), insert_instance_profile.id.unwrap());
+    let mut tags = super::tag::prepare_for_insert(input.tags(), insert_instance_profile.id.unwrap());
     db::instance_profile_tag::save_all(&mut tx, &mut tags).await?;
 
     let instance_profile = InstanceProfile::builder()
@@ -58,7 +58,7 @@ pub(crate) async fn create_instance_profile(
         .arn(&insert_instance_profile.arn)
         .create_date(DateTime::from_secs(current_time))
         .set_roles(Some(Vec::with_capacity(0))) // no roles when just create an instance profile.
-        .set_tags(super::common::prepare_tags_for_output(&tags))
+        .set_tags(super::tag::prepare_for_output(&tags))
         .build()
         .unwrap();
 
@@ -112,7 +112,7 @@ pub(crate) async fn tag_instance_profile(
     let mut tx = db.new_tx().await?;
 
     let instance_profile_id = find_id_by_name(ctx, tx.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
-    let mut instance_profile_tags = super::common::prepare_tags_for_insert(input.tags(), instance_profile_id);
+    let mut instance_profile_tags = super::tag::prepare_for_insert(input.tags(), instance_profile_id);
 
     db::instance_profile_tag::save_all(&mut tx, &mut instance_profile_tags).await?;
     let count = db::instance_profile_tag::count(tx.as_mut(), instance_profile_id).await?;
@@ -142,21 +142,12 @@ pub(crate) async fn list_instance_profile_tags(
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
     let found_tags = db::instance_profile_tag::list(connection.as_mut(), found_instance_profile_id, &query).await?;
+
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
-    let mut tags: Vec<Tag> = vec![];
-    for i in 0..(query.limit) {
-        let found_tag = found_tags.get(i as usize);
-        match found_tag {
-            None => break,
-            Some(tag) => {
-                tags.push(tag.into());
-            }
-        }
-    }
-
     let output = ListInstanceProfileTagsOutput::builder()
-        .set_tags(Some(tags))
+        .set_tags(tags)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()

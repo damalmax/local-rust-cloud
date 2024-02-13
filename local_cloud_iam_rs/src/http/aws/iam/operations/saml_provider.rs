@@ -32,13 +32,13 @@ pub(crate) async fn create_saml_provider(
 
     db::saml_provider::create(&mut tx, &mut insert_saml_provider).await?;
 
-    let mut saml_provider_tags = super::common::prepare_tags_for_insert(input.tags(), insert_saml_provider.id.unwrap());
+    let mut saml_provider_tags = super::tag::prepare_for_insert(input.tags(), insert_saml_provider.id.unwrap());
 
     db::saml_provider_tag::save_all(&mut tx, &mut saml_provider_tags).await?;
 
     let output = CreateSamlProviderOutput::builder()
         .saml_provider_arn(insert_saml_provider.arn)
-        .set_tags(super::common::prepare_tags_for_output(&saml_provider_tags))
+        .set_tags(super::tag::prepare_for_output(&saml_provider_tags))
         .build();
 
     tx.commit().await?;

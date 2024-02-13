@@ -1,5 +1,3 @@
-use local_cloud_testing::assertions::assert_not_empty;
-
 use crate::tests::fixture::tag;
 
 #[actix_rt::test]

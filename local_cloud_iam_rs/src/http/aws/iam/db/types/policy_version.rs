@@ -29,13 +29,13 @@ pub(crate) struct SelectPolicyVersion {
     pub(crate) is_default: bool,
 }
 
-impl Into<PolicyVersion> for &SelectPolicyVersion {
-    fn into(self) -> PolicyVersion {
+impl From<&SelectPolicyVersion> for PolicyVersion {
+    fn from(value: &SelectPolicyVersion) -> Self {
         PolicyVersion::builder()
-            .version_id(format!("v{}", self.version))
-            .document(&self.policy_document)
-            .is_default_version(self.is_default)
-            .create_date(DateTime::from_secs(self.create_date))
+            .version_id(format!("v{}", value.version))
+            .document(&value.policy_document)
+            .is_default_version(value.is_default)
+            .create_date(DateTime::from_secs(value.create_date))
             .build()
     }
 }

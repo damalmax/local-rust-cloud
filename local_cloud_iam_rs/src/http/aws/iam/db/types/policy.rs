@@ -82,9 +82,9 @@ impl<'r> FromRow<'r, SqliteRow> for SelectPolicy {
     }
 }
 
-impl Into<Policy> for &SelectPolicy {
-    fn into(self) -> Policy {
-        let tags = match &self.tags {
+impl From<&SelectPolicy> for Policy {
+    fn from(value: &SelectPolicy) -> Self {
+        let tags = match &value.tags {
             None => None,
             Some(tags) => {
                 if tags.is_empty() {
@@ -94,23 +94,23 @@ impl Into<Policy> for &SelectPolicy {
                 }
             }
         };
-        let description = match &self.description {
+        let description = match &value.description {
             None => None,
             Some(desc) => Some(desc.to_owned()),
         };
 
         Policy::builder()
-            .policy_name(&self.policy_name)
-            .policy_id(&self.policy_id)
-            .arn(&self.arn)
+            .policy_name(&value.policy_name)
+            .policy_id(&value.policy_id)
+            .arn(&value.arn)
             .set_description(description)
-            .path(&self.path)
-            .default_version_id(format!("v{}", &self.version))
-            .attachment_count(self.attachment_count)
-            .permissions_boundary_usage_count(self.permissions_boundary_usage_count)
-            .is_attachable(self.is_attachable)
-            .create_date(DateTime::from_secs(self.create_date))
-            .update_date(DateTime::from_secs(self.update_date))
+            .path(&value.path)
+            .default_version_id(format!("v{}", &value.version))
+            .attachment_count(value.attachment_count)
+            .permissions_boundary_usage_count(value.permissions_boundary_usage_count)
+            .is_attachable(value.is_attachable)
+            .create_date(DateTime::from_secs(value.create_date))
+            .update_date(DateTime::from_secs(value.update_date))
             .set_tags(tags)
             .build()
     }

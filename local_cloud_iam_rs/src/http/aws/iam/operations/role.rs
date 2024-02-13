@@ -6,7 +6,7 @@ use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
 use aws_sdk_iam::operation::list_roles::ListRolesOutput;
 use aws_sdk_iam::operation::put_role_policy::PutRolePolicyOutput;
 use aws_sdk_iam::operation::tag_role::TagRoleOutput;
-use aws_sdk_iam::types::{Role, Tag};
+use aws_sdk_iam::types::Role;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
@@ -54,7 +54,7 @@ pub async fn create_role(
 
     db::role::create(&mut tx, &mut insert_role).await?;
 
-    let mut role_tags = super::common::prepare_tags_for_insert(input.tags(), insert_role.id.unwrap());
+    let mut role_tags = super::tag::prepare_for_insert(input.tags(), insert_role.id.unwrap());
     db::role_tag::save_all(&mut tx, &mut role_tags).await?;
 
     let role = Role::builder()
@@ -69,7 +69,7 @@ pub async fn create_role(
         .arn(&insert_role.arn)
         .set_description(insert_role.description.as_ref().map(|s| s.to_owned()))
         .create_date(DateTime::from_secs(insert_role.create_date))
-        .set_tags(super::common::prepare_tags_for_output(&role_tags))
+        .set_tags(super::tag::prepare_for_output(&role_tags))
         .build()
         .unwrap();
     let output = CreateRoleOutput::builder().role(role).build();
@@ -148,21 +148,12 @@ pub(crate) async fn list_role_tags(
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
     let found_tags = db::role_tag::list_tags(connection.as_mut(), found_role_id, &query).await?;
+
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
-    let mut tags: Vec<Tag> = vec![];
-    for i in 0..(query.limit) {
-        let found_tag = found_tags.get(i as usize);
-        match found_tag {
-            None => break,
-            Some(tag) => {
-                tags.push(tag.into());
-            }
-        }
-    }
-
     let output = ListRoleTagsOutput::builder()
-        .set_tags(Some(tags))
+        .set_tags(tags)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()
@@ -184,7 +175,7 @@ pub(crate) async fn list_roles(
     let marker = super::common::create_encoded_marker(&query, found_roles.len())?;
 
     let mut roles: Vec<Role> = vec![];
-    for i in 0..(query.limit) {
+    for i in 0..query.limit {
         let found_role = found_roles.get(i as usize);
         match found_role {
             None => break,
@@ -226,21 +217,11 @@ pub(crate) async fn list_role_policies(
     let query = ListInlinePoliciesQuery::new(role_id, input.max_items(), input.marker_type());
     let found_policies = db::role_inline_policy::find_by_role_id(connection.as_mut(), &query).await?;
 
-    let mut policy_names: Vec<String> = vec![];
-    for i in 0..(query.limit) {
-        let policy = found_policies.get(i as usize);
-        match policy {
-            None => break,
-            Some(policy) => {
-                policy_names.push(policy.policy_name.to_owned());
-            }
-        }
-    }
-
+    let policy_names = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
 
     let output = ListRolePoliciesOutput::builder()
-        .set_policy_names(Some(policy_names))
+        .set_policy_names(policy_names)
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build()
@@ -256,7 +237,7 @@ pub(crate) async fn tag_role(
     let mut tx = db.new_tx().await?;
 
     let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
-    let mut role_tags = super::common::prepare_tags_for_insert(input.tags(), role_id);
+    let mut role_tags = super::tag::prepare_for_insert(input.tags(), role_id);
 
     db::role_tag::save_all(&mut tx, &mut role_tags).await?;
     let count = db::role_tag::count(tx.as_mut(), role_id).await?;
