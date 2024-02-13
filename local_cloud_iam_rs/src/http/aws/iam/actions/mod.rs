@@ -122,3 +122,4 @@ action!(
     ListSamlProviderTagsRequest,
     ListSamlProviderTagsOutput
 );
+action!(saml_provider, tag_saml_provider, tag_saml_provider_request, TagSamlProviderRequest, TagSamlProviderOutput);

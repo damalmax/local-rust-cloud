@@ -46,6 +46,7 @@ mod put_user_policy;
 mod tag_instance_profile;
 mod tag_policy;
 mod tag_role;
+mod tag_saml_provider;
 mod tag_user;
 
 pub fn credentials_provider() -> impl ProvideCredentials {

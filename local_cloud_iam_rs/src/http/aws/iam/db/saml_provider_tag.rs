@@ -17,6 +17,13 @@ pub(crate) async fn save_all<'a>(tx: &mut Transaction<'a, Sqlite>, tags: &mut Ve
     super::tag::save_all(tx, tags, "saml_provider_tags").await
 }
 
+pub(crate) async fn count<'a, E>(executor: E, saml_provider_id: i64) -> Result<usize, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    super::tag::count(executor, "saml_provider_tags", saml_provider_id).await
+}
+
 pub(crate) async fn list<'a, E>(executor: E, saml_provider_id: i64, query: &ListTagsQuery) -> Result<Vec<DbTag>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,

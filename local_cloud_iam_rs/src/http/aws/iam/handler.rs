@@ -50,6 +50,7 @@ use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
+use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 
 #[derive(Deserialize, Debug)]
@@ -96,6 +97,7 @@ pub(crate) enum LocalAwsRequest {
     TagInstanceProfile(TagInstanceProfileRequest),
     TagPolicy(TagPolicyRequest),
     TagRole(TagRoleRequest),
+    TagSAMLProvider(TagSamlProviderRequest),
     TagUser(TagUserRequest),
 }
 
@@ -268,6 +270,10 @@ pub(crate) async fn handle(
             .await
             .map(|out| out.into()),
         LocalAwsRequest::TagRole(tag_role) => tag_role
+            .execute(account_id, &aws_request_id, db.as_ref())
+            .await
+            .map(|out| out.into()),
+        LocalAwsRequest::TagSAMLProvider(tag_saml_provider) => tag_saml_provider
             .execute(account_id, &aws_request_id, db.as_ref())
             .await
             .map(|out| out.into()),

@@ -1,5 +1,6 @@
 use aws_sdk_iam::operation::create_saml_provider::CreateSamlProviderOutput;
 use aws_sdk_iam::operation::list_saml_provider_tags::ListSamlProviderTagsOutput;
+use aws_sdk_iam::operation::tag_saml_provider::TagSamlProviderOutput;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
 
@@ -7,13 +8,14 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::saml_provider::InsertSamlProvider;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
 use crate::http::aws::iam::types::list_saml_provider_tags_request::ListSamlProviderTagsRequest;
+use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
+use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
 where
@@ -62,6 +64,32 @@ pub(crate) async fn create_saml_provider(
         .build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn tag_saml_provider(
+    ctx: &OperationCtx, input: &TagSamlProviderRequest, db: &LocalDb,
+) -> Result<TagSamlProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let saml_provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.saml_provider_arn().unwrap()).await?;
+    let mut saml_provider_tags = super::tag::prepare_for_insert(input.tags(), saml_provider_id);
+
+    db::saml_provider_tag::save_all(&mut tx, &mut saml_provider_tags).await?;
+    let count = db::saml_provider_tag::count(tx.as_mut(), saml_provider_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM SAML provider.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagSamlProviderOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }
 
