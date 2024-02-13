@@ -61,7 +61,6 @@ impl TestContext {
 
         let db_file_name = Uuid::new_v4();
         let server_config = TestAppConfig {
-            // database_url: "sqlite://iam-test.db".to_owned(),
             database_url: format!("file:{}?mode=memory&cache=shared", db_file_name),
             port,
         };
