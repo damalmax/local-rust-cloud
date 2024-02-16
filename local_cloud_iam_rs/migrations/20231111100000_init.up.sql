@@ -368,4 +368,29 @@ CREATE TABLE IF NOT EXISTS saml_provider_tags
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_saml_provider_tags__parent_id ON saml_provider_tags (parent_id ASC);
-
+-- Virtual MFA
+CREATE TABLE IF NOT EXISTS mfa_devices
+(
+    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id    INTEGER REFERENCES accounts (id)  NOT NULL,
+    serial_number VARCHAR2(256)                     NOT NULL,
+    path          VARCHAR2(512)                     NOT NULL,
+    name          VARCHAR2(128)                     NOT NULL,
+    unique_name   VARCHAR2(128)                     NOT NULL,
+    seed          BLOB                              NOT NULL,
+    create_date   INTEGER                           NOT NULL,
+    enable_date   INTEGER,
+    user_id       INTEGER REFERENCES users (id), -- MFA device could be assigned to only one user
+    UNIQUE (serial_number),
+    UNIQUE (account_id, unique_name)
+);
+CREATE INDEX IF NOT EXISTS fk_mfa_devices__account_id ON mfa_devices (account_id ASC);
+CREATE TABLE IF NOT EXISTS mfa_device_tags
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT   NOT NULL,
+    parent_id INTEGER REFERENCES mfa_devices (id) NOT NULL,
+    key       VARCHAR2(128)                       NOT NULL,
+    value     VARCHAR2(256)                       NOT NULL,
+    UNIQUE (parent_id, key)
+);
+CREATE INDEX IF NOT EXISTS fk_mfa_device_tags__parent_id ON mfa_device_tags (parent_id ASC);

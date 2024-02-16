@@ -26,6 +26,7 @@ actix-rt = "2.9"
 
 derive_more = "0.99"
 derive_builder = "0.13"
+lazy_static = "1.4"
 encoding_rs = "0.8"
 dotenv = "0.15"
 env_logger = "0.11"
@@ -35,6 +36,7 @@ futures-util = "0.3"
 log = "0.4"
 
 base64 = "0.21"
+data-encoding = "2.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 serde_aws_query_ce = "0.1"
@@ -50,6 +52,8 @@ sqlx = { version = "0.7", features = [
 tokio = { version = "1.24", features = ["sync", "full"] }
 url = "2.5"
 urlencoding = "2.1"
+qrcode = "0.13"
+image = "0.24"
 
 chrono = { version = "0.4", features = ["serde"] }
 

@@ -5,6 +5,8 @@ pub(crate) mod inline_policy;
 pub(crate) mod instance_profile;
 pub(crate) mod instance_profile_tag;
 pub(crate) mod login_profile;
+pub(crate) mod mfa_device;
+pub(crate) mod mfa_device_tags;
 pub(crate) mod open_id_connect_provider;
 pub(crate) mod open_id_connect_provider_client_id;
 pub(crate) mod open_id_connect_provider_client_thumbprint;

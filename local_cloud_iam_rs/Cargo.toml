@@ -17,6 +17,8 @@ dotenv.workspace = true
 env_logger.workspace = true
 log.workspace = true
 
+qrcode.workspace = true
+image.workspace = true
 base64.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -48,8 +50,10 @@ local_cloud_validate = { path = "../local_cloud_validate" }
 local_cloud_xml = { path = "../local_cloud_xml" }
 local_cloud_db = { path = "../local_cloud_db" }
 local_cloud_iam_policy_document = { path = "../local_cloud_iam_policy_document" }
-lazy_static = "1.4"
-encoding_rs = "0.8"
+
+lazy_static.workspace = true
+encoding_rs.workspace = true
+data-encoding.workspace = true
 urlencoding.workspace = true
 
 [dev-dependencies]

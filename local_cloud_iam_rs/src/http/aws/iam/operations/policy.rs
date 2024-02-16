@@ -285,13 +285,14 @@ pub(crate) async fn tag_policy(
 fn prepare_policy_for_insert(
     ctx: &OperationCtx, policy_input: &CreatePolicyRequest, policy_id: &str, current_time: i64,
 ) -> Result<InsertPolicy, InsertPolicyBuilderError> {
+    let path = policy_input.path().unwrap_or("/");
     let policy_name = policy_input.policy_name().unwrap().trim();
-    let arn = format!("arn:aws:iam::{:0>12}:policy/{}", ctx.account_id, policy_name);
+    let arn = format!("arn:aws:iam::{:0>12}:policy{}{}", ctx.account_id, path, policy_name);
     InsertPolicyBuilder::default()
         // The property will be initialized during insert
         .id(None)
         .account_id(ctx.account_id)
-        .path(policy_input.path().unwrap_or("/").to_owned())
+        .path(path.to_owned())
         .description(policy_input.description().map(|value| value.to_owned()))
         .arn(arn)
         .policy_id(policy_id.to_owned())

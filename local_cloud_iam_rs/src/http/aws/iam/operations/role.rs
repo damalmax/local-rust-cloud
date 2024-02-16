@@ -81,8 +81,9 @@ pub async fn create_role(
 fn prepare_role_for_insert(
     ctx: &OperationCtx, input: &CreateRoleRequest, role_id: &str, policy_id: Option<i64>, current_time: i64,
 ) -> Result<InsertRole, InsertRoleBuilderError> {
+    let path = input.path().unwrap_or("/");
     let role_name = input.role_name().unwrap().trim();
-    let arn = format!("arn:aws:iam::{:0>12}:role/{}", ctx.account_id, role_name);
+    let arn = format!("arn:aws:iam::{:0>12}:role{}{}", ctx.account_id, path, role_name);
     let max_session_duration = input
         .max_session_duration()
         .map(|v| *v)
@@ -95,7 +96,7 @@ fn prepare_role_for_insert(
         .description(input.description().map(|s| s.to_owned()))
         .max_session_duration(max_session_duration)
         .arn(arn)
-        .path(input.path().unwrap_or("/").to_owned())
+        .path(path.to_owned())
         .role_id(role_id.to_owned())
         .policy_id(policy_id)
         .create_date(current_time)

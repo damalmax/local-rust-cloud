@@ -68,12 +68,13 @@ pub(crate) async fn create_group(
 fn prepare_group_for_insert(
     ctx: &OperationCtx, input: &CreateGroupRequest, group_id: &str, current_time: i64,
 ) -> Result<InsertGroup, InsertGroupBuilderError> {
+    let path = input.path().unwrap_or("/");
     let group_name = input.group_name().unwrap().trim();
-    let arn = format!("arn:aws:iam::{:0>12}:group/{}", ctx.account_id, group_name);
+    let arn = format!("arn:aws:iam::{:0>12}:group{}{}", ctx.account_id, path, group_name);
     InsertGroupBuilder::default()
         .id(None) // The property will be initialized during insert
         .account_id(ctx.account_id)
-        .path(input.path().unwrap_or("/").to_owned())
+        .path(path.to_owned())
         .arn(arn)
         .group_name(group_name.to_owned())
         .group_id(group_id.to_owned())

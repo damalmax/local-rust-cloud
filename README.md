@@ -36,7 +36,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] create_service_linked_role
 - [ ] create_service_specific_credential
 - [X] create_user
-- [ ] create_virtual_mfa_device
+- [X] create_virtual_mfa_device
 - [ ] deactivate_mfa_device
 - [ ] delete_access_key
 - [ ] delete_account_alias

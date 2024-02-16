@@ -25,6 +25,7 @@ use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVer
 use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
+use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtualMfaDeviceRequest;
 use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
 use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
@@ -73,6 +74,7 @@ pub(crate) enum LocalAwsRequest {
     CreateRole(CreateRoleRequest),
     CreateSAMLProvider(CreateSamlProviderRequest),
     CreateUser(CreateUserRequest),
+    CreateVirtualMFADevice(CreateVirtualMfaDeviceRequest),
     GetGroup(GetGroupRequest),
     GetGroupPolicy(GetGroupPolicyRequest),
     GetRolePolicy(GetRolePolicyRequest),
@@ -137,6 +139,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::CreateRole(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::CreateSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::CreateUser(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::CreateVirtualMFADevice(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetGroup(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetGroupPolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetRolePolicy(request) => execute!(request, account_id, aws_request_id, db),

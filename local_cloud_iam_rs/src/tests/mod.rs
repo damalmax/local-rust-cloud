@@ -20,6 +20,7 @@ mod create_policy_version;
 mod create_role;
 mod create_saml_provider;
 mod create_user;
+mod create_virtual_mfa_device;
 pub mod fixture;
 mod get_group;
 mod get_group_policy;

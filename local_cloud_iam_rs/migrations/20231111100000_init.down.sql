@@ -1,3 +1,8 @@
+DROP INDEX IF EXISTS fk_mfa_device_tags__parent_id;
+DROP TABLE IF EXISTS mfa_device_tags;
+DROP INDEX IF EXISTS fk_mfa_devices__account_id;
+DROP TABLE IF EXISTS mfa_devices;
+
 DROP INDEX IF EXISTS fk_saml_provider_tags__parent_id;
 DROP TABLE IF EXISTS saml_provider_tags;
 

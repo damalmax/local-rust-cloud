@@ -8,6 +8,7 @@ pub(crate) mod create_policy_version;
 pub(crate) mod create_role;
 pub(crate) mod create_saml_provider;
 pub(crate) mod create_user;
+pub(crate) mod create_virtual_mfa_device;
 pub(crate) mod error;
 
 macro_rules! action {

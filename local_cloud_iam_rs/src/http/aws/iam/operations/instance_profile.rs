@@ -31,8 +31,9 @@ pub(crate) async fn create_instance_profile(
     let current_time = Utc::now().timestamp();
     let mut tx = db.new_tx().await?;
 
+    let path = input.path().unwrap_or("/");
     let instance_profile_name = input.instance_profile_name().unwrap();
-    let arn = format!("arn:aws:iam::{:0>12}:instance-profile/{}", ctx.account_id, instance_profile_name);
+    let arn = format!("arn:aws:iam::{:0>12}:instance-profile{}{}", ctx.account_id, path, instance_profile_name);
     let instance_profile_id =
         create_resource_id(&mut tx, constants::instance_profile::PREFIX, ResourceType::InstanceProfile).await?;
 
@@ -42,7 +43,7 @@ pub(crate) async fn create_instance_profile(
         instance_profile_name: instance_profile_name.to_owned(),
         instance_profile_id,
         arn,
-        path: input.path().unwrap_or("/").to_owned(),
+        path: path.to_owned(),
         create_date: current_time,
     };
 

@@ -85,14 +85,15 @@ pub async fn create_user(
 fn prepare_user_for_insert(
     ctx: &OperationCtx, input: &CreateUserRequest, user_id: &str, policy_id: Option<i64>, current_time: i64,
 ) -> Result<InsertUser, InsertUserBuilderError> {
+    let path = input.path().unwrap_or("/");
     let username = input.user_name().unwrap().trim();
-    let arn = format!("arn:aws:iam::{:0>12}:user/{}", ctx.account_id, username);
+    let arn = format!("arn:aws:iam::{:0>12}:user{}{}", ctx.account_id, path, username);
     InsertUserBuilder::default()
         .id(None)
         .account_id(ctx.account_id)
         .username(input.user_name().unwrap().to_owned())
         .arn(arn)
-        .path(input.path().unwrap_or("/").to_owned())
+        .path(path.to_owned())
         .user_id(user_id.to_owned())
         .policy_id(policy_id)
         .create_date(current_time)
