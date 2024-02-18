@@ -26,8 +26,10 @@ use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
 use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
 use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
 use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtualMfaDeviceRequest;
+use crate::http::aws::iam::types::enable_mfa_device_request::EnableMfaDeviceRequest;
 use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
+use crate::http::aws::iam::types::get_mfa_device_request::GetMfaDeviceRequest;
 use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
 use crate::http::aws::iam::types::get_user_policy_request::GetUserPolicyRequest;
 use crate::http::aws::iam::types::list_group_policies_request::ListGroupPoliciesRequest;
@@ -75,8 +77,10 @@ pub(crate) enum LocalAwsRequest {
     CreateSAMLProvider(CreateSamlProviderRequest),
     CreateUser(CreateUserRequest),
     CreateVirtualMFADevice(CreateVirtualMfaDeviceRequest),
+    EnableMFADevice(EnableMfaDeviceRequest),
     GetGroup(GetGroupRequest),
     GetGroupPolicy(GetGroupPolicyRequest),
+    GetMFADevice(GetMfaDeviceRequest),
     GetRolePolicy(GetRolePolicyRequest),
     GetUserPolicy(GetUserPolicyRequest),
     ListGroups(ListGroupsRequest),
@@ -140,8 +144,10 @@ pub(crate) async fn handle(
         LocalAwsRequest::CreateSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::CreateUser(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::CreateVirtualMFADevice(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::EnableMFADevice(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetGroup(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetGroupPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::GetMFADevice(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetRolePolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::GetUserPolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListGroups(request) => execute!(request, account_id, aws_request_id, db),

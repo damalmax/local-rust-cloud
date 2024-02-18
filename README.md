@@ -64,7 +64,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] detach_group_policy
 - [ ] detach_role_policy
 - [ ] detach_user_policy
-- [ ] enable_mfa_device
+- [X] enable_mfa_device
 - [ ] generate_credential_report
 - [ ] generate_organizations_access_report
 - [ ] generate_service_last_accessed_details
@@ -79,7 +79,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] get_group_policy
 - [ ] get_instance_profile
 - [ ] get_login_profile
-- [ ] get_mfa_device
+- [X] get_mfa_device
 - [ ] get_open_id_connect_provider
 - [ ] get_organizations_access_report
 - [ ] get_policy

@@ -378,6 +378,8 @@ CREATE TABLE IF NOT EXISTS mfa_devices
     name          VARCHAR2(128)                     NOT NULL,
     unique_name   VARCHAR2(128)                     NOT NULL,
     seed          BLOB                              NOT NULL,
+    code1         VARCHAR2(6),
+    code2         VARCHAR2(6),
     create_date   INTEGER                           NOT NULL,
     enable_date   INTEGER,
     user_id       INTEGER REFERENCES users (id), -- MFA device could be assigned to only one user

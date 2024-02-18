@@ -131,3 +131,5 @@ action!(
     ListSamlProviderTagsOutput
 );
 action!(saml_provider, tag_saml_provider, tag_saml_provider_request, TagSamlProviderRequest, TagSamlProviderOutput);
+action!(mfa_device, get_mfa_device, get_mfa_device_request, GetMfaDeviceRequest, GetMfaDeviceOutput);
+action!(mfa_device, enable_mfa_device, enable_mfa_device_request, EnableMfaDeviceRequest, EnableMfaDeviceOutput);

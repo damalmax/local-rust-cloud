@@ -1,7 +1,6 @@
 use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_xml::encode::ScopeWriter;
-use base64::Engine;
-use data_encoding::{BASE32_NOPAD, BASE64};
+use data_encoding::{BASE32, BASE64};
 
 use local_cloud_xml::write_tag_with_value;
 
@@ -19,7 +18,7 @@ pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, device
     write_tag_with_value(
         &mut wrapper_tag,
         "Base32StringSeed",
-        device.base32_string_seed().map(|v| BASE32_NOPAD.encode(v.as_ref())),
+        device.base32_string_seed().map(|v| BASE32.encode(v.as_ref())),
     );
     write_tag_with_value(&mut wrapper_tag, "QRCodePNG", device.qr_code_png().map(|v| BASE64.encode(v.as_ref())));
     if let Some(user) = device.user() {

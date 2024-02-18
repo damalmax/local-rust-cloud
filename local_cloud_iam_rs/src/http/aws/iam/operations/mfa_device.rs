@@ -1,22 +1,27 @@
 use std::io::Cursor;
 
 use aws_sdk_iam::operation::create_virtual_mfa_device::CreateVirtualMfaDeviceOutput;
+use aws_sdk_iam::operation::enable_mfa_device::EnableMfaDeviceOutput;
+use aws_sdk_iam::operation::get_mfa_device::GetMfaDeviceOutput;
 use aws_sdk_iam::types::VirtualMfaDevice;
-use aws_smithy_types::Blob;
+use aws_smithy_types::{Blob, DateTime};
 use base64::prelude::BASE64_URL_SAFE;
 use base64::Engine;
 use chrono::Utc;
 use image::{ImageOutputFormat, Luma};
 use qrcode::QrCode;
+use sqlx::{Executor, Sqlite};
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::mfa_device::InsertMfaDevice;
+use crate::http::aws::iam::db::types::mfa_device::{EnableMfaDeviceQuery, InsertMfaDevice, SelectMfaDevice};
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtualMfaDeviceRequest;
+use crate::http::aws::iam::types::enable_mfa_device_request::EnableMfaDeviceRequest;
+use crate::http::aws::iam::types::get_mfa_device_request::GetMfaDeviceRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_virtual_mfa_device(
@@ -24,7 +29,6 @@ pub(crate) async fn create_virtual_mfa_device(
 ) -> Result<CreateVirtualMfaDeviceOutput, OperationError> {
     input.validate("$")?;
 
-    // TODO: add check to allow to register up to 8 MFA devices per user (it is possible to register up to 8 devices to ROOT user also)
     let current_time = Utc::now().timestamp();
 
     let mut tx = db.new_tx().await?;
@@ -45,6 +49,18 @@ pub(crate) async fn create_virtual_mfa_device(
     };
 
     db::mfa_device::create(&mut tx, &mut insert_mfa_device).await?;
+
+    let devices_count = db::mfa_device::count(tx.as_mut(), ctx.account_id, None).await?;
+    if devices_count > constants::mfa::DEVICE_MAX_COUNT_PER_USER {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!(
+                "It is allowed to register up to {} MFA devices per user.",
+                constants::mfa::DEVICE_MAX_COUNT_PER_USER
+            )
+            .as_str(),
+        ));
+    }
 
     let mut device_tags = super::tag::prepare_for_insert(input.tags(), insert_mfa_device.id.unwrap());
     db::mfa_device_tags::save_all(&mut tx, &mut device_tags).await?;
@@ -81,5 +97,107 @@ pub(crate) async fn create_virtual_mfa_device(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn find_id_by_serial_number<'a, E>(
+    executor: E, account_id: i64, serial_number: &str,
+) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::mfa_device::find_id_by_serial_number(executor, account_id, serial_number).await? {
+        Some(mfa_device_id) => Ok(mfa_device_id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM MFA device with serial number '{}' doesn't exist.", serial_number).as_str(),
+            ));
+        }
+    }
+}
+
+pub(crate) async fn find_by_serial_number<'a, E>(
+    executor: E, account_id: i64, serial_number: &str, user_name: Option<&str>,
+) -> Result<SelectMfaDevice, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::mfa_device::find_by_serial_number(executor, account_id, serial_number).await? {
+        Some(mfa_device) => {
+            if user_name.is_none()
+                || (user_name.is_some()
+                    && mfa_device.user_name.is_some()
+                    && user_name.unwrap() == mfa_device.user_name.as_ref().unwrap())
+            {
+                Ok(mfa_device)
+            } else {
+                Err(OperationError::new(
+                    ApiErrorKind::NoSuchEntity,
+                    format!("IAM MFA device with serial number '{}' assigned to a different user.", serial_number)
+                        .as_str(),
+                ))
+            }
+        }
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM MFA device with serial number '{}' doesn't exist.", serial_number).as_str(),
+            ));
+        }
+    }
+}
+
+pub(crate) async fn get_mfa_device(
+    ctx: &OperationCtx, input: &GetMfaDeviceRequest, db: &LocalDb,
+) -> Result<GetMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let serial_number = input.serial_number().unwrap();
+    let user_name = input.user_name();
+    let select_mfa_device =
+        find_by_serial_number(connection.as_mut(), ctx.account_id, serial_number, user_name).await?;
+
+    let output = GetMfaDeviceOutput::builder()
+        .serial_number(&select_mfa_device.serial_number)
+        .set_enable_date(select_mfa_device.enable_date.map(|date| DateTime::from_secs(date)))
+        .set_user_name(select_mfa_device.user_name)
+        .set_certifications(None)
+        .build()
+        .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn enable_mfa_device(
+    ctx: &OperationCtx, input: &EnableMfaDeviceRequest, db: &LocalDb,
+) -> Result<EnableMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let current_time = Utc::now().timestamp();
+
+    let mut tx = db.new_tx().await?;
+
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+
+    let mfa_device = find_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap(), None).await?;
+    if mfa_device.user_id.is_some() && mfa_device.enable_date.is_some() {
+        return Err(OperationError::new(ApiErrorKind::EntityAlreadyExists, "MFA device is already activated."));
+    }
+
+    let query = EnableMfaDeviceQuery {
+        id: mfa_device.id,
+        enable_date: current_time,
+        user_id,
+        code1: input.authentication_code_1().unwrap().to_owned(),
+        code2: input.authentication_code_2().unwrap().to_owned(),
+    };
+
+    db::mfa_device::enable(&mut tx, &query).await?;
+
+    let output = EnableMfaDeviceOutput::builder().build();
+
+    tx.commit().await?;
     Ok(output)
 }

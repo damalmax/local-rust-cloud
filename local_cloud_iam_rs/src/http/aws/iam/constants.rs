@@ -47,4 +47,5 @@ pub(crate) mod open_id_connect_provider {
 
 pub(crate) mod mfa {
     pub(crate) const SEED_LENGTH: usize = 20;
+    pub(crate) const DEVICE_MAX_COUNT_PER_USER: usize = 8;
 }

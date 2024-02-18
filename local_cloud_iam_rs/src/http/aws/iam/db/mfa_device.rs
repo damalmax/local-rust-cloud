@@ -1,7 +1,7 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::mfa_device::InsertMfaDevice;
+use crate::http::aws::iam::db::types::mfa_device::{EnableMfaDeviceQuery, InsertMfaDevice, SelectMfaDevice};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, mfa_device: &mut InsertMfaDevice,
@@ -31,5 +31,92 @@ pub(crate) async fn create<'a>(
     .await?;
 
     mfa_device.id = Some(result);
+    Ok(())
+}
+
+pub(crate) async fn find_id_by_serial_number<'a, E>(
+    executor: E, account_id: i64, serial_number: &str,
+) -> Result<Option<i64>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query("SELECT id FROM mfa_devices WHERE account_id = $1 AND serial_number = $2")
+        .bind(account_id)
+        .bind(serial_number)
+        .map(|row: SqliteRow| row.get::<i64, &str>("id"))
+        .fetch_optional(executor)
+        .await?;
+    Ok(result)
+}
+
+pub(crate) async fn find_by_serial_number<'a, E>(
+    executor: E, account_id: i64, serial_number: &str,
+) -> Result<Option<SelectMfaDevice>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT md.id AS id, \
+                    md.account_id AS account_id, \
+                    md.serial_number AS serial_number, \
+                    md.path AS path, \
+                    md.name AS name, \
+                    md.unique_name AS unique_name, \
+                    md.seed AS seed, \
+                    md.create_date AS create_date, \
+                    md.enable_date AS enable_date, \
+                    md.user_id AS user_id, \
+                    u.username AS user_name \
+            FROM mfa_devices md LEFT JOIN users u ON md.user_id = u.id \
+            WHERE md.account_id = $1 AND md.serial_number = $2",
+    )
+    .bind(account_id)
+    .bind(serial_number)
+    .map(|row: SqliteRow| SelectMfaDevice::from_row(&row).unwrap())
+    .fetch_optional(executor)
+    .await?;
+    Ok(result)
+}
+
+pub(crate) async fn count<'a, E>(executor: E, account_id: i64, user_name: Option<&'a str>) -> Result<usize, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+        "SELECT COUNT(md.id) AS count \
+            FROM mfa_devices md LEFT JOIN users u ON md.user_id = u.id \
+            WHERE md.account_id = ",
+    );
+    query_builder.push_bind(account_id);
+
+    if let Some(user_name) = user_name {
+        query_builder.push(" AND u.username = ").push_bind(user_name);
+    }
+    let result = query_builder
+        .build()
+        .map(|row: SqliteRow| row.get::<i64, &str>("count"))
+        .fetch_one(executor)
+        .await?;
+    Ok(result as usize)
+}
+
+pub(crate) async fn enable<'a>(tx: &mut Transaction<'a, Sqlite>, query: &EnableMfaDeviceQuery) -> Result<(), Error> {
+    let query = sqlx::query(
+        "UPDATE mfa_devices \
+        SET \
+            user_id = $1, \
+            enable_date = $2, \
+            code1 = $3, \
+            code2 = $4 \
+        WHERE id = $5 ",
+    )
+    .bind(query.user_id)
+    .bind(query.enable_date)
+    .bind(&query.code1)
+    .bind(&query.code2)
+    .bind(query.id)
+    .execute(tx.as_mut())
+    .await?;
+
     Ok(())
 }
