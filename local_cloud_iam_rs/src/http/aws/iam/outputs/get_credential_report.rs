@@ -1,7 +1,6 @@
 use aws_sdk_iam::operation::get_credential_report::GetCredentialReportOutput;
 use aws_smithy_xml::encode::XmlWriter;
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
+use data_encoding::BASE64;
 
 use local_cloud_actix::local::web::XmlResponse;
 use local_cloud_xml::{write_iso8061_datetime_value_tag, write_request_metadata_tag, write_tag_with_value};
@@ -23,7 +22,7 @@ impl From<LocalGetCredentialReportOutput> for XmlResponse {
 
         let mut result_tag = response_tag.start_el("GetCredentialReportResult").finish();
 
-        write_tag_with_value(&mut result_tag, "Content", val.inner.content().map(|v| STANDARD.encode(v)));
+        write_tag_with_value(&mut result_tag, "Content", val.inner.content().map(|v| BASE64.encode(v.as_ref())));
         write_tag_with_value(&mut result_tag, "ReportFormat", val.inner.report_format().map(|v| v.as_str()));
         write_iso8061_datetime_value_tag(&mut result_tag, "GeneratedTime", val.inner.generated_time());
         result_tag.finish();

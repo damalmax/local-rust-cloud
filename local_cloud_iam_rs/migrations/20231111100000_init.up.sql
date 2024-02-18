@@ -397,3 +397,16 @@ CREATE TABLE IF NOT EXISTS mfa_device_tags
     UNIQUE (parent_id, key)
 );
 CREATE INDEX IF NOT EXISTS fk_mfa_device_tags__parent_id ON mfa_device_tags (parent_id ASC);
+-- SSH public keys
+CREATE TABLE IF NOT EXISTS user_ssh_public_keys
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id     INTEGER REFERENCES users (id)     NOT NULL,
+    key_id      VARCHAR2(21)                      NOT NULL,
+    body        VARCHAR2(16384)                   NOT NULL,
+    status      INTEGER                           NOT NULL,
+    upload_date INTEGER                           NOT NULL,
+    UNIQUE (user_id, body),
+    UNIQUE (key_id)
+);
+CREATE INDEX IF NOT EXISTS fk_user_ssh_public_keys__user_id ON user_ssh_public_keys (user_id ASC);

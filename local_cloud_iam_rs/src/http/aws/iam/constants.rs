@@ -49,3 +49,7 @@ pub(crate) mod mfa {
     pub(crate) const SEED_LENGTH: usize = 20;
     pub(crate) const DEVICE_MAX_COUNT_PER_USER: usize = 8;
 }
+
+pub(crate) mod ssh_public_key {
+    pub(crate) const PREFIX: &str = "APKA";
+}

@@ -6,9 +6,8 @@ use aws_sdk_iam::operation::get_mfa_device::GetMfaDeviceOutput;
 use aws_sdk_iam::operation::list_virtual_mfa_devices::ListVirtualMfaDevicesOutput;
 use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_types::{Blob, DateTime};
-use base64::prelude::BASE64_URL_SAFE;
-use base64::Engine;
 use chrono::Utc;
+use data_encoding::BASE64;
 use image::{ImageOutputFormat, Luma};
 use qrcode::QrCode;
 use sqlx::{Executor, Sqlite};
@@ -71,7 +70,7 @@ pub(crate) async fn create_virtual_mfa_device(
 
     // Using account ID since User is not available when we register a new MFA device.
     let account_name = format!("{:0>12}", ctx.account_id);
-    let secret = BASE64_URL_SAFE.encode(&insert_mfa_device.seed);
+    let secret = BASE64.encode(&insert_mfa_device.seed);
     let qr_code_str = format!("otpauth://totp/{device_name}@{account_name}?secret={secret}");
 
     let code = QrCode::new(&qr_code_str).unwrap();

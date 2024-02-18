@@ -174,7 +174,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] update_user
 - [ ] upload_server_certificate
 - [ ] upload_signing_certificate
-- [ ] upload_ssh_public_key
+- [X] upload_ssh_public_key
 
 </details>
 

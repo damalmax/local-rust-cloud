@@ -11,5 +11,7 @@ pub(crate) mod policy_version;
 pub(crate) mod resource_identifier;
 pub(crate) mod role;
 pub(crate) mod saml_provider;
+pub(crate) mod ssh_public_key;
+pub(crate) mod ssh_public_key_type;
 pub(crate) mod tags;
 pub(crate) mod user;

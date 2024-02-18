@@ -1,0 +1,41 @@
+#[derive(Debug, Clone, sqlx::Type)]
+#[repr(i32)]
+pub enum SshPublicKeyStatusType {
+    Active,
+    Inactive,
+}
+
+impl SshPublicKeyStatusType {
+    pub(crate) fn as_i32(&self) -> i32 {
+        match self {
+            SshPublicKeyStatusType::Active => 1,
+            SshPublicKeyStatusType::Inactive => 2,
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            SshPublicKeyStatusType::Active => "Active",
+            SshPublicKeyStatusType::Inactive => "Inactive",
+        }
+    }
+}
+
+impl Into<i32> for SshPublicKeyStatusType {
+    fn into(self) -> i32 {
+        match self {
+            Self::Active => 1,
+            Self::Inactive => 2,
+        }
+    }
+}
+
+impl From<i32> for SshPublicKeyStatusType {
+    fn from(value: i32) -> Self {
+        if value == 1 {
+            Self::Active
+        } else {
+            Self::Inactive
+        }
+    }
+}

@@ -14,6 +14,7 @@ pub(crate) enum ResourceType {
     Group,
     InstanceProfile,
     SamlProvider,
+    SshPublicKey,
 }
 
 impl Into<i16> for ResourceType {
@@ -26,6 +27,7 @@ impl Into<i16> for ResourceType {
             Self::Group => 5,
             Self::InstanceProfile => 6,
             Self::SamlProvider => 7,
+            Self::SshPublicKey => 8,
         }
     }
 }

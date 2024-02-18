@@ -140,3 +140,10 @@ action!(
     ListVirtualMfaDevicesRequest,
     ListVirtualMfaDevicesOutput
 );
+action!(
+    ssh_public_key,
+    upload_ssh_public_key,
+    upload_ssh_public_key_request,
+    UploadSshPublicKeyRequest,
+    UploadSshPublicKeyOutput
+);

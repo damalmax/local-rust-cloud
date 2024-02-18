@@ -1,8 +1,7 @@
 use std::io::ErrorKind;
 use std::ops::Deref;
 
-use base64::engine::general_purpose;
-use base64::Engine;
+use data_encoding::BASE64;
 use serde::{Deserialize, Deserializer};
 
 use local_cloud_validate::{ValidationError, ValidationErrorKind};
@@ -25,7 +24,7 @@ impl<'de> Deserialize<'de> for MarkerType {
         D: Deserializer<'de>,
     {
         let input: String = Deserialize::deserialize(deserializer)?;
-        let bytes = general_purpose::STANDARD
+        let bytes = BASE64
             .decode(input.as_bytes())
             .map_err(|_err| ValidationError::new(ValidationErrorKind::Other, DECODE_MARKER_ERROR_MSG));
 
@@ -84,7 +83,7 @@ impl Marker {
     pub(crate) fn encode(&self) -> Result<String, std::io::Error> {
         let json = serde_json::to_string(self)
             .map_err(|_err| std::io::Error::new(ErrorKind::Other, "Failed to generate Marker"))?;
-        Ok(general_purpose::STANDARD.encode(json))
+        Ok(BASE64.encode(json.as_bytes()))
     }
 
     pub(crate) fn new(truncate_amount: i32) -> Marker {

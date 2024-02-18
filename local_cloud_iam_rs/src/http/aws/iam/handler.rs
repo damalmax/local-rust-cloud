@@ -57,6 +57,7 @@ use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
+use crate::http::aws::iam::types::upload_ssh_public_key_request::UploadSshPublicKeyRequest;
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "Action")]
@@ -109,6 +110,7 @@ pub(crate) enum LocalAwsRequest {
     TagRole(TagRoleRequest),
     TagSAMLProvider(TagSamlProviderRequest),
     TagUser(TagUserRequest),
+    UploadSSHPublicKey(UploadSshPublicKeyRequest),
 }
 
 macro_rules! execute {
@@ -177,6 +179,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::TagRole(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagUser(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UploadSSHPublicKey(request) => execute!(request, account_id, aws_request_id, db),
     };
 
     match output {

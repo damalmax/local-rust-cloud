@@ -72,6 +72,7 @@ parking_lot = "0.12"
 regex = "1.10"
 password-hash = "0.5"
 argon2 = "0.5"
+openssh-keys = "0.6"
 
 etcd-client = "0.12"
 

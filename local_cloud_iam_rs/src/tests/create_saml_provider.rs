@@ -1,7 +1,5 @@
-use base64::engine::general_purpose::STANDARD as Base64;
-use base64::Engine;
-
 use crate::tests::fixture::tag;
+use data_encoding::BASE64;
 
 #[actix_rt::test]
 async fn create_saml_provider() {
@@ -12,7 +10,7 @@ async fn create_saml_provider() {
 
     let result = client
         .create_saml_provider()
-        .saml_metadata_document(Base64.encode(include_str!("resources/saml-metadata.xml")))
+        .saml_metadata_document(BASE64.encode(include_str!("resources/saml-metadata.xml").as_bytes()))
         .name("MyUniversity")
         .tags(tag("key1", "value1"))
         .tags(tag("key2", "value2"))

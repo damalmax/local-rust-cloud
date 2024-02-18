@@ -1,5 +1,3 @@
-use validator::HasLen;
-
 use local_cloud_testing::assertions::assert_not_empty;
 
 const USER_NAME: &str = "test-user-1";

@@ -53,6 +53,7 @@ mod tag_policy;
 mod tag_role;
 mod tag_saml_provider;
 mod tag_user;
+mod upload_ssh_public_key;
 
 pub fn credentials_provider() -> impl ProvideCredentials {
     aws_credential_types::Credentials::new("AKIAIOSFODNN201ADMIN", "secret_access_key", None, None, "provider_name")

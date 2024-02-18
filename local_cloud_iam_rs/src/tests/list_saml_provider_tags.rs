@@ -1,6 +1,4 @@
-use base64::engine::general_purpose::STANDARD as Base64;
-use base64::Engine;
-
+use data_encoding::BASE64;
 use local_cloud_testing::assertions::assert_not_empty;
 
 use crate::tests::fixture::tag;
@@ -14,7 +12,7 @@ async fn list_saml_provider_tags() {
 
     let create_saml_provider_output = client
         .create_saml_provider()
-        .saml_metadata_document(Base64.encode(include_str!("resources/saml-metadata.xml")))
+        .saml_metadata_document(BASE64.encode(include_str!("resources/saml-metadata.xml").as_bytes()))
         .name("MyUniversity")
         .tags(tag("key1", "value1"))
         .tags(tag("key2", "value2"))

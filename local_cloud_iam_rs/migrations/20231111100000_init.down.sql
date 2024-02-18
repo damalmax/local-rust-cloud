@@ -1,3 +1,6 @@
+DROP INDEX IF EXISTS fk_user_ssh_public_keys__user_id;
+DROP TABLE IF EXISTS user_ssh_public_keys;
+
 DROP INDEX IF EXISTS fk_mfa_device_tags__parent_id;
 DROP TABLE IF EXISTS mfa_device_tags;
 DROP INDEX IF EXISTS fk_mfa_devices__account_id;

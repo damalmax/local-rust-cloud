@@ -13,6 +13,13 @@ impl PolicyType {
             PolicyType::CustomerManaged => 2,
         }
     }
+
+    pub(crate) fn as_str(&self) -> &str {
+        match self {
+            Self::LocalCloudManaged => "Local Cloud Managed",
+            Self::CustomerManaged => "Customer Managed",
+        }
+    }
 }
 
 impl Into<i32> for PolicyType {
@@ -30,15 +37,6 @@ impl From<i32> for PolicyType {
             Self::LocalCloudManaged
         } else {
             Self::CustomerManaged
-        }
-    }
-}
-
-impl Into<&'static str> for PolicyType {
-    fn into(self) -> &'static str {
-        match self {
-            Self::LocalCloudManaged => "Local Cloud Managed",
-            Self::CustomerManaged => "Customer Managed",
         }
     }
 }
