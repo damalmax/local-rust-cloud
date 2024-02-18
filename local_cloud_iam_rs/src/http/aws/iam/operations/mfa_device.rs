@@ -3,6 +3,7 @@ use std::io::Cursor;
 use aws_sdk_iam::operation::create_virtual_mfa_device::CreateVirtualMfaDeviceOutput;
 use aws_sdk_iam::operation::enable_mfa_device::EnableMfaDeviceOutput;
 use aws_sdk_iam::operation::get_mfa_device::GetMfaDeviceOutput;
+use aws_sdk_iam::operation::list_virtual_mfa_devices::ListVirtualMfaDevicesOutput;
 use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_types::{Blob, DateTime};
 use base64::prelude::BASE64_URL_SAFE;
@@ -16,12 +17,15 @@ use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::mfa_device::{EnableMfaDeviceQuery, InsertMfaDevice, SelectMfaDevice};
+use crate::http::aws::iam::db::types::mfa_device::{
+    EnableMfaDeviceQuery, InsertMfaDevice, ListVirtualMfaDevicesQuery, SelectMfaDevice,
+};
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtualMfaDeviceRequest;
 use crate::http::aws::iam::types::enable_mfa_device_request::EnableMfaDeviceRequest;
 use crate::http::aws::iam::types::get_mfa_device_request::GetMfaDeviceRequest;
+use crate::http::aws::iam::types::list_virtual_mfa_devices_request::ListVirtualMfaDevicesRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_virtual_mfa_device(
@@ -199,5 +203,27 @@ pub(crate) async fn enable_mfa_device(
     let output = EnableMfaDeviceOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn list_virtual_mfa_devices(
+    ctx: &OperationCtx, input: &ListVirtualMfaDevicesRequest, db: &LocalDb,
+) -> Result<ListVirtualMfaDevicesOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let query: ListVirtualMfaDevicesQuery = input.into();
+    let found_mfa_devices = db::mfa_device::list_virtual(connection.as_mut(), ctx.account_id, &query).await?;
+
+    let marker = super::common::create_encoded_marker(&query, found_mfa_devices.len())?;
+    let mfa_devices = super::common::convert_and_limit(&found_mfa_devices, query.limit).unwrap_or_default();
+
+    let output = ListVirtualMfaDevicesOutput::builder()
+        .set_virtual_mfa_devices(Some(mfa_devices))
+        .set_is_truncated(marker.as_ref().map(|_| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }

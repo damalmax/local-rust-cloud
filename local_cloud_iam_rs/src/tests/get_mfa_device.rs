@@ -1,8 +1,3 @@
-use base64::engine::general_purpose::STANDARD as Base64;
-use base64::Engine;
-
-use crate::tests::fixture::tag;
-
 const DEVICE_NAME: &str = "TestMFADevice";
 const USER_NAME: &str = "user1";
 

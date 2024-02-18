@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS users
     user_id         VARCHAR2(21)                      NOT NULL,
     policy_id       INTEGER REFERENCES policies (id),
     create_date     INTEGER                           NOT NULL,
+    last_used_date  INTEGER,
     UNIQUE (arn),
     UNIQUE (user_id),
     UNIQUE (account_id, unique_username)

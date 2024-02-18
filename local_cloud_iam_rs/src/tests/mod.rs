@@ -43,6 +43,7 @@ mod list_saml_provider_tags;
 mod list_user_policies;
 mod list_user_tags;
 mod list_users;
+mod list_virtual_mfa_devices;
 mod put_group_policy;
 mod put_role_policy;
 mod put_user_policy;

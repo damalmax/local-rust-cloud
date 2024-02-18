@@ -2,7 +2,7 @@ use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_xml::encode::ScopeWriter;
 use data_encoding::{BASE32, BASE64};
 
-use local_cloud_xml::write_tag_with_value;
+use local_cloud_xml::{write_iso8061_datetime_value_tag, write_tag_with_value};
 
 pub(crate) fn write_slice(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, items: &[VirtualMfaDevice]) {
     let mut items_tag = parent_tag.start_el(wrapper_tag_name).finish();
@@ -14,6 +14,7 @@ pub(crate) fn write_slice(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, 
 
 pub(crate) fn write(parent_tag: &mut ScopeWriter, wrapper_tag_name: &str, device: &VirtualMfaDevice) {
     let mut wrapper_tag = parent_tag.start_el(wrapper_tag_name).finish();
+    write_iso8061_datetime_value_tag(&mut wrapper_tag, "EnableDate", device.enable_date());
     write_tag_with_value(&mut wrapper_tag, "SerialNumber", Some(device.serial_number()));
     write_tag_with_value(
         &mut wrapper_tag,

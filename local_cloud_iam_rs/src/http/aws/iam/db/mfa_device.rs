@@ -1,7 +1,10 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::mfa_device::{EnableMfaDeviceQuery, InsertMfaDevice, SelectMfaDevice};
+use crate::http::aws::iam::db::types::mfa_device::{
+    EnableMfaDeviceQuery, InsertMfaDevice, ListVirtualMfaDevicesQuery, SelectMfaDevice,
+};
+use crate::http::aws::iam::types::assignment_status_type::AssignmentStatusType;
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, mfa_device: &mut InsertMfaDevice,
@@ -66,7 +69,12 @@ where
                     md.create_date AS create_date, \
                     md.enable_date AS enable_date, \
                     md.user_id AS user_id, \
-                    u.username AS user_name \
+                    u.user_id AS user_user_id, \
+                    u.username AS user_name, \
+                    u.arn AS user_arn, \
+                    u.path AS user_path, \
+                    u.create_date AS user_create_date, \
+                    u.last_used_date AS user_password_last_used \
             FROM mfa_devices md LEFT JOIN users u ON md.user_id = u.id \
             WHERE md.account_id = $1 AND md.serial_number = $2",
     )
@@ -101,7 +109,7 @@ where
 }
 
 pub(crate) async fn enable<'a>(tx: &mut Transaction<'a, Sqlite>, query: &EnableMfaDeviceQuery) -> Result<(), Error> {
-    let query = sqlx::query(
+    sqlx::query(
         "UPDATE mfa_devices \
         SET \
             user_id = $1, \
@@ -119,4 +127,53 @@ pub(crate) async fn enable<'a>(tx: &mut Transaction<'a, Sqlite>, query: &EnableM
     .await?;
 
     Ok(())
+}
+
+pub(crate) async fn list_virtual<'a, E>(
+    executor: E, account_id: i64, query: &ListVirtualMfaDevicesQuery,
+) -> Result<Vec<SelectMfaDevice>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+        "
+            SELECT md.id AS id, \
+                    md.account_id AS account_id, \
+                    md.serial_number AS serial_number, \
+                    md.path AS path, \
+                    md.name AS name, \
+                    md.unique_name AS unique_name, \
+                    md.seed AS seed, \
+                    md.create_date AS create_date, \
+                    md.enable_date AS enable_date, \
+                    md.user_id AS user_id, \
+                    u.user_id AS user_user_id, \
+                    u.username AS user_name, \
+                    u.arn AS user_arn, \
+                    u.path AS user_path, \
+                    u.create_date AS user_create_date, \
+                    u.last_used_date AS user_password_last_used \
+            FROM mfa_devices md LEFT JOIN users u ON md.user_id = u.id \
+            WHERE md.account_id = ",
+    );
+    query_builder.push_bind(account_id);
+
+    if AssignmentStatusType::Assigned == query.assignment_status {
+        query_builder.push(" AND md.user_id IS NOT NULL");
+    } else if AssignmentStatusType::Unassigned == query.assignment_status {
+        query_builder.push(" AND md.user_id IS NULL");
+    }
+
+    let result = query_builder
+        .push(" ORDER BY unique_name ASC")
+        .push(" LIMIT ")
+        .push_bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
+        .push(" OFFSET ")
+        .push_bind(query.skip)
+        .build()
+        .map(|row: SqliteRow| SelectMfaDevice::from_row(&row).unwrap())
+        .fetch_all(executor)
+        .await?;
+
+    Ok(result)
 }

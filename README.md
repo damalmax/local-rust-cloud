@@ -127,7 +127,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] list_user_policies
 - [X] list_user_tags
 - [X] list_users
-- [ ] list_virtual_mfa_devices
+- [X] list_virtual_mfa_devices
 - [X] put_group_policy
 - [ ] put_role_permissions_boundary
 - [X] put_role_policy

@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, serde::Deserialize)]
+#[derive(Debug, PartialEq, serde::Deserialize, Clone)]
 pub(crate) enum AssignmentStatusType {
     #[serde(rename = "Assigned")]
     Assigned,

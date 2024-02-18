@@ -10,7 +10,7 @@ async fn list_users_empty() {
         .max_items(10)
         .send()
         .await
-        .expect("Failed to get a list of IAM groups");
+        .expect("Failed to get a list of IAM users");
 
     assert!(result.users().is_empty());
     ctx.stop_server().await;

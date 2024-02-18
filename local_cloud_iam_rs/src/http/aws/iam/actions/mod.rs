@@ -133,3 +133,10 @@ action!(
 action!(saml_provider, tag_saml_provider, tag_saml_provider_request, TagSamlProviderRequest, TagSamlProviderOutput);
 action!(mfa_device, get_mfa_device, get_mfa_device_request, GetMfaDeviceRequest, GetMfaDeviceOutput);
 action!(mfa_device, enable_mfa_device, enable_mfa_device_request, EnableMfaDeviceRequest, EnableMfaDeviceOutput);
+action!(
+    mfa_device,
+    list_virtual_mfa_devices,
+    list_virtual_mfa_devices_request,
+    ListVirtualMfaDevicesRequest,
+    ListVirtualMfaDevicesOutput
+);

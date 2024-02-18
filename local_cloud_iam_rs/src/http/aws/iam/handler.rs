@@ -47,6 +47,7 @@ use crate::http::aws::iam::types::list_saml_provider_tags_request::ListSamlProvi
 use crate::http::aws::iam::types::list_user_policies_request::ListUserPoliciesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::list_virtual_mfa_devices_request::ListVirtualMfaDevicesRequest;
 use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
 use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
 use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
@@ -98,6 +99,7 @@ pub(crate) enum LocalAwsRequest {
     ListUserPolicies(ListUserPoliciesRequest),
     ListUserTags(ListUserTagsRequest),
     ListUsers(ListUsersRequest),
+    ListVirtualMFADevices(ListVirtualMfaDevicesRequest),
     PutGroupPolicy(PutGroupPolicyRequest),
     PutRolePolicy(PutRolePolicyRequest),
     PutUserPolicy(PutUserPolicyRequest),
@@ -165,6 +167,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::ListUserPolicies(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListUserTags(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListUsers(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListVirtualMFADevices(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::PutGroupPolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::PutRolePolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::PutUserPolicy(request) => execute!(request, account_id, aws_request_id, db),

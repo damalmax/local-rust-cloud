@@ -17,7 +17,7 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::group::{
-    InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, ListGroupsByUserQuery, SelectGroup,
+    InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, ListGroupsByUserQuery, ListGroupsQuery, SelectGroup,
 };
 use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
@@ -87,7 +87,7 @@ pub(crate) async fn list_groups(
 ) -> Result<ListGroupsOutput, OperationError> {
     input.validate("$")?;
 
-    let query = input.into();
+    let query: ListGroupsQuery = input.into();
 
     // obtain connection
     let mut connection = db.new_connection().await?;

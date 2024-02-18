@@ -18,7 +18,7 @@ async fn add_user_to_group() {
     .await
     .unwrap();
 
-    let role_output = client
+    client
         .create_role()
         .role_name("Test-Role")
         .path("/")
@@ -31,7 +31,7 @@ async fn add_user_to_group() {
         .await
         .expect("Failed to create IAM role");
 
-    let instance_profile_output = client
+    client
         .create_instance_profile()
         .path("/")
         .instance_profile_name("instance-profile-1")
