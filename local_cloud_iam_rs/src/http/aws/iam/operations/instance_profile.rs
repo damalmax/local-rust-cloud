@@ -50,7 +50,7 @@ pub(crate) async fn create_instance_profile(
     db::instance_profile::create(&mut tx, &mut insert_instance_profile).await?;
 
     let mut tags = super::tag::prepare_for_insert(input.tags(), insert_instance_profile.id.unwrap());
-    db::instance_profile_tag::save_all(&mut tx, &mut tags).await?;
+    db::Tags::InstanceProfile.save_all(&mut tx, &mut tags).await?;
 
     let instance_profile = InstanceProfile::builder()
         .instance_profile_name(&insert_instance_profile.instance_profile_name)
@@ -115,8 +115,12 @@ pub(crate) async fn tag_instance_profile(
     let instance_profile_id = find_id_by_name(ctx, tx.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
     let mut instance_profile_tags = super::tag::prepare_for_insert(input.tags(), instance_profile_id);
 
-    db::instance_profile_tag::save_all(&mut tx, &mut instance_profile_tags).await?;
-    let count = db::instance_profile_tag::count(tx.as_mut(), instance_profile_id).await?;
+    db::Tags::InstanceProfile
+        .save_all(&mut tx, &mut instance_profile_tags)
+        .await?;
+    let count = db::Tags::InstanceProfile
+        .count(tx.as_mut(), instance_profile_id)
+        .await?;
     if count > constants::tag::MAX_COUNT {
         return Err(OperationError::new(
             ApiErrorKind::LimitExceeded,
@@ -142,7 +146,9 @@ pub(crate) async fn list_instance_profile_tags(
         find_id_by_name(ctx, connection.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::instance_profile_tag::list(connection.as_mut(), found_instance_profile_id, &query).await?;
+    let found_tags = db::Tags::InstanceProfile
+        .list(connection.as_mut(), found_instance_profile_id, &query)
+        .await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;

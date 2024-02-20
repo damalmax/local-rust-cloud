@@ -10,6 +10,8 @@ pub(crate) mod policy;
 pub(crate) mod role;
 pub(crate) mod saml_provider;
 pub(crate) mod secure;
+pub(crate) mod server_certificate;
+pub(crate) mod signing_certificate;
 pub(crate) mod ssh_public_key;
 pub(crate) mod tag;
 pub(crate) mod user;

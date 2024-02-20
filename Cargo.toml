@@ -73,6 +73,7 @@ regex = "1.10"
 password-hash = "0.5"
 argon2 = "0.5"
 openssh-keys = "0.6"
+x509-parser = "0.15"
 
 etcd-client = "0.12"
 

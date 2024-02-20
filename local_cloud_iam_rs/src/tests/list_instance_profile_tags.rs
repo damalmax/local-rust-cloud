@@ -9,7 +9,7 @@ async fn list_instance_profile_tags_with_marker() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_instance_profile_output = client
+    client
         .create_instance_profile()
         .path("/")
         .instance_profile_name("instance-profile-1")

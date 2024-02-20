@@ -8,7 +8,7 @@ async fn enable_mfa_device() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_user_output = super::fixture::create_user(&client, USER_NAME, "/", None, None)
+    super::fixture::create_user(&client, USER_NAME, "/", None, None)
         .await
         .expect("Failed to create IAM user");
 

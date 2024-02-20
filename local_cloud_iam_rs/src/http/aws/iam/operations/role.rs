@@ -55,7 +55,7 @@ pub async fn create_role(
     db::role::create(&mut tx, &mut insert_role).await?;
 
     let mut role_tags = super::tag::prepare_for_insert(input.tags(), insert_role.id.unwrap());
-    db::role_tag::save_all(&mut tx, &mut role_tags).await?;
+    db::Tags::Role.save_all(&mut tx, &mut role_tags).await?;
 
     let role = Role::builder()
         .role_id(role_id)
@@ -148,7 +148,7 @@ pub(crate) async fn list_role_tags(
     let found_role_id = find_id_by_name(connection.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::role_tag::list_tags(connection.as_mut(), found_role_id, &query).await?;
+    let found_tags = db::Tags::Role.list(connection.as_mut(), found_role_id, &query).await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
@@ -240,8 +240,8 @@ pub(crate) async fn tag_role(
     let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
     let mut role_tags = super::tag::prepare_for_insert(input.tags(), role_id);
 
-    db::role_tag::save_all(&mut tx, &mut role_tags).await?;
-    let count = db::role_tag::count(tx.as_mut(), role_id).await?;
+    db::Tags::Role.save_all(&mut tx, &mut role_tags).await?;
+    let count = db::Tags::Role.count(tx.as_mut(), role_id).await?;
     if count > constants::tag::MAX_COUNT {
         return Err(OperationError::new(
             ApiErrorKind::LimitExceeded,

@@ -54,7 +54,7 @@ pub async fn create_user(
     db::user::create(&mut tx, &mut insert_user).await?;
 
     let mut user_tags = super::tag::prepare_for_insert(input.tags(), insert_user.id.unwrap());
-    db::user_tag::save_all(&mut tx, &mut user_tags).await?;
+    db::Tags::User.save_all(&mut tx, &mut user_tags).await?;
 
     let permissions_boundary = match policy_id {
         None => None,
@@ -188,7 +188,7 @@ pub(crate) async fn list_user_tags(
     let found_user_id = find_id_by_name(connection.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::user_tag::list_tags(connection.as_mut(), found_user_id, &query).await?;
+    let found_tags = db::Tags::User.list(connection.as_mut(), found_user_id, &query).await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
@@ -212,8 +212,8 @@ pub(crate) async fn tag_user(
     let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
     let mut user_tags = super::tag::prepare_for_insert(input.tags(), user_id);
 
-    db::user_tag::save_all(&mut tx, &mut user_tags).await?;
-    let count = db::user_tag::count(tx.as_mut(), user_id).await?;
+    db::Tags::User.save_all(&mut tx, &mut user_tags).await?;
+    let count = db::Tags::User.count(tx.as_mut(), user_id).await?;
     if count > constants::tag::MAX_COUNT {
         return Err(OperationError::new(
             ApiErrorKind::LimitExceeded,

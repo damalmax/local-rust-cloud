@@ -65,6 +65,7 @@ pub(crate) mod detach_user_policy_request;
 pub(crate) mod enable_mfa_device_request;
 pub(crate) mod encoding_type;
 pub(crate) mod entity_type;
+mod error;
 pub(crate) mod existing_user_name_type;
 pub(crate) mod generate_organizations_access_report_request;
 pub(crate) mod generate_service_last_accessed_details_request;

@@ -28,6 +28,10 @@ pub(crate) mod policy {
     pub(crate) const ROLE_SESSION_DEFAULT_DURATION_SEC: Duration = Duration::new(3600, 0);
 }
 
+pub(crate) mod server_certificate {
+    pub(crate) const PREFIX: &str = "ASCA";
+}
+
 pub(crate) mod user {
     pub(crate) const PREFIX: &str = "AIDA";
 }

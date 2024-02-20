@@ -147,3 +147,17 @@ action!(
     UploadSshPublicKeyRequest,
     UploadSshPublicKeyOutput
 );
+action!(
+    signing_certificate,
+    upload_signing_certificate,
+    upload_signing_certificate_request,
+    UploadSigningCertificateRequest,
+    UploadSigningCertificateOutput
+);
+action!(
+    server_certificate,
+    upload_server_certificate,
+    upload_server_certificate_request,
+    UploadServerCertificateRequest,
+    UploadServerCertificateOutput
+);

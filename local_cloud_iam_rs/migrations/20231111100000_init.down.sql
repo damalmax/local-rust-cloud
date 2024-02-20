@@ -1,3 +1,12 @@
+DROP INDEX IF EXISTS fk_server_certificate_tags__parent_id;
+DROP TABLE IF EXISTS server_certificate_tags;
+
+DROP INDEX IF EXISTS fk_server_certificates__account_id;
+DROP TABLE IF EXISTS server_certificates;
+
+DROP INDEX IF EXISTS fk_signing_certificates__account_id;
+DROP TABLE IF EXISTS signing_certificates;
+
 DROP INDEX IF EXISTS fk_user_ssh_public_keys__user_id;
 DROP TABLE IF EXISTS user_ssh_public_keys;
 

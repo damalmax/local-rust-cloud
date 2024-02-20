@@ -56,7 +56,9 @@ pub(crate) async fn create_saml_provider(
 
     let mut saml_provider_tags = super::tag::prepare_for_insert(input.tags(), insert_saml_provider.id.unwrap());
 
-    db::saml_provider_tag::save_all(&mut tx, &mut saml_provider_tags).await?;
+    db::Tags::SamlProvider
+        .save_all(&mut tx, &mut saml_provider_tags)
+        .await?;
 
     let output = CreateSamlProviderOutput::builder()
         .saml_provider_arn(insert_saml_provider.arn)
@@ -77,8 +79,10 @@ pub(crate) async fn tag_saml_provider(
     let saml_provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.saml_provider_arn().unwrap()).await?;
     let mut saml_provider_tags = super::tag::prepare_for_insert(input.tags(), saml_provider_id);
 
-    db::saml_provider_tag::save_all(&mut tx, &mut saml_provider_tags).await?;
-    let count = db::saml_provider_tag::count(tx.as_mut(), saml_provider_id).await?;
+    db::Tags::SamlProvider
+        .save_all(&mut tx, &mut saml_provider_tags)
+        .await?;
+    let count = db::Tags::SamlProvider.count(tx.as_mut(), saml_provider_id).await?;
     if count > constants::tag::MAX_COUNT {
         return Err(OperationError::new(
             ApiErrorKind::LimitExceeded,
@@ -103,7 +107,9 @@ pub(crate) async fn list_saml_provider_tags(
     let provider_id = find_id_by_arn(connection.as_mut(), ctx.account_id, input.saml_provider_arn().unwrap()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::saml_provider_tag::list(connection.as_mut(), provider_id, &query).await?;
+    let found_tags = db::Tags::SamlProvider
+        .list(connection.as_mut(), provider_id, &query)
+        .await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;

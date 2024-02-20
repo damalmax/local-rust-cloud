@@ -410,3 +410,42 @@ CREATE TABLE IF NOT EXISTS user_ssh_public_keys
     UNIQUE (key_id)
 );
 CREATE INDEX IF NOT EXISTS fk_user_ssh_public_keys__user_id ON user_ssh_public_keys (user_id ASC);
+-- Signing certificates
+CREATE TABLE IF NOT EXISTS signing_certificates
+(
+    id               INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id       INTEGER REFERENCES accounts (id)  NOT NULL,
+    certificate_id   VARCHAR2(128)                     NOT NULL,
+    certificate_body VARCHAR2(16384)                   NOT NULL,
+    status           INTEGER                           NOT NULL,
+    upload_date      INTEGER                           NOT NULL,
+    user_id          INTEGER REFERENCES users (id)
+);
+CREATE INDEX IF NOT EXISTS fk_signing_certificates__account_id ON signing_certificates (account_id ASC);
+-- Server certificates
+CREATE TABLE IF NOT EXISTS server_certificates
+(
+    id                             INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id                     INTEGER REFERENCES accounts (id)  NOT NULL,
+    arn                            VARCHAR2(2048)                    NOT NULL,
+    path                           VARCHAR2(512)                     NOT NULL,
+    certificate_body               VARCHAR2(16384)                   NOT NULL,
+    certificate_chain              VARCHAR2(2097152),
+    server_certificate_name        VARCHAR2(128)                     NOT NULL,
+    unique_server_certificate_name VARCHAR2(128)                     NOT NULL,
+    server_certificate_id          VARCHAR2(128)                     NOT NULL,
+    upload_date                    INTEGER                           NOT NULL,
+    expiration                     INTEGER,
+    UNIQUE (arn),
+    UNIQUE (account_id, unique_server_certificate_name)
+);
+CREATE INDEX IF NOT EXISTS fk_server_certificates__account_id ON server_certificates (account_id ASC);
+CREATE TABLE IF NOT EXISTS server_certificate_tags
+(
+    id        INTEGER PRIMARY KEY AUTOINCREMENT           NOT NULL,
+    parent_id INTEGER REFERENCES server_certificates (id) NOT NULL,
+    key       VARCHAR2(128)                               NOT NULL,
+    value     VARCHAR2(256)                               NOT NULL,
+    UNIQUE (parent_id, key)
+);
+CREATE INDEX IF NOT EXISTS fk_server_certificate_tags__parent_id ON server_certificate_tags (parent_id ASC);

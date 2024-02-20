@@ -64,7 +64,7 @@ pub(crate) async fn create_policy(
 
     let mut policy_tags = super::tag::prepare_for_insert(input.tags(), insert_policy.id.unwrap());
 
-    db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
+    db::Tags::Policy.save_all(&mut tx, &mut policy_tags).await?;
 
     let response_policy_builder = Policy::builder()
         .arn(insert_policy.arn)
@@ -243,7 +243,9 @@ pub(crate) async fn list_policy_tags(
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
 
-    let found_tags = db::policy_tag::list(connection.as_mut(), found_policy_id, &query).await?;
+    let found_tags = db::Tags::Policy
+        .list(connection.as_mut(), found_policy_id, &query)
+        .await?;
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
@@ -266,8 +268,8 @@ pub(crate) async fn tag_policy(
     let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
     let mut policy_tags = super::tag::prepare_for_insert(input.tags(), policy_id);
 
-    db::policy_tag::save_all(&mut tx, &mut policy_tags).await?;
-    let count = db::policy_tag::count(tx.as_mut(), policy_id).await?;
+    db::Tags::Policy.save_all(&mut tx, &mut policy_tags).await?;
+    let count = db::Tags::Policy.count(tx.as_mut(), policy_id).await?;
     if count > constants::tag::MAX_COUNT {
         return Err(OperationError::new(
             ApiErrorKind::LimitExceeded,

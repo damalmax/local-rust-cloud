@@ -53,6 +53,8 @@ mod tag_policy;
 mod tag_role;
 mod tag_saml_provider;
 mod tag_user;
+mod upload_server_certificate;
+mod upload_signing_certificate;
 mod upload_ssh_public_key;
 
 pub fn credentials_provider() -> impl ProvideCredentials {

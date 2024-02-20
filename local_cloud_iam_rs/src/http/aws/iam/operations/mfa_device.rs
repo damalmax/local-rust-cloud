@@ -66,7 +66,7 @@ pub(crate) async fn create_virtual_mfa_device(
     }
 
     let mut device_tags = super::tag::prepare_for_insert(input.tags(), insert_mfa_device.id.unwrap());
-    db::mfa_device_tags::save_all(&mut tx, &mut device_tags).await?;
+    db::Tags::MfaDevice.save_all(&mut tx, &mut device_tags).await?;
 
     // Using account ID since User is not available when we register a new MFA device.
     let account_name = format!("{:0>12}", ctx.account_id);

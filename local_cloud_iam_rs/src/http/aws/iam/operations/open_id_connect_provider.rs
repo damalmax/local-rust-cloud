@@ -85,7 +85,7 @@ pub(crate) async fn create_open_id_connect_provider(
     }
 
     let mut tags = super::tag::prepare_for_insert(input.tags(), provider_id);
-    db::open_id_connect_provider_tag::save_all(&mut tx, &mut tags).await?;
+    db::Tags::OpenIdConnectProvider.save_all(&mut tx, &mut tags).await?;
 
     let output = CreateOpenIdConnectProviderOutput::builder()
         .open_id_connect_provider_arn(&insert_provider.arn)
@@ -107,7 +107,9 @@ pub(crate) async fn list_open_id_connect_provider_tags(
         find_id_by_arn(connection.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::open_id_connect_provider_tag::list(connection.as_mut(), provider_id, &query).await?;
+    let found_tags = db::Tags::OpenIdConnectProvider
+        .list(connection.as_mut(), provider_id, &query)
+        .await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
@@ -132,8 +134,10 @@ pub(crate) async fn tag_open_id_connect_provider(
         find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
     let mut provider_tags = super::tag::prepare_for_insert(input.tags(), provider_id);
 
-    db::open_id_connect_provider_tag::save_all(&mut tx, &mut provider_tags).await?;
-    let count = db::open_id_connect_provider_tag::count(tx.as_mut(), provider_id).await?;
+    db::Tags::OpenIdConnectProvider
+        .save_all(&mut tx, &mut provider_tags)
+        .await?;
+    let count = db::Tags::OpenIdConnectProvider.count(tx.as_mut(), provider_id).await?;
     if count > constants::tag::MAX_COUNT {
         return Err(OperationError::new(
             ApiErrorKind::LimitExceeded,

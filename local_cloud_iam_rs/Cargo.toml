@@ -36,6 +36,7 @@ regex.workspace = true
 password-hash.workspace = true
 argon2.workspace = true
 openssh-keys.workspace = true
+x509-parser.workspace = true
 
 aws-config.workspace = true
 aws-smithy-xml.workspace = true

@@ -8,7 +8,7 @@ async fn get_group_no_users() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_group_output = client
+    client
         .create_group()
         .group_name("test_group_1")
         .path("/")

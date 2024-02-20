@@ -7,7 +7,7 @@ async fn attach_user_policy() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_user_output = super::fixture::create_user(&client, "user1", "/", None, None)
+    super::fixture::create_user(&client, "user1", "/", None, None)
         .await
         .expect("Failed to create IAM user");
 
@@ -22,7 +22,7 @@ async fn attach_user_policy() {
     .await
     .expect("Failed to create IAM policy");
 
-    let response = client
+    client
         .attach_user_policy()
         .user_name("user1")
         .policy_arn(policy_output.policy().unwrap().arn().unwrap())
