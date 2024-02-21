@@ -69,6 +69,13 @@ action!(
     ListInstanceProfileTagsRequest,
     ListInstanceProfileTagsOutput
 );
+action!(
+    instance_profile,
+    untag_instance_profile,
+    untag_instance_profile_request,
+    UntagInstanceProfileRequest,
+    UntagInstanceProfileOutput
+);
 action!(group, add_user_to_group, add_user_to_group_request, AddUserToGroupRequest, AddUserToGroupOutput);
 action!(group, attach_group_policy, attach_group_policy_request, AttachGroupPolicyRequest, AttachGroupPolicyOutput);
 action!(group, get_group, get_group_request, GetGroupRequest, GetGroupOutput);

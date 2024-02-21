@@ -1,5 +1,5 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, Row, Sqlite, Transaction};
+use sqlx::{Error, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::signing_certificate::InsertSigningCertificate;
 

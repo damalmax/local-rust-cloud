@@ -53,7 +53,7 @@ pub async fn create_user(
 
     db::user::create(&mut tx, &mut insert_user).await?;
 
-    let mut user_tags = super::tag::prepare_for_insert(input.tags(), insert_user.id.unwrap());
+    let mut user_tags = super::tag::prepare_for_db(input.tags(), insert_user.id.unwrap());
     db::Tags::User.save_all(&mut tx, &mut user_tags).await?;
 
     let permissions_boundary = match policy_id {
@@ -210,7 +210,7 @@ pub(crate) async fn tag_user(
     let mut tx = db.new_tx().await?;
 
     let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
-    let mut user_tags = super::tag::prepare_for_insert(input.tags(), user_id);
+    let mut user_tags = super::tag::prepare_for_db(input.tags(), user_id);
 
     db::Tags::User.save_all(&mut tx, &mut user_tags).await?;
     let count = db::Tags::User.count(tx.as_mut(), user_id).await?;

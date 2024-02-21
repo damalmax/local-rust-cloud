@@ -54,7 +54,7 @@ pub async fn create_role(
 
     db::role::create(&mut tx, &mut insert_role).await?;
 
-    let mut role_tags = super::tag::prepare_for_insert(input.tags(), insert_role.id.unwrap());
+    let mut role_tags = super::tag::prepare_for_db(input.tags(), insert_role.id.unwrap());
     db::Tags::Role.save_all(&mut tx, &mut role_tags).await?;
 
     let role = Role::builder()
@@ -238,7 +238,7 @@ pub(crate) async fn tag_role(
     let mut tx = db.new_tx().await?;
 
     let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
-    let mut role_tags = super::tag::prepare_for_insert(input.tags(), role_id);
+    let mut role_tags = super::tag::prepare_for_db(input.tags(), role_id);
 
     db::Tags::Role.save_all(&mut tx, &mut role_tags).await?;
     let count = db::Tags::Role.count(tx.as_mut(), role_id).await?;

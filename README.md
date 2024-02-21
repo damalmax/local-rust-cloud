@@ -152,7 +152,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] tag_saml_provider
 - [X] tag_server_certificate
 - [X] tag_user
-- [ ] untag_instance_profile
+- [X] untag_instance_profile
 - [ ] untag_mfa_device
 - [ ] untag_open_id_connect_provider
 - [ ] untag_policy

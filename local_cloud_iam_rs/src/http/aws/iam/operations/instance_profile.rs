@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::add_role_to_instance_profile::AddRoleToInstanceProfi
 use aws_sdk_iam::operation::create_instance_profile::CreateInstanceProfileOutput;
 use aws_sdk_iam::operation::list_instance_profile_tags::ListInstanceProfileTagsOutput;
 use aws_sdk_iam::operation::tag_instance_profile::TagInstanceProfileOutput;
+use aws_sdk_iam::operation::untag_instance_profile::UntagInstanceProfileOutput;
 use aws_sdk_iam::types::InstanceProfile;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -21,6 +22,7 @@ use crate::http::aws::iam::types::add_role_to_instance_profile_request::AddRoleT
 use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
 use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
 use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
+use crate::http::aws::iam::types::untag_instance_profile_request::UntagInstanceProfileRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_instance_profile(
@@ -49,7 +51,7 @@ pub(crate) async fn create_instance_profile(
 
     db::instance_profile::create(&mut tx, &mut insert_instance_profile).await?;
 
-    let mut tags = super::tag::prepare_for_insert(input.tags(), insert_instance_profile.id.unwrap());
+    let mut tags = super::tag::prepare_for_db(input.tags(), insert_instance_profile.id.unwrap());
     db::Tags::InstanceProfile.save_all(&mut tx, &mut tags).await?;
 
     let instance_profile = InstanceProfile::builder()
@@ -113,7 +115,7 @@ pub(crate) async fn tag_instance_profile(
     let mut tx = db.new_tx().await?;
 
     let instance_profile_id = find_id_by_name(ctx, tx.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
-    let mut instance_profile_tags = super::tag::prepare_for_insert(input.tags(), instance_profile_id);
+    let mut instance_profile_tags = super::tag::prepare_for_db(input.tags(), instance_profile_id);
 
     db::Tags::InstanceProfile
         .save_all(&mut tx, &mut instance_profile_tags)
@@ -129,6 +131,26 @@ pub(crate) async fn tag_instance_profile(
     }
 
     let output = TagInstanceProfileOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn untag_instance_profile(
+    ctx: &OperationCtx, input: &UntagInstanceProfileRequest, db: &LocalDb,
+) -> Result<UntagInstanceProfileOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let instance_profile_id = find_id_by_name(ctx, tx.as_mut(), input.instance_profile_name().unwrap().trim()).await?;
+
+    db::Tags::InstanceProfile
+        .delete_all(&mut tx, instance_profile_id, &input.tag_keys())
+        .await?;
+
+    let output = UntagInstanceProfileOutput::builder().build();
 
     tx.commit().await?;
 

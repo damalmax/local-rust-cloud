@@ -52,8 +52,7 @@ pub(crate) async fn upload_server_certificate(
 
     db::server_certificate::create(&mut tx, &mut insert_server_certificate).await?;
 
-    let mut server_certificate_tags =
-        super::tag::prepare_for_insert(input.tags(), insert_server_certificate.id.unwrap());
+    let mut server_certificate_tags = super::tag::prepare_for_db(input.tags(), insert_server_certificate.id.unwrap());
 
     db::Tags::ServerCertificate
         .save_all(&mut tx, &mut server_certificate_tags)
@@ -105,7 +104,7 @@ pub(crate) async fn tag_server_certificate(
 
     let server_certificate_id =
         find_id_by_name(tx.as_mut(), ctx.account_id, input.server_certificate_name().unwrap().trim()).await?;
-    let mut server_certificate_tags = super::tag::prepare_for_insert(input.tags(), server_certificate_id);
+    let mut server_certificate_tags = super::tag::prepare_for_db(input.tags(), server_certificate_id);
 
     db::Tags::ServerCertificate
         .save_all(&mut tx, &mut server_certificate_tags)

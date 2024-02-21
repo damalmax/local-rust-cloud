@@ -44,7 +44,7 @@ async fn tag_server_certificate_limit_exceeded() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let upload_server_certificate_output = client
+    client
         .upload_server_certificate()
         .server_certificate_name("TestCertificate1")
         .path("/servers/")
@@ -89,7 +89,7 @@ async fn test_server_certificate_with_replacement() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let upload_server_certificate_output = client
+    client
         .upload_server_certificate()
         .server_certificate_name("TestCertificate1")
         .path("/servers/")

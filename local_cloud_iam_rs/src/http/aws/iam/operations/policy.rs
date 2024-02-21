@@ -62,7 +62,7 @@ pub(crate) async fn create_policy(
     .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
     db::policy_version::create(&mut tx, &mut policy_version).await?;
 
-    let mut policy_tags = super::tag::prepare_for_insert(input.tags(), insert_policy.id.unwrap());
+    let mut policy_tags = super::tag::prepare_for_db(input.tags(), insert_policy.id.unwrap());
 
     db::Tags::Policy.save_all(&mut tx, &mut policy_tags).await?;
 
@@ -266,7 +266,7 @@ pub(crate) async fn tag_policy(
     let mut tx = db.new_tx().await?;
 
     let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
-    let mut policy_tags = super::tag::prepare_for_insert(input.tags(), policy_id);
+    let mut policy_tags = super::tag::prepare_for_db(input.tags(), policy_id);
 
     db::Tags::Policy.save_all(&mut tx, &mut policy_tags).await?;
     let count = db::Tags::Policy.count(tx.as_mut(), policy_id).await?;

@@ -38,7 +38,7 @@ pub(crate) fn convert_and_limit<S: Sized, T: Sized + for<'a> From<&'a S>>(
     source_slice: &[S], limit: i32,
 ) -> Option<Vec<T>> {
     if source_slice.len() == 0 {
-        None
+        Some(vec![])
     } else {
         let mut result: Vec<T> = vec![];
         for i in 0..limit {

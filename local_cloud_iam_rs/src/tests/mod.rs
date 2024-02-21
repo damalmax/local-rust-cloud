@@ -55,6 +55,7 @@ mod tag_role;
 mod tag_saml_provider;
 mod tag_server_certificate;
 mod tag_user;
+mod untag_instance_profile;
 mod upload_server_certificate;
 mod upload_signing_certificate;
 mod upload_ssh_public_key;

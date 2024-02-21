@@ -1,7 +1,5 @@
 use crate::tests::fixture::tag;
 
-use super::fixture;
-
 #[actix_rt::test]
 async fn tag_mfa_device() {
     let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;

@@ -84,7 +84,7 @@ pub(crate) async fn create_open_id_connect_provider(
         db::open_id_connect_provider_client_thumbprint::create_all(&mut tx, provider_id, thumbprints).await?;
     }
 
-    let mut tags = super::tag::prepare_for_insert(input.tags(), provider_id);
+    let mut tags = super::tag::prepare_for_db(input.tags(), provider_id);
     db::Tags::OpenIdConnectProvider.save_all(&mut tx, &mut tags).await?;
 
     let output = CreateOpenIdConnectProviderOutput::builder()
@@ -132,7 +132,7 @@ pub(crate) async fn tag_open_id_connect_provider(
 
     let provider_id =
         find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
-    let mut provider_tags = super::tag::prepare_for_insert(input.tags(), provider_id);
+    let mut provider_tags = super::tag::prepare_for_db(input.tags(), provider_id);
 
     db::Tags::OpenIdConnectProvider
         .save_all(&mut tx, &mut provider_tags)

@@ -76,10 +76,30 @@ impl Tags {
         return Ok(());
     }
 
+    pub(crate) async fn delete<'a>(
+        &self, tx: &mut Transaction<'a, Sqlite>, parent_id: i64, tag_key: &str,
+    ) -> Result<(), Error> {
+        let sql_query = format!("DELETE FROM {} WHERE parent_id=$1 AND key=$2", self.as_str());
+        sqlx::query(&sql_query)
+            .bind(parent_id)
+            .bind(tag_key)
+            .execute(tx.as_mut())
+            .await
+            .map(|_| ())
+    }
+    pub(crate) async fn delete_all<'a>(
+        &self, tx: &mut Transaction<'a, Sqlite>, parent_id: i64, tag_keys: &[String],
+    ) -> Result<(), Error> {
+        for key in tag_keys {
+            self.delete(tx, parent_id, key).await?;
+        }
+        return Ok(());
+    }
+
     pub(crate) async fn delete_by_parent_id<'a>(
         &self, tx: &mut Transaction<'a, Sqlite>, parent_id: i64,
     ) -> Result<(), Error> {
-        let sql_query = format!("DELETE * FROM {} WHERE parent_id=$1", self.as_str());
+        let sql_query = format!("DELETE FROM {} WHERE parent_id=$1", self.as_str());
         sqlx::query(&sql_query)
             .bind(parent_id)
             .execute(tx.as_mut())

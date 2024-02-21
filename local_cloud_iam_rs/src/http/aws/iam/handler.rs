@@ -59,6 +59,7 @@ use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
 use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCertificateRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
+use crate::http::aws::iam::types::untag_instance_profile_request::UntagInstanceProfileRequest;
 use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
 use crate::http::aws::iam::types::upload_signing_certificate_request::UploadSigningCertificateRequest;
 use crate::http::aws::iam::types::upload_ssh_public_key_request::UploadSshPublicKeyRequest;
@@ -116,6 +117,7 @@ pub(crate) enum LocalAwsRequest {
     TagSAMLProvider(TagSamlProviderRequest),
     TagServerCertificate(TagServerCertificateRequest),
     TagUser(TagUserRequest),
+    UntagInstanceProfile(UntagInstanceProfileRequest),
     UploadServerCertificate(UploadServerCertificateRequest),
     UploadSigningCertificate(UploadSigningCertificateRequest),
     UploadSSHPublicKey(UploadSshPublicKeyRequest),
@@ -189,6 +191,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::TagSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagUser(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSigningCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSSHPublicKey(request) => execute!(request, account_id, aws_request_id, db),

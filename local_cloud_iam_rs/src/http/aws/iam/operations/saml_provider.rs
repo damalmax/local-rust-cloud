@@ -54,7 +54,7 @@ pub(crate) async fn create_saml_provider(
 
     db::saml_provider::create(&mut tx, &mut insert_saml_provider).await?;
 
-    let mut saml_provider_tags = super::tag::prepare_for_insert(input.tags(), insert_saml_provider.id.unwrap());
+    let mut saml_provider_tags = super::tag::prepare_for_db(input.tags(), insert_saml_provider.id.unwrap());
 
     db::Tags::SamlProvider
         .save_all(&mut tx, &mut saml_provider_tags)
@@ -77,7 +77,7 @@ pub(crate) async fn tag_saml_provider(
     let mut tx = db.new_tx().await?;
 
     let saml_provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.saml_provider_arn().unwrap()).await?;
-    let mut saml_provider_tags = super::tag::prepare_for_insert(input.tags(), saml_provider_id);
+    let mut saml_provider_tags = super::tag::prepare_for_db(input.tags(), saml_provider_id);
 
     db::Tags::SamlProvider
         .save_all(&mut tx, &mut saml_provider_tags)

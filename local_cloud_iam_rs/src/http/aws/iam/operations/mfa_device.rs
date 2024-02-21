@@ -67,7 +67,7 @@ pub(crate) async fn create_virtual_mfa_device(
         ));
     }
 
-    let mut device_tags = super::tag::prepare_for_insert(input.tags(), insert_mfa_device.id.unwrap());
+    let mut device_tags = super::tag::prepare_for_db(input.tags(), insert_mfa_device.id.unwrap());
     db::Tags::MfaDevice.save_all(&mut tx, &mut device_tags).await?;
 
     // Using account ID since User is not available when we register a new MFA device.
@@ -238,7 +238,7 @@ pub(crate) async fn tag_mfa_device(
 
     let mfa_device_id =
         find_id_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
-    let mut mfa_device_tags = super::tag::prepare_for_insert(input.tags(), mfa_device_id);
+    let mut mfa_device_tags = super::tag::prepare_for_db(input.tags(), mfa_device_id);
 
     db::Tags::MfaDevice.save_all(&mut tx, &mut mfa_device_tags).await?;
     let count = db::Tags::MfaDevice.count(tx.as_mut(), mfa_device_id).await?;

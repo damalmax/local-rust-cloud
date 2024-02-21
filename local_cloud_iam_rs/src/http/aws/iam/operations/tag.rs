@@ -3,7 +3,7 @@ use aws_sdk_iam::types::Tag;
 use crate::http::aws::iam::db::types::tags::DbTag;
 use crate::http::aws::iam::types;
 
-pub(crate) fn prepare_for_insert(tags: Option<&[types::tag::Tag]>, parent_id: i64) -> Vec<DbTag> {
+pub(crate) fn prepare_for_db(tags: Option<&[types::tag::Tag]>, parent_id: i64) -> Vec<DbTag> {
     match tags {
         None => vec![],
         Some(tags) => {
