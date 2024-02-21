@@ -56,6 +56,7 @@ use crate::http::aws::iam::types::tag_open_id_connect_provider_request::TagOpenI
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
 use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
+use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCertificateRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
 use crate::http::aws::iam::types::upload_signing_certificate_request::UploadSigningCertificateRequest;
@@ -111,6 +112,7 @@ pub(crate) enum LocalAwsRequest {
     TagPolicy(TagPolicyRequest),
     TagRole(TagRoleRequest),
     TagSAMLProvider(TagSamlProviderRequest),
+    TagServerCertificate(TagServerCertificateRequest),
     TagUser(TagUserRequest),
     UploadServerCertificate(UploadServerCertificateRequest),
     UploadSigningCertificate(UploadSigningCertificateRequest),
@@ -182,6 +184,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::TagPolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagRole(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagUser(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSigningCertificate(request) => execute!(request, account_id, aws_request_id, db),

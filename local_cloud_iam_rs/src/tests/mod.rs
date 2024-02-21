@@ -52,6 +52,7 @@ mod tag_open_id_connect_provider;
 mod tag_policy;
 mod tag_role;
 mod tag_saml_provider;
+mod tag_server_certificate;
 mod tag_user;
 mod upload_server_certificate;
 mod upload_signing_certificate;

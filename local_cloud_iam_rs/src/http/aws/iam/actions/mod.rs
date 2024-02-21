@@ -161,3 +161,10 @@ action!(
     UploadServerCertificateRequest,
     UploadServerCertificateOutput
 );
+action!(
+    server_certificate,
+    tag_server_certificate,
+    tag_server_certificate_request,
+    TagServerCertificateRequest,
+    TagServerCertificateOutput
+);

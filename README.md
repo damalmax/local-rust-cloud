@@ -1,4 +1,5 @@
 # Local Rust Cloud DEV
+
 The project is created to help with serverless apps testing on local environment.
 
 **NOTE:** it is not ready for use yet.
@@ -6,10 +7,11 @@ The project is created to help with serverless apps testing on local environment
 # Services supported
 
 ## AWS
-| Service Name | Binary name               | Depends On           |
-|--------------|---------------------------|----------------------|
-| IAM          | `local_rust_cloud_iam_rs` |                      |
-| STS          | `local_rust_cloud_sts_rs` |                      |
+
+| Service Name | Binary name               | Depends On |
+|--------------|---------------------------|------------|
+| IAM          | `local_rust_cloud_iam_rs` |            |
+| STS          | `local_rust_cloud_sts_rs` |            |
 
 ### Services implementation coverage
 
@@ -148,7 +150,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] tag_policy
 - [X] tag_role
 - [X] tag_saml_provider
-- [ ] tag_server_certificate
+- [X] tag_server_certificate
 - [X] tag_user
 - [ ] untag_instance_profile
 - [ ] untag_mfa_device
@@ -192,41 +194,50 @@ The project is created to help with serverless apps testing on local environment
 </details>
 
 # How to contribute
+
 All services are implemented using [Rust language](https://www.rust-lang.org/).
 
 # How to run
 
 ## Setup `etcd`
-The project requires a working etcd cluster. Below you can find a way how to setup the cluster with Docker Compose. The Docker Compose configuration file could be found in the `docker` folder:
+
+The project requires a working etcd cluster. Below you can find a way how to setup the cluster with Docker Compose. The
+Docker Compose configuration file could be found in the `docker` folder:
 
 ```bash
 $ cd docker && docker compose up -d
 ```
+
 The command above will create a new etcd cluster which consists of 3 instances:
+
 - 127.0.0.1:2379
 - 127.0.0.1:2479
 - 127.0.0.1:2579
 
 ## Setup `.env` file
+
 The `.env` file is the main configuration file if you run Local Rust Cloud applications from the Github repository.
 
 # Third-Party Software used
+
 - [SQLite DB](https://www.sqlite.org/index.html) - for storing all services-related data.
 - [etcd](https://etcd.io/) - for storing app configs, shared data, etc.
 - [Docker](https://www.docker.com) - for applications containerization and some tasks execution.
 - [Protobuf compiler](https://grpc.io/docs/protoc-installation/) - Dependency required for project compilation.
 
 # Windows Build prerequisites
+
 Guide Used: https://gist.github.com/zeljic/d8b542788b225b1bcb5fce169ee28c55
 
 ### How to build SQLite3 .lib file on Windows 10
 
 1. Download source from [source](https://www.sqlite.org/download.html)
 
-For example: [source](https://www.sqlite.org/2022/sqlite-amalgamation-3390300.zip) 
+For example: [source](https://www.sqlite.org/2022/sqlite-amalgamation-3390300.zip)
+
 2. Download binary from [binary](https://www.sqlite.org/download.html)
 
-For example: [binary](https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.zip) 
+For example: [binary](https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.zip)
 
 3. Extract both archives to the same directory
 
@@ -234,4 +245,4 @@ For example: [binary](https://www.sqlite.org/2022/sqlite-dll-win64-x64-3390300.z
 
 5. Go to directory where you've extracted **source code** and **binary** files (via opened cmd)
 6. Run
-```lib /DEF:sqlite3.def /OUT:sqlite3.lib /MACHINE:x64```
+   ```lib /DEF:sqlite3.def /OUT:sqlite3.lib /MACHINE:x64```

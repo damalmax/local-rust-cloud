@@ -1,17 +1,21 @@
+use aws_sdk_iam::operation::tag_server_certificate::TagServerCertificateOutput;
 use aws_sdk_iam::operation::upload_server_certificate::UploadServerCertificateOutput;
 use aws_sdk_iam::types::ServerCertificateMetadata;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
+use sqlx::{Executor, Sqlite};
 use x509_parser::pem::parse_x509_pem;
 
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
+use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::server_certificate::InsertServerCertificate;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCertificateRequest;
 use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -69,6 +73,54 @@ pub(crate) async fn upload_server_certificate(
         .server_certificate_metadata(server_certificate_metadata)
         .set_tags(super::tag::prepare_for_output(&server_certificate_tags))
         .build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn find_id_by_name<'a, E>(
+    executor: E, account_id: i64, server_certificate_name: &str,
+) -> Result<i64, OperationError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::server_certificate::find_id_by_name(executor, account_id, server_certificate_name).await? {
+        Some(role_id) => Ok(role_id),
+        None => {
+            return Err(OperationError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM server certificate with name '{}' doesn't exist.", server_certificate_name).as_str(),
+            ));
+        }
+    }
+}
+
+pub(crate) async fn tag_server_certificate(
+    ctx: &OperationCtx, input: &TagServerCertificateRequest, db: &LocalDb,
+) -> Result<TagServerCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let server_certificate_id =
+        find_id_by_name(tx.as_mut(), ctx.account_id, input.server_certificate_name().unwrap().trim()).await?;
+    let mut server_certificate_tags = super::tag::prepare_for_insert(input.tags(), server_certificate_id);
+
+    db::Tags::ServerCertificate
+        .save_all(&mut tx, &mut server_certificate_tags)
+        .await?;
+    let count = db::Tags::ServerCertificate
+        .count(tx.as_mut(), server_certificate_id)
+        .await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM server certificate.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagServerCertificateOutput::builder().build();
 
     tx.commit().await?;
 
