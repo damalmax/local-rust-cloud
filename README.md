@@ -108,7 +108,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] list_instance_profile_tags
 - [ ] list_instance_profiles
 - [ ] list_instance_profiles_for_role
-- [ ] list_mfa_device_tags
+- [X] list_mfa_device_tags
 - [ ] list_mfa_devices
 - [X] list_open_id_connect_provider_tags
 - [ ] list_open_id_connect_providers
@@ -153,7 +153,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] tag_server_certificate
 - [X] tag_user
 - [X] untag_instance_profile
-- [ ] untag_mfa_device
+- [X] untag_mfa_device
 - [ ] untag_open_id_connect_provider
 - [ ] untag_policy
 - [ ] untag_role

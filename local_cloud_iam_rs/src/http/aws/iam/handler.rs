@@ -36,6 +36,7 @@ use crate::http::aws::iam::types::list_group_policies_request::ListGroupPolicies
 use crate::http::aws::iam::types::list_groups_for_user_request::ListGroupsForUserRequest;
 use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
 use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
+use crate::http::aws::iam::types::list_mfa_device_tags_request::ListMfaDeviceTagsRequest;
 use crate::http::aws::iam::types::list_open_id_connect_provider_tags_request::ListOpenIdConnectProviderTagsRequest;
 use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
@@ -60,6 +61,7 @@ use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequ
 use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCertificateRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 use crate::http::aws::iam::types::untag_instance_profile_request::UntagInstanceProfileRequest;
+use crate::http::aws::iam::types::untag_mfa_device_request::UntagMfaDeviceRequest;
 use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
 use crate::http::aws::iam::types::upload_signing_certificate_request::UploadSigningCertificateRequest;
 use crate::http::aws::iam::types::upload_ssh_public_key_request::UploadSshPublicKeyRequest;
@@ -94,6 +96,7 @@ pub(crate) enum LocalAwsRequest {
     ListGroupsForUser(ListGroupsForUserRequest),
     ListGroupPolicies(ListGroupPoliciesRequest),
     ListInstanceProfileTags(ListInstanceProfileTagsRequest),
+    ListMFADeviceTags(ListMfaDeviceTagsRequest),
     ListOpenIDConnectProviderTags(ListOpenIdConnectProviderTagsRequest),
     ListPolicies(ListPoliciesRequest),
     ListPolicyVersions(ListPolicyVersionsRequest),
@@ -118,6 +121,7 @@ pub(crate) enum LocalAwsRequest {
     TagServerCertificate(TagServerCertificateRequest),
     TagUser(TagUserRequest),
     UntagInstanceProfile(UntagInstanceProfileRequest),
+    UntagMFADevice(UntagMfaDeviceRequest),
     UploadServerCertificate(UploadServerCertificateRequest),
     UploadSigningCertificate(UploadSigningCertificateRequest),
     UploadSSHPublicKey(UploadSshPublicKeyRequest),
@@ -168,6 +172,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::ListGroupsForUser(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListGroupPolicies(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListInstanceProfileTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListMFADeviceTags(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListOpenIDConnectProviderTags(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListPolicies(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListPolicyVersions(request) => execute!(request, account_id, aws_request_id, db),
@@ -192,6 +197,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::TagServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagUser(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UntagInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagMFADevice(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSigningCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSSHPublicKey(request) => execute!(request, account_id, aws_request_id, db),

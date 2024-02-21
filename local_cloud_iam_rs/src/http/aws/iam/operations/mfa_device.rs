@@ -3,8 +3,10 @@ use std::io::Cursor;
 use aws_sdk_iam::operation::create_virtual_mfa_device::CreateVirtualMfaDeviceOutput;
 use aws_sdk_iam::operation::enable_mfa_device::EnableMfaDeviceOutput;
 use aws_sdk_iam::operation::get_mfa_device::GetMfaDeviceOutput;
+use aws_sdk_iam::operation::list_mfa_device_tags::ListMfaDeviceTagsOutput;
 use aws_sdk_iam::operation::list_virtual_mfa_devices::ListVirtualMfaDevicesOutput;
 use aws_sdk_iam::operation::tag_mfa_device::TagMfaDeviceOutput;
+use aws_sdk_iam::operation::untag_mfa_device::UntagMfaDeviceOutput;
 use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_types::{Blob, DateTime};
 use chrono::Utc;
@@ -20,13 +22,16 @@ use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::mfa_device::{
     EnableMfaDeviceQuery, InsertMfaDevice, ListVirtualMfaDevicesQuery, SelectMfaDevice,
 };
+use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtualMfaDeviceRequest;
 use crate::http::aws::iam::types::enable_mfa_device_request::EnableMfaDeviceRequest;
 use crate::http::aws::iam::types::get_mfa_device_request::GetMfaDeviceRequest;
+use crate::http::aws::iam::types::list_mfa_device_tags_request::ListMfaDeviceTagsRequest;
 use crate::http::aws::iam::types::list_virtual_mfa_devices_request::ListVirtualMfaDevicesRequest;
 use crate::http::aws::iam::types::tag_mfa_device_request::TagMfaDeviceRequest;
+use crate::http::aws::iam::types::untag_mfa_device_request::UntagMfaDeviceRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_virtual_mfa_device(
@@ -63,7 +68,7 @@ pub(crate) async fn create_virtual_mfa_device(
                 "It is allowed to register up to {} MFA devices per user.",
                 constants::mfa::DEVICE_MAX_COUNT_PER_USER
             )
-            .as_str(),
+                .as_str(),
         ));
     }
 
@@ -108,8 +113,8 @@ pub(crate) async fn create_virtual_mfa_device(
 pub(crate) async fn find_id_by_serial_number<'a, E>(
     executor: E, account_id: i64, serial_number: &str,
 ) -> Result<i64, OperationError>
-where
-    E: 'a + Executor<'a, Database = Sqlite>,
+    where
+        E: 'a + Executor<'a, Database=Sqlite>,
 {
     match db::mfa_device::find_id_by_serial_number(executor, account_id, serial_number).await? {
         Some(mfa_device_id) => Ok(mfa_device_id),
@@ -125,15 +130,15 @@ where
 pub(crate) async fn find_by_serial_number<'a, E>(
     executor: E, account_id: i64, serial_number: &str, user_name: Option<&str>,
 ) -> Result<SelectMfaDevice, OperationError>
-where
-    E: 'a + Executor<'a, Database = Sqlite>,
+    where
+        E: 'a + Executor<'a, Database=Sqlite>,
 {
     match db::mfa_device::find_by_serial_number(executor, account_id, serial_number).await? {
         Some(mfa_device) => {
             if user_name.is_none()
                 || (user_name.is_some()
-                    && mfa_device.user_name.is_some()
-                    && user_name.unwrap() == mfa_device.user_name.as_ref().unwrap())
+                && mfa_device.user_name.is_some()
+                && user_name.unwrap() == mfa_device.user_name.as_ref().unwrap())
             {
                 Ok(mfa_device)
             } else {
@@ -252,6 +257,55 @@ pub(crate) async fn tag_mfa_device(
     let output = TagMfaDeviceOutput::builder().build();
 
     tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn untag_mfa_device(
+    ctx: &OperationCtx, input: &UntagMfaDeviceRequest, db: &LocalDb,
+) -> Result<UntagMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let mfa_device_id =
+        find_id_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
+
+    db::Tags::MfaDevice
+        .delete_all(&mut tx, mfa_device_id, &input.tag_keys())
+        .await?;
+
+    let output = UntagMfaDeviceOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn list_mfa_device_tags(
+    ctx: &OperationCtx, input: &ListMfaDeviceTagsRequest, db: &LocalDb,
+) -> Result<ListMfaDeviceTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let mfa_device_id =
+        find_id_by_serial_number(connection.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::Tags::MfaDevice
+        .list(connection.as_mut(), mfa_device_id, &query)
+        .await?;
+
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let output = ListMfaDeviceTagsOutput::builder()
+        .set_tags(tags)
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
 
     Ok(output)
 }
