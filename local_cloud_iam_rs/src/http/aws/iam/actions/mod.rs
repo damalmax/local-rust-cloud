@@ -140,6 +140,7 @@ action!(
     ListVirtualMfaDevicesRequest,
     ListVirtualMfaDevicesOutput
 );
+action!(mfa_device, tag_mfa_device, tag_mfa_device_request, TagMfaDeviceRequest, TagMfaDeviceOutput);
 action!(
     ssh_public_key,
     upload_ssh_public_key,

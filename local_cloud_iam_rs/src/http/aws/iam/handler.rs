@@ -52,6 +52,7 @@ use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyReques
 use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
 use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
+use crate::http::aws::iam::types::tag_mfa_device_request::TagMfaDeviceRequest;
 use crate::http::aws::iam::types::tag_open_id_connect_provider_request::TagOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
@@ -108,6 +109,7 @@ pub(crate) enum LocalAwsRequest {
     PutRolePolicy(PutRolePolicyRequest),
     PutUserPolicy(PutUserPolicyRequest),
     TagInstanceProfile(TagInstanceProfileRequest),
+    TagMFADevice(TagMfaDeviceRequest),
     TagOpenIDConnectProvider(TagOpenIdConnectProviderRequest),
     TagPolicy(TagPolicyRequest),
     TagRole(TagRoleRequest),
@@ -180,6 +182,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::PutRolePolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::PutUserPolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::TagMFADevice(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagOpenIDConnectProvider(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagPolicy(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::TagRole(request) => execute!(request, account_id, aws_request_id, db),

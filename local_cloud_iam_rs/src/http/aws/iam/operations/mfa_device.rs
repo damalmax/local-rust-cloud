@@ -4,6 +4,7 @@ use aws_sdk_iam::operation::create_virtual_mfa_device::CreateVirtualMfaDeviceOut
 use aws_sdk_iam::operation::enable_mfa_device::EnableMfaDeviceOutput;
 use aws_sdk_iam::operation::get_mfa_device::GetMfaDeviceOutput;
 use aws_sdk_iam::operation::list_virtual_mfa_devices::ListVirtualMfaDevicesOutput;
+use aws_sdk_iam::operation::tag_mfa_device::TagMfaDeviceOutput;
 use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_types::{Blob, DateTime};
 use chrono::Utc;
@@ -25,6 +26,7 @@ use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtu
 use crate::http::aws::iam::types::enable_mfa_device_request::EnableMfaDeviceRequest;
 use crate::http::aws::iam::types::get_mfa_device_request::GetMfaDeviceRequest;
 use crate::http::aws::iam::types::list_virtual_mfa_devices_request::ListVirtualMfaDevicesRequest;
+use crate::http::aws::iam::types::tag_mfa_device_request::TagMfaDeviceRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_virtual_mfa_device(
@@ -224,5 +226,32 @@ pub(crate) async fn list_virtual_mfa_devices(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn tag_mfa_device(
+    ctx: &OperationCtx, input: &TagMfaDeviceRequest, db: &LocalDb,
+) -> Result<TagMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let mfa_device_id =
+        find_id_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
+    let mut mfa_device_tags = super::tag::prepare_for_insert(input.tags(), mfa_device_id);
+
+    db::Tags::MfaDevice.save_all(&mut tx, &mut mfa_device_tags).await?;
+    let count = db::Tags::MfaDevice.count(tx.as_mut(), mfa_device_id).await?;
+    if count > constants::tag::MAX_COUNT {
+        return Err(OperationError::new(
+            ApiErrorKind::LimitExceeded,
+            format!("Cannot assign more than {} tags to IAM MFA device.", constants::tag::MAX_COUNT).as_str(),
+        ));
+    }
+
+    let output = TagMfaDeviceOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }
