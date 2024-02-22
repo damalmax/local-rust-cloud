@@ -4,6 +4,7 @@ use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
 use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
 use aws_sdk_iam::operation::list_policy_versions::ListPolicyVersionsOutput;
 use aws_sdk_iam::operation::tag_policy::TagPolicyOutput;
+use aws_sdk_iam::operation::untag_policy::UntagPolicyOutput;
 use aws_sdk_iam::types::{Policy, PolicyVersion};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -31,6 +32,7 @@ use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
 use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
 use crate::http::aws::iam::types::list_policy_versions_request::ListPolicyVersionsRequest;
 use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
+use crate::http::aws::iam::types::untag_policy_request::UntagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_policy(
@@ -320,4 +322,24 @@ fn prepare_policy_version_for_insert(
         .account_id(ctx.account_id)
         .create_date(current_time)
         .build()
+}
+
+pub(crate) async fn untag_policy(
+    ctx: &OperationCtx, input: &UntagPolicyRequest, db: &LocalDb,
+) -> Result<UntagPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
+
+    db::Tags::Policy
+        .delete_all(&mut tx, policy_id, &input.tag_keys())
+        .await?;
+
+    let output = UntagPolicyOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
 }

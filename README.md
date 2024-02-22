@@ -121,7 +121,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] list_roles
 - [X] list_saml_provider_tags
 - [ ] list_saml_providers
-- [ ] list_server_certificate_tags
+- [X] list_server_certificate_tags
 - [ ] list_server_certificates
 - [ ] list_service_specific_credentials
 - [ ] list_signing_certificates
@@ -154,12 +154,12 @@ The project is created to help with serverless apps testing on local environment
 - [X] tag_user
 - [X] untag_instance_profile
 - [X] untag_mfa_device
-- [ ] untag_open_id_connect_provider
-- [ ] untag_policy
-- [ ] untag_role
-- [ ] untag_saml_provider
-- [ ] untag_server_certificate
-- [ ] untag_user
+- [X] untag_open_id_connect_provider
+- [X] untag_policy
+- [X] untag_role
+- [X] untag_saml_provider
+- [X] untag_server_certificate
+- [X] untag_user
 - [ ] update_access_key
 - [ ] update_account_password_policy
 - [ ] update_assume_role_policy

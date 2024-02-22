@@ -45,6 +45,7 @@ use crate::http::aws::iam::types::list_role_policies_request::ListRolePoliciesRe
 use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::list_saml_provider_tags_request::ListSamlProviderTagsRequest;
+use crate::http::aws::iam::types::list_server_certificate_tags_request::ListServerCertificateTagsRequest;
 use crate::http::aws::iam::types::list_user_policies_request::ListUserPoliciesRequest;
 use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
@@ -62,6 +63,12 @@ use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCerti
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
 use crate::http::aws::iam::types::untag_instance_profile_request::UntagInstanceProfileRequest;
 use crate::http::aws::iam::types::untag_mfa_device_request::UntagMfaDeviceRequest;
+use crate::http::aws::iam::types::untag_open_id_connect_provider_request::UntagOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::untag_policy_request::UntagPolicyRequest;
+use crate::http::aws::iam::types::untag_role_request::UntagRoleRequest;
+use crate::http::aws::iam::types::untag_saml_provider_request::UntagSamlProviderRequest;
+use crate::http::aws::iam::types::untag_server_certificate_request::UntagServerCertificateRequest;
+use crate::http::aws::iam::types::untag_user_request::UntagUserRequest;
 use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
 use crate::http::aws::iam::types::upload_signing_certificate_request::UploadSigningCertificateRequest;
 use crate::http::aws::iam::types::upload_ssh_public_key_request::UploadSshPublicKeyRequest;
@@ -103,6 +110,7 @@ pub(crate) enum LocalAwsRequest {
     ListPolicyTags(ListPolicyTagsRequest),
     ListRoles(ListRolesRequest),
     ListSAMLProviderTags(ListSamlProviderTagsRequest),
+    ListServerCertificateTags(ListServerCertificateTagsRequest),
     ListRolePolicies(ListRolePoliciesRequest),
     ListRoleTags(ListRoleTagsRequest),
     ListUserPolicies(ListUserPoliciesRequest),
@@ -122,6 +130,12 @@ pub(crate) enum LocalAwsRequest {
     TagUser(TagUserRequest),
     UntagInstanceProfile(UntagInstanceProfileRequest),
     UntagMFADevice(UntagMfaDeviceRequest),
+    UntagOpenIDConnectProvider(UntagOpenIdConnectProviderRequest),
+    UntagPolicy(UntagPolicyRequest),
+    UntagRole(UntagRoleRequest),
+    UntagSAMLProvider(UntagSamlProviderRequest),
+    UntagServerCertificate(UntagServerCertificateRequest),
+    UntagUser(UntagUserRequest),
     UploadServerCertificate(UploadServerCertificateRequest),
     UploadSigningCertificate(UploadSigningCertificateRequest),
     UploadSSHPublicKey(UploadSshPublicKeyRequest),
@@ -179,6 +193,7 @@ pub(crate) async fn handle(
         LocalAwsRequest::ListPolicyTags(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListRoles(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListSAMLProviderTags(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::ListServerCertificateTags(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListRolePolicies(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListRoleTags(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::ListUserPolicies(request) => execute!(request, account_id, aws_request_id, db),
@@ -198,6 +213,12 @@ pub(crate) async fn handle(
         LocalAwsRequest::TagUser(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UntagInstanceProfile(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UntagMFADevice(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagOpenIDConnectProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagPolicy(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagRole(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagSAMLProvider(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
+        LocalAwsRequest::UntagUser(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadServerCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSigningCertificate(request) => execute!(request, account_id, aws_request_id, db),
         LocalAwsRequest::UploadSSHPublicKey(request) => execute!(request, account_id, aws_request_id, db),

@@ -94,12 +94,14 @@ action!(
 );
 action!(policy, list_policy_tags, list_policy_tags_request, ListPolicyTagsRequest, ListPolicyTagsOutput);
 action!(policy, tag_policy, tag_policy_request, TagPolicyRequest, TagPolicyOutput);
+action!(policy, untag_policy, untag_policy_request, UntagPolicyRequest, UntagPolicyOutput);
 action!(user, attach_user_policy, attach_user_policy_request, AttachUserPolicyRequest, AttachUserPolicyOutput);
 action!(user, get_user_policy, get_user_policy_request, GetUserPolicyRequest, GetUserPolicyOutput);
 action!(user, list_users, list_users_request, ListUsersRequest, ListUsersOutput);
 action!(user, list_user_policies, list_user_policies_request, ListUserPoliciesRequest, ListUserPoliciesOutput);
 action!(user, list_user_tags, list_user_tags_request, ListUserTagsRequest, ListUserTagsOutput);
 action!(user, tag_user, tag_user_request, TagUserRequest, TagUserOutput);
+action!(user, untag_user, untag_user_request, UntagUserRequest, UntagUserOutput);
 action!(user, put_user_policy, put_user_policy_request, PutUserPolicyRequest, PutUserPolicyOutput);
 action!(login_profile, change_password, change_password_request, ChangePasswordRequest, ChangePasswordOutput);
 action!(role, attach_role_policy, attach_role_policy_request, AttachRolePolicyRequest, AttachRolePolicyOutput);
@@ -109,6 +111,7 @@ action!(role, list_role_policies, list_role_policies_request, ListRolePoliciesRe
 action!(role, list_roles, list_roles_request, ListRolesRequest, ListRolesOutput);
 action!(role, put_role_policy, put_role_policy_request, PutRolePolicyRequest, PutRolePolicyOutput);
 action!(role, tag_role, tag_role_request, TagRoleRequest, TagRoleOutput);
+action!(role, untag_role, untag_role_request, UntagRoleRequest, UntagRoleOutput);
 action!(
     open_id_connect_provider,
     add_client_id_to_open_id_connect_provider,
@@ -131,6 +134,13 @@ action!(
     TagOpenIdConnectProviderOutput
 );
 action!(
+    open_id_connect_provider,
+    untag_open_id_connect_provider,
+    untag_open_id_connect_provider_request,
+    UntagOpenIdConnectProviderRequest,
+    UntagOpenIdConnectProviderOutput
+);
+action!(
     saml_provider,
     list_saml_provider_tags,
     list_saml_provider_tags_request,
@@ -138,6 +148,13 @@ action!(
     ListSamlProviderTagsOutput
 );
 action!(saml_provider, tag_saml_provider, tag_saml_provider_request, TagSamlProviderRequest, TagSamlProviderOutput);
+action!(
+    saml_provider,
+    untag_saml_provider,
+    untag_saml_provider_request,
+    UntagSamlProviderRequest,
+    UntagSamlProviderOutput
+);
 action!(mfa_device, get_mfa_device, get_mfa_device_request, GetMfaDeviceRequest, GetMfaDeviceOutput);
 action!(mfa_device, enable_mfa_device, enable_mfa_device_request, EnableMfaDeviceRequest, EnableMfaDeviceOutput);
 action!(
@@ -183,4 +200,18 @@ action!(
     tag_server_certificate_request,
     TagServerCertificateRequest,
     TagServerCertificateOutput
+);
+action!(
+    server_certificate,
+    untag_server_certificate,
+    untag_server_certificate_request,
+    UntagServerCertificateRequest,
+    UntagServerCertificateOutput
+);
+action!(
+    server_certificate,
+    list_server_certificate_tags,
+    list_server_certificate_tags_request,
+    ListServerCertificateTagsRequest,
+    ListServerCertificateTagsOutput
 );

@@ -1,4 +1,6 @@
+use aws_sdk_iam::operation::list_server_certificate_tags::ListServerCertificateTagsOutput;
 use aws_sdk_iam::operation::tag_server_certificate::TagServerCertificateOutput;
+use aws_sdk_iam::operation::untag_server_certificate::UntagServerCertificateOutput;
 use aws_sdk_iam::operation::upload_server_certificate::UploadServerCertificateOutput;
 use aws_sdk_iam::types::ServerCertificateMetadata;
 use aws_smithy_types::DateTime;
@@ -12,10 +14,13 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::server_certificate::InsertServerCertificate;
+use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::list_server_certificate_tags_request::ListServerCertificateTagsRequest;
 use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCertificateRequest;
+use crate::http::aws::iam::types::untag_server_certificate_request::UntagServerCertificateRequest;
 use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -81,8 +86,8 @@ pub(crate) async fn upload_server_certificate(
 pub(crate) async fn find_id_by_name<'a, E>(
     executor: E, account_id: i64, server_certificate_name: &str,
 ) -> Result<i64, OperationError>
-where
-    E: 'a + Executor<'a, Database = Sqlite>,
+    where
+        E: 'a + Executor<'a, Database=Sqlite>,
 {
     match db::server_certificate::find_id_by_name(executor, account_id, server_certificate_name).await? {
         Some(role_id) => Ok(role_id),
@@ -123,5 +128,53 @@ pub(crate) async fn tag_server_certificate(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn untag_server_certificate(
+    ctx: &OperationCtx, input: &UntagServerCertificateRequest, db: &LocalDb,
+) -> Result<UntagServerCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let certificate_id =
+        find_id_by_name(tx.as_mut(), ctx.account_id, input.server_certificate_name().unwrap().trim()).await?;
+
+    db::Tags::ServerCertificate
+        .delete_all(&mut tx, certificate_id, &input.tag_keys())
+        .await?;
+
+    let output = UntagServerCertificateOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn list_server_certificate_tags(
+    ctx: &OperationCtx, input: &ListServerCertificateTagsRequest, db: &LocalDb,
+) -> Result<ListServerCertificateTagsOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
+
+    let server_certificate_id =
+        find_id_by_name(connection.as_mut(), ctx.account_id, input.server_certificate_name().unwrap()).await?;
+
+    let query = ListTagsQuery::new(input.max_items(), input.marker_type());
+    let found_tags = db::Tags::ServerCertificate
+        .list(connection.as_mut(), server_certificate_id, &query)
+        .await?;
+
+    let tags = super::common::convert_and_limit(&found_tags, query.limit);
+    let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
+
+    let output = ListServerCertificateTagsOutput::builder()
+        .set_tags(tags)
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }

@@ -1,6 +1,7 @@
 use aws_sdk_iam::operation::create_saml_provider::CreateSamlProviderOutput;
 use aws_sdk_iam::operation::list_saml_provider_tags::ListSamlProviderTagsOutput;
 use aws_sdk_iam::operation::tag_saml_provider::TagSamlProviderOutput;
+use aws_sdk_iam::operation::untag_saml_provider::UntagSamlProviderOutput;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
 
@@ -15,6 +16,7 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
 use crate::http::aws::iam::types::list_saml_provider_tags_request::ListSamlProviderTagsRequest;
 use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
+use crate::http::aws::iam::types::untag_saml_provider_request::UntagSamlProviderRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
@@ -120,5 +122,26 @@ pub(crate) async fn list_saml_provider_tags(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn untag_saml_provider(
+    ctx: &OperationCtx, input: &UntagSamlProviderRequest, db: &LocalDb,
+) -> Result<UntagSamlProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let saml_provider_id =
+        find_id_by_arn(tx.as_mut(), ctx.account_id, input.saml_provider_arn().unwrap().trim()).await?;
+
+    db::Tags::SamlProvider
+        .delete_all(&mut tx, saml_provider_id, &input.tag_keys())
+        .await?;
+
+    let output = UntagSamlProviderOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

@@ -6,6 +6,7 @@ use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
 use aws_sdk_iam::operation::put_user_policy::PutUserPolicyOutput;
 use aws_sdk_iam::operation::tag_user::TagUserOutput;
+use aws_sdk_iam::operation::untag_user::UntagUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -30,6 +31,7 @@ use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
 use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
+use crate::http::aws::iam::types::untag_user_request::UntagUserRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_user(
@@ -301,5 +303,23 @@ pub(crate) async fn list_user_policies(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn untag_user(
+    ctx: &OperationCtx, input: &UntagUserRequest, db: &LocalDb,
+) -> Result<UntagUserOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
+
+    db::Tags::User.delete_all(&mut tx, user_id, &input.tag_keys()).await?;
+
+    let output = UntagUserOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

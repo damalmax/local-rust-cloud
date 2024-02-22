@@ -68,7 +68,7 @@ pub(crate) async fn create_virtual_mfa_device(
                 "It is allowed to register up to {} MFA devices per user.",
                 constants::mfa::DEVICE_MAX_COUNT_PER_USER
             )
-                .as_str(),
+            .as_str(),
         ));
     }
 
@@ -113,8 +113,8 @@ pub(crate) async fn create_virtual_mfa_device(
 pub(crate) async fn find_id_by_serial_number<'a, E>(
     executor: E, account_id: i64, serial_number: &str,
 ) -> Result<i64, OperationError>
-    where
-        E: 'a + Executor<'a, Database=Sqlite>,
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::mfa_device::find_id_by_serial_number(executor, account_id, serial_number).await? {
         Some(mfa_device_id) => Ok(mfa_device_id),
@@ -130,15 +130,15 @@ pub(crate) async fn find_id_by_serial_number<'a, E>(
 pub(crate) async fn find_by_serial_number<'a, E>(
     executor: E, account_id: i64, serial_number: &str, user_name: Option<&str>,
 ) -> Result<SelectMfaDevice, OperationError>
-    where
-        E: 'a + Executor<'a, Database=Sqlite>,
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::mfa_device::find_by_serial_number(executor, account_id, serial_number).await? {
         Some(mfa_device) => {
             if user_name.is_none()
                 || (user_name.is_some()
-                && mfa_device.user_name.is_some()
-                && user_name.unwrap() == mfa_device.user_name.as_ref().unwrap())
+                    && mfa_device.user_name.is_some()
+                    && user_name.unwrap() == mfa_device.user_name.as_ref().unwrap())
             {
                 Ok(mfa_device)
             } else {

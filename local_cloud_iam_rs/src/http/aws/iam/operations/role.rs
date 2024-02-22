@@ -6,6 +6,7 @@ use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
 use aws_sdk_iam::operation::list_roles::ListRolesOutput;
 use aws_sdk_iam::operation::put_role_policy::PutRolePolicyOutput;
 use aws_sdk_iam::operation::tag_role::TagRoleOutput;
+use aws_sdk_iam::operation::untag_role::UntagRoleOutput;
 use aws_sdk_iam::types::Role;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -30,6 +31,7 @@ use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
 use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
 use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
+use crate::http::aws::iam::types::untag_role_request::UntagRoleRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(
@@ -304,5 +306,23 @@ pub(crate) async fn put_role_policy(
     let output = PutRolePolicyOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn untag_role(
+    ctx: &OperationCtx, input: &UntagRoleRequest, db: &LocalDb,
+) -> Result<UntagRoleOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.role_name().unwrap().trim()).await?;
+
+    db::Tags::Role.delete_all(&mut tx, role_id, &input.tag_keys()).await?;
+
+    let output = UntagRoleOutput::builder().build();
+
+    tx.commit().await?;
+
     Ok(output)
 }

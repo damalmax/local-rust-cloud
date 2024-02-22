@@ -2,6 +2,7 @@ use aws_sdk_iam::operation::add_client_id_to_open_id_connect_provider::AddClient
 use aws_sdk_iam::operation::create_open_id_connect_provider::CreateOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::list_open_id_connect_provider_tags::ListOpenIdConnectProviderTagsOutput;
 use aws_sdk_iam::operation::tag_open_id_connect_provider::TagOpenIdConnectProviderOutput;
+use aws_sdk_iam::operation::untag_open_id_connect_provider::UntagOpenIdConnectProviderOutput;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
 
@@ -17,6 +18,7 @@ use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider_requ
 use crate::http::aws::iam::types::create_open_id_connect_provider_request::CreateOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::list_open_id_connect_provider_tags_request::ListOpenIdConnectProviderTagsRequest;
 use crate::http::aws::iam::types::tag_open_id_connect_provider_request::TagOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::untag_open_id_connect_provider_request::UntagOpenIdConnectProviderRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn add_client_id_to_open_id_connect_provider(
@@ -147,6 +149,27 @@ pub(crate) async fn tag_open_id_connect_provider(
     }
 
     let output = TagOpenIdConnectProviderOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn untag_open_id_connect_provider(
+    ctx: &OperationCtx, input: &UntagOpenIdConnectProviderRequest, db: &LocalDb,
+) -> Result<UntagOpenIdConnectProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let provider_id =
+        find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap().trim()).await?;
+
+    db::Tags::OpenIdConnectProvider
+        .delete_all(&mut tx, provider_id, &input.tag_keys())
+        .await?;
+
+    let output = UntagOpenIdConnectProviderOutput::builder().build();
 
     tx.commit().await?;
 

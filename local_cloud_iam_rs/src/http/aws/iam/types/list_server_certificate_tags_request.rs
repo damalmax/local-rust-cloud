@@ -1,4 +1,7 @@
+use local_cloud_validate::{validate_named, validate_required, ValidationError};
+
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::marker_type::MarkerType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListServerCertificateTagsRequest {
@@ -7,7 +10,7 @@ pub(crate) struct ListServerCertificateTagsRequest {
     #[serde(rename = "MaxItems")]
     pub(crate) max_items: Option<types::max_items_type::MaxItemsType>,
     #[serde(rename = "Marker")]
-    pub(crate) marker: Option<types::marker_type::MarkerType>,
+    pub(crate) marker: Option<MarkerType>,
 }
 
 impl ListServerCertificateTagsRequest {
@@ -20,20 +23,17 @@ impl ListServerCertificateTagsRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
     }
+    pub(crate) fn marker_type(&self) -> Option<&MarkerType> {
+        self.marker.as_ref()
+    }
 }
 
 impl local_cloud_validate::NamedValidator for &ListServerCertificateTagsRequest {
-    fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(
-            self.server_certificate_name(),
-            format!("{at}.{}", "ServerCertificateName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.server_certificate_name.as_ref(),
-            format!("{at}.{}", "ServerCertificateName").as_str(),
-        )?;
-        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
-        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
+    fn validate(&self, at: &str) -> Result<(), ValidationError> {
+        validate_required(self.server_certificate_name(), format!("{at}.{}", "ServerCertificateName").as_str())?;
+        validate_named(self.server_certificate_name.as_ref(), format!("{at}.{}", "ServerCertificateName").as_str())?;
+        validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
+        validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
         Ok(())
     }
 }
