@@ -4,7 +4,7 @@ use sqlx::{Error, FromRow, Row};
 
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::tags::DbTag;
-use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
+use crate::http::aws::iam::types::list_roles::ListRolesRequest;
 
 #[derive(Debug, Builder)]
 pub(crate) struct InsertRole {

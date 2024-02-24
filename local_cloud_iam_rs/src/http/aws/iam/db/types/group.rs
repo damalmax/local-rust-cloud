@@ -4,7 +4,7 @@ use derive_builder::Builder;
 use sqlx::FromRow;
 
 use crate::http::aws::iam::db::types::common::Pageable;
-use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
+use crate::http::aws::iam::types::list_groups::ListGroupsRequest;
 
 #[derive(Debug, Builder)]
 pub(crate) struct InsertGroup {

@@ -21,8 +21,8 @@ async fn untag_mfa_device() {
             tag("key-5", "value-5"),
         ]),
     )
-        .await
-        .expect("Failed to create IAM policy");
+    .await
+    .expect("Failed to create IAM policy");
 
     let policy_arn = create_policy_output.policy().unwrap().arn().unwrap();
 

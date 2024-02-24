@@ -23,15 +23,15 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::attach_role_policy_request::AttachRolePolicyRequest;
-use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
-use crate::http::aws::iam::types::get_role_policy_request::GetRolePolicyRequest;
-use crate::http::aws::iam::types::list_role_policies_request::ListRolePoliciesRequest;
-use crate::http::aws::iam::types::list_role_tags_request::ListRoleTagsRequest;
-use crate::http::aws::iam::types::list_roles_request::ListRolesRequest;
-use crate::http::aws::iam::types::put_role_policy_request::PutRolePolicyRequest;
-use crate::http::aws::iam::types::tag_role_request::TagRoleRequest;
-use crate::http::aws::iam::types::untag_role_request::UntagRoleRequest;
+use crate::http::aws::iam::types::attach_role_policy::AttachRolePolicyRequest;
+use crate::http::aws::iam::types::create_role::CreateRoleRequest;
+use crate::http::aws::iam::types::get_role_policy::GetRolePolicyRequest;
+use crate::http::aws::iam::types::list_role_policies::ListRolePoliciesRequest;
+use crate::http::aws::iam::types::list_role_tags::ListRoleTagsRequest;
+use crate::http::aws::iam::types::list_roles::ListRolesRequest;
+use crate::http::aws::iam::types::put_role_policy::PutRolePolicyRequest;
+use crate::http::aws::iam::types::tag_role::TagRoleRequest;
+use crate::http::aws::iam::types::untag_role::UntagRoleRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(

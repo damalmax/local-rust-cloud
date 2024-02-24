@@ -7,6 +7,7 @@ use aws_sdk_iam::operation::list_users::ListUsersOutput;
 use aws_sdk_iam::operation::put_user_policy::PutUserPolicyOutput;
 use aws_sdk_iam::operation::tag_user::TagUserOutput;
 use aws_sdk_iam::operation::untag_user::UntagUserOutput;
+use aws_sdk_iam::operation::update_user::UpdateUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -23,15 +24,16 @@ use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, Inse
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::attach_user_policy_request::AttachUserPolicyRequest;
-use crate::http::aws::iam::types::create_user_request::CreateUserRequest;
-use crate::http::aws::iam::types::get_user_policy_request::GetUserPolicyRequest;
-use crate::http::aws::iam::types::list_user_policies_request::ListUserPoliciesRequest;
-use crate::http::aws::iam::types::list_user_tags_request::ListUserTagsRequest;
-use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
-use crate::http::aws::iam::types::put_user_policy_request::PutUserPolicyRequest;
-use crate::http::aws::iam::types::tag_user_request::TagUserRequest;
-use crate::http::aws::iam::types::untag_user_request::UntagUserRequest;
+use crate::http::aws::iam::types::attach_user_policy::AttachUserPolicyRequest;
+use crate::http::aws::iam::types::create_user::CreateUserRequest;
+use crate::http::aws::iam::types::get_user_policy::GetUserPolicyRequest;
+use crate::http::aws::iam::types::list_user_policies::ListUserPoliciesRequest;
+use crate::http::aws::iam::types::list_user_tags::ListUserTagsRequest;
+use crate::http::aws::iam::types::list_users::ListUsersRequest;
+use crate::http::aws::iam::types::put_user_policy::PutUserPolicyRequest;
+use crate::http::aws::iam::types::tag_user::TagUserRequest;
+use crate::http::aws::iam::types::untag_user::UntagUserRequest;
+use crate::http::aws::iam::types::update_user::UpdateUserRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_user(
@@ -321,5 +323,12 @@ pub(crate) async fn untag_user(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn update_user(
+    ctx: &OperationCtx, input: &UpdateUserRequest, db: &LocalDb,
+) -> Result<UpdateUserOutput, OperationError> {
+    let output = UpdateUserOutput::builder().build();
     Ok(output)
 }

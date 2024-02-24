@@ -18,10 +18,10 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::list_server_certificate_tags_request::ListServerCertificateTagsRequest;
-use crate::http::aws::iam::types::tag_server_certificate_request::TagServerCertificateRequest;
-use crate::http::aws::iam::types::untag_server_certificate_request::UntagServerCertificateRequest;
-use crate::http::aws::iam::types::upload_server_certificate_request::UploadServerCertificateRequest;
+use crate::http::aws::iam::types::list_server_certificate_tags::ListServerCertificateTagsRequest;
+use crate::http::aws::iam::types::tag_server_certificate::TagServerCertificateRequest;
+use crate::http::aws::iam::types::untag_server_certificate::UntagServerCertificateRequest;
+use crate::http::aws::iam::types::upload_server_certificate::UploadServerCertificateRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn upload_server_certificate(
@@ -86,8 +86,8 @@ pub(crate) async fn upload_server_certificate(
 pub(crate) async fn find_id_by_name<'a, E>(
     executor: E, account_id: i64, server_certificate_name: &str,
 ) -> Result<i64, OperationError>
-    where
-        E: 'a + Executor<'a, Database=Sqlite>,
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::server_certificate::find_id_by_name(executor, account_id, server_certificate_name).await? {
         Some(role_id) => Ok(role_id),

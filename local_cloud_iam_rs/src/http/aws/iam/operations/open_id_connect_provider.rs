@@ -14,11 +14,11 @@ use crate::http::aws::iam::db::types::open_id_connect_provider::InsertOpenIdConn
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider_request::AddClientIdToOpenIdConnectProviderRequest;
-use crate::http::aws::iam::types::create_open_id_connect_provider_request::CreateOpenIdConnectProviderRequest;
-use crate::http::aws::iam::types::list_open_id_connect_provider_tags_request::ListOpenIdConnectProviderTagsRequest;
-use crate::http::aws::iam::types::tag_open_id_connect_provider_request::TagOpenIdConnectProviderRequest;
-use crate::http::aws::iam::types::untag_open_id_connect_provider_request::UntagOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider::AddClientIdToOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::create_open_id_connect_provider::CreateOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::list_open_id_connect_provider_tags::ListOpenIdConnectProviderTagsRequest;
+use crate::http::aws::iam::types::tag_open_id_connect_provider::TagOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::untag_open_id_connect_provider::UntagOpenIdConnectProviderRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn add_client_id_to_open_id_connect_provider(

@@ -4,7 +4,7 @@ use sqlx::FromRow;
 
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::types::assignment_status_type::AssignmentStatusType;
-use crate::http::aws::iam::types::list_virtual_mfa_devices_request::ListVirtualMfaDevicesRequest;
+use crate::http::aws::iam::types::list_virtual_mfa_devices::ListVirtualMfaDevicesRequest;
 
 #[derive(Debug)]
 pub(crate) struct InsertMfaDevice {

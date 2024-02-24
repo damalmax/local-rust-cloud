@@ -25,13 +25,13 @@ use crate::http::aws::iam::db::types::mfa_device::{
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::create_virtual_mfa_device_request::CreateVirtualMfaDeviceRequest;
-use crate::http::aws::iam::types::enable_mfa_device_request::EnableMfaDeviceRequest;
-use crate::http::aws::iam::types::get_mfa_device_request::GetMfaDeviceRequest;
-use crate::http::aws::iam::types::list_mfa_device_tags_request::ListMfaDeviceTagsRequest;
-use crate::http::aws::iam::types::list_virtual_mfa_devices_request::ListVirtualMfaDevicesRequest;
-use crate::http::aws::iam::types::tag_mfa_device_request::TagMfaDeviceRequest;
-use crate::http::aws::iam::types::untag_mfa_device_request::UntagMfaDeviceRequest;
+use crate::http::aws::iam::types::create_virtual_mfa_device::CreateVirtualMfaDeviceRequest;
+use crate::http::aws::iam::types::enable_mfa_device::EnableMfaDeviceRequest;
+use crate::http::aws::iam::types::get_mfa_device::GetMfaDeviceRequest;
+use crate::http::aws::iam::types::list_mfa_device_tags::ListMfaDeviceTagsRequest;
+use crate::http::aws::iam::types::list_virtual_mfa_devices::ListVirtualMfaDevicesRequest;
+use crate::http::aws::iam::types::tag_mfa_device::TagMfaDeviceRequest;
+use crate::http::aws::iam::types::untag_mfa_device::UntagMfaDeviceRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_virtual_mfa_device(

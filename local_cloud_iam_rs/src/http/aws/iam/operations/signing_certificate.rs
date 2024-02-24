@@ -12,7 +12,7 @@ use crate::http::aws::iam::db::types::signing_certificate::InsertSigningCertific
 use crate::http::aws::iam::db::types::signing_certificate_status_type::SigningCertificateStatusType;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::upload_signing_certificate_request::UploadSigningCertificateRequest;
+use crate::http::aws::iam::types::upload_signing_certificate::UploadSigningCertificateRequest;
 
 pub(crate) async fn upload_signing_certificate(
     ctx: &OperationCtx, input: &UploadSigningCertificateRequest, db: &LocalDb,

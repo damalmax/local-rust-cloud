@@ -26,13 +26,13 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::create_policy_request::CreatePolicyRequest;
-use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
-use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
-use crate::http::aws::iam::types::list_policy_tags_request::ListPolicyTagsRequest;
-use crate::http::aws::iam::types::list_policy_versions_request::ListPolicyVersionsRequest;
-use crate::http::aws::iam::types::tag_policy_request::TagPolicyRequest;
-use crate::http::aws::iam::types::untag_policy_request::UntagPolicyRequest;
+use crate::http::aws::iam::types::create_policy::CreatePolicyRequest;
+use crate::http::aws::iam::types::create_policy_version::CreatePolicyVersionRequest;
+use crate::http::aws::iam::types::list_policies::ListPoliciesRequest;
+use crate::http::aws::iam::types::list_policy_tags::ListPolicyTagsRequest;
+use crate::http::aws::iam::types::list_policy_versions::ListPolicyVersionsRequest;
+use crate::http::aws::iam::types::tag_policy::TagPolicyRequest;
+use crate::http::aws::iam::types::untag_policy::UntagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_policy(

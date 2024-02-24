@@ -13,10 +13,10 @@ use crate::http::aws::iam::db::types::saml_provider::InsertSamlProvider;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::create_saml_provider_request::CreateSamlProviderRequest;
-use crate::http::aws::iam::types::list_saml_provider_tags_request::ListSamlProviderTagsRequest;
-use crate::http::aws::iam::types::tag_saml_provider_request::TagSamlProviderRequest;
-use crate::http::aws::iam::types::untag_saml_provider_request::UntagSamlProviderRequest;
+use crate::http::aws::iam::types::create_saml_provider::CreateSamlProviderRequest;
+use crate::http::aws::iam::types::list_saml_provider_tags::ListSamlProviderTagsRequest;
+use crate::http::aws::iam::types::tag_saml_provider::TagSamlProviderRequest;
+use crate::http::aws::iam::types::untag_saml_provider::UntagSamlProviderRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>

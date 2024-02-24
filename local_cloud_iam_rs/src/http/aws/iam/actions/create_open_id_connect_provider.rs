@@ -8,7 +8,7 @@ use crate::http::aws::iam::actions::error::{ApiError, ApiErrorKind};
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
-use crate::http::aws::iam::types::create_open_id_connect_provider_request::CreateOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::create_open_id_connect_provider::CreateOpenIdConnectProviderRequest;
 
 impl Action for CreateOpenIdConnectProviderRequest {
     type Output = OutputWrapper<CreateOpenIdConnectProviderOutput>;

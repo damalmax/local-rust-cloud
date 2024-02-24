@@ -8,7 +8,7 @@ use crate::http::aws::iam::actions::error::{ApiError, ApiErrorKind};
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
-use crate::http::aws::iam::types::create_role_request::CreateRoleRequest;
+use crate::http::aws::iam::types::create_role::CreateRoleRequest;
 
 impl Action for CreateRoleRequest {
     type Output = OutputWrapper<CreateRoleOutput>;

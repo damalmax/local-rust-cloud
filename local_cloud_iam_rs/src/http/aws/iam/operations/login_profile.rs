@@ -11,8 +11,8 @@ use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::login_profile::InsertLoginProfile;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::change_password_request::ChangePasswordRequest;
-use crate::http::aws::iam::types::create_login_profile_request::CreateLoginProfileRequest;
+use crate::http::aws::iam::types::change_password::ChangePasswordRequest;
+use crate::http::aws::iam::types::create_login_profile::CreateLoginProfileRequest;
 
 pub(crate) async fn create_login_profile(
     ctx: &OperationCtx, input: &CreateLoginProfileRequest, db: &LocalDb,

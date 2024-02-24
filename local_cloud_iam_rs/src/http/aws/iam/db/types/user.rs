@@ -7,7 +7,7 @@ use sqlx::{Error, FromRow, Row};
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::tags::DbTag;
 use crate::http::aws::iam::operations;
-use crate::http::aws::iam::types::list_users_request::ListUsersRequest;
+use crate::http::aws::iam::types::list_users::ListUsersRequest;
 
 #[derive(Debug, Builder)]
 pub(crate) struct InsertUser {

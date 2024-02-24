@@ -67,6 +67,7 @@ mod untag_user;
 mod upload_server_certificate;
 mod upload_signing_certificate;
 mod upload_ssh_public_key;
+mod update_user;
 
 pub fn credentials_provider() -> impl ProvideCredentials {
     aws_credential_types::Credentials::new("AKIAIOSFODNN201ADMIN", "secret_access_key", None, None, "provider_name")

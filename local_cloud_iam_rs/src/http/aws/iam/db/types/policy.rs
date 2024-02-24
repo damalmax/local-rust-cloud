@@ -7,7 +7,7 @@ use sqlx::{Error, FromRow, Row};
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::policy_type::PolicyType;
 use crate::http::aws::iam::db::types::tags::DbTag;
-use crate::http::aws::iam::types::list_policies_request::ListPoliciesRequest;
+use crate::http::aws::iam::types::list_policies::ListPoliciesRequest;
 use crate::http::aws::iam::types::policy_scope_type::PolicyScopeType;
 
 #[derive(Debug, Builder)]

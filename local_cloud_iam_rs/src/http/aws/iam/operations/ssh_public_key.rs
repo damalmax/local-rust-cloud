@@ -13,7 +13,7 @@ use crate::http::aws::iam::db::types::ssh_public_key_type::SshPublicKeyStatusTyp
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::upload_ssh_public_key_request::UploadSshPublicKeyRequest;
+use crate::http::aws::iam::types::upload_ssh_public_key::UploadSshPublicKeyRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn upload_ssh_public_key(

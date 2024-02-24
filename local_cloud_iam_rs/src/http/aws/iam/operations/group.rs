@@ -25,15 +25,15 @@ use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::add_user_to_group_request::AddUserToGroupRequest;
-use crate::http::aws::iam::types::attach_group_policy_request::AttachGroupPolicyRequest;
-use crate::http::aws::iam::types::create_group_request::CreateGroupRequest;
-use crate::http::aws::iam::types::get_group_policy_request::GetGroupPolicyRequest;
-use crate::http::aws::iam::types::get_group_request::GetGroupRequest;
-use crate::http::aws::iam::types::list_group_policies_request::ListGroupPoliciesRequest;
-use crate::http::aws::iam::types::list_groups_for_user_request::ListGroupsForUserRequest;
-use crate::http::aws::iam::types::list_groups_request::ListGroupsRequest;
-use crate::http::aws::iam::types::put_group_policy_request::PutGroupPolicyRequest;
+use crate::http::aws::iam::types::add_user_to_group::AddUserToGroupRequest;
+use crate::http::aws::iam::types::attach_group_policy::AttachGroupPolicyRequest;
+use crate::http::aws::iam::types::create_group::CreateGroupRequest;
+use crate::http::aws::iam::types::get_group::GetGroupRequest;
+use crate::http::aws::iam::types::get_group_policy::GetGroupPolicyRequest;
+use crate::http::aws::iam::types::list_group_policies::ListGroupPoliciesRequest;
+use crate::http::aws::iam::types::list_groups::ListGroupsRequest;
+use crate::http::aws::iam::types::list_groups_for_user::ListGroupsForUserRequest;
+use crate::http::aws::iam::types::put_group_policy::PutGroupPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_group(

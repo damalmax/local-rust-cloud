@@ -18,11 +18,11 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
-use crate::http::aws::iam::types::add_role_to_instance_profile_request::AddRoleToInstanceProfileRequest;
-use crate::http::aws::iam::types::create_instance_profile_request::CreateInstanceProfileRequest;
-use crate::http::aws::iam::types::list_instance_profile_tags_request::ListInstanceProfileTagsRequest;
-use crate::http::aws::iam::types::tag_instance_profile_request::TagInstanceProfileRequest;
-use crate::http::aws::iam::types::untag_instance_profile_request::UntagInstanceProfileRequest;
+use crate::http::aws::iam::types::add_role_to_instance_profile::AddRoleToInstanceProfileRequest;
+use crate::http::aws::iam::types::create_instance_profile::CreateInstanceProfileRequest;
+use crate::http::aws::iam::types::list_instance_profile_tags::ListInstanceProfileTagsRequest;
+use crate::http::aws::iam::types::tag_instance_profile::TagInstanceProfileRequest;
+use crate::http::aws::iam::types::untag_instance_profile::UntagInstanceProfileRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_instance_profile(

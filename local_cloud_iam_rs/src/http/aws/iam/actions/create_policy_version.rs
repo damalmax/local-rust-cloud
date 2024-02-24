@@ -8,7 +8,7 @@ use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
-use crate::http::aws::iam::types::create_policy_version_request::CreatePolicyVersionRequest;
+use crate::http::aws::iam::types::create_policy_version::CreatePolicyVersionRequest;
 
 impl Action for CreatePolicyVersionRequest {
     type Output = OutputWrapper<CreatePolicyVersionOutput>;
