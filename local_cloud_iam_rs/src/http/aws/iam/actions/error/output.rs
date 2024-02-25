@@ -1,6 +1,6 @@
 use aws_smithy_xml::encode::XmlWriter;
 
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 
 use crate::http::aws::iam::actions::error::ApiError;
 use crate::http::aws::iam::constants;

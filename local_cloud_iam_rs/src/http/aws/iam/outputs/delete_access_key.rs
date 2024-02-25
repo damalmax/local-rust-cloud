@@ -1,6 +1,6 @@
 use aws_sdk_iam::operation::delete_access_key::DeleteAccessKeyOutput;
 
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
 

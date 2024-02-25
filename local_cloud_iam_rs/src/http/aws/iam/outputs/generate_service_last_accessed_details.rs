@@ -1,7 +1,7 @@
 use aws_sdk_iam::operation::generate_service_last_accessed_details::GenerateServiceLastAccessedDetailsOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 use local_cloud_xml::{write_request_metadata_tag, write_tag_with_value};
 
 use crate::http::aws::iam::constants;

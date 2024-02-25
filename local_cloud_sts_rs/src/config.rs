@@ -13,7 +13,7 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    pub fn parse() -> Self {
+    pub fn parse_env() -> Self {
         log::info!("Reading STS configurations...");
 
         let database_url = config::get_string_env_with_default(ENV_DATABASE_URL, DEFAULT_DATABASE_URL).into();
@@ -30,23 +30,5 @@ impl AppConfig {
             database_url: database_url.into(),
             service_port: port,
         }
-    }
-}
-
-pub(crate) trait AppConfigFactory {
-    fn get_config(&self) -> AppConfig;
-}
-
-pub(crate) struct EnvironmentAppConfigFactory {}
-
-impl EnvironmentAppConfigFactory {
-    pub(crate) fn new() -> Self {
-        EnvironmentAppConfigFactory {}
-    }
-}
-
-impl AppConfigFactory for EnvironmentAppConfigFactory {
-    fn get_config(&self) -> AppConfig {
-        AppConfig::parse()
     }
 }

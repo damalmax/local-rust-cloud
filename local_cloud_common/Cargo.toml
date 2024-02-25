@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web.workspace = true
 serde.workspace = true
 log.workspace = true
 url = "2.5"

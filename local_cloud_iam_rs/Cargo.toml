@@ -4,11 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-http.workspace = true
-actix-server.workspace = true
-actix-service.workspace = true
-actix-web.workspace = true
-actix-utils.workspace = true
+axum.workspace = true
+tokio.workspace = true
+tracing.workspace = true
 
 chrono.workspace = true
 derive_builder.workspace = true
@@ -25,7 +23,6 @@ validator.workspace = true
 
 sqlx.workspace = true
 url.workspace = true
-tokio.workspace = true
 futures.workspace = true
 futures-util.workspace = true
 
@@ -45,7 +42,7 @@ aws-types.workspace = true
 aws-sdk-iam.workspace = true
 aws-credential-types.workspace = true
 
-local_cloud_actix = { path = "../local_cloud_actix" }
+local_cloud_axum = { path = "../local_cloud_axum" }
 local_cloud_common = { path = "../local_cloud_common" }
 local_cloud_validate = { path = "../local_cloud_validate" }
 local_cloud_xml = { path = "../local_cloud_xml" }
@@ -58,7 +55,6 @@ data-encoding.workspace = true
 urlencoding.workspace = true
 
 [dev-dependencies]
-actix-rt.workspace = true
 aws-smithy-runtime-api.workspace = true
 serde_aws_query_ce.workspace = true
 serde_urlencoded = "0.7"

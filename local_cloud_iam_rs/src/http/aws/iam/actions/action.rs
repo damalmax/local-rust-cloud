@@ -1,4 +1,4 @@
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 use local_cloud_db::LocalDb;
 
 use crate::http::aws::iam::actions::error::ApiError;

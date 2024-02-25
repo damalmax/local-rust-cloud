@@ -1,7 +1,7 @@
-use actix_http::StatusCode;
 use aws_smithy_xml::encode::XmlWriter;
+use axum::http::StatusCode;
 
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 
 use crate::http::aws::sts::constants;
 
@@ -9,6 +9,15 @@ use crate::http::aws::sts::constants;
 pub enum StsErrorKind {
     InvalidInput,
     ServiceFailureException,
+}
+
+impl StsErrorKind {
+    pub(crate) fn status_code(&self) -> StatusCode {
+        match self {
+            StsErrorKind::InvalidInput => StatusCode::BAD_REQUEST,
+            StsErrorKind::ServiceFailureException => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
 
 impl Into<String> for &StsErrorKind {
