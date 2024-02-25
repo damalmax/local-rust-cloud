@@ -1,9 +1,9 @@
 use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
 use local_cloud_testing::assertions::assert_not_empty;
 
-#[actix_rt::test]
+#[tokio::test]
 async fn get_group_no_users() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
@@ -36,9 +36,9 @@ async fn get_group_no_users() {
     ctx.stop_server().await;
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn get_group_group_does_not_exist() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
@@ -58,9 +58,9 @@ async fn get_group_group_does_not_exist() {
     ctx.stop_server().await;
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn get_group_with_users() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);

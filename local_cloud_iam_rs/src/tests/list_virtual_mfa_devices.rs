@@ -2,9 +2,9 @@ use local_cloud_testing::assertions::assert_not_empty;
 
 const USER_NAME: &str = "test-user-1";
 
-#[actix_rt::test]
+#[tokio::test]
 async fn list_virtual_mfa_devices_empty() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
@@ -21,9 +21,9 @@ async fn list_virtual_mfa_devices_empty() {
     ctx.stop_server().await;
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn list_virtual_mfa_devices_with_attached_user() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);

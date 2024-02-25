@@ -1,11 +1,16 @@
 [package]
-name = "local_cloud_actix"
+name = "local_cloud_axum"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web.workspace = true
-actix-http.workspace = true
+axum.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
 derive_more.workspace = true
 serde.workspace = true
 log.workspace = true
@@ -16,3 +21,8 @@ uuid.workspace = true
 
 encoding_rs.workspace = true
 serde_aws_query_ce.workspace = true
+tracing-subscriber = "0.3.18"
+
+[dev-dependencies]
+http = "1.0"
+http-body-util = "0.1"

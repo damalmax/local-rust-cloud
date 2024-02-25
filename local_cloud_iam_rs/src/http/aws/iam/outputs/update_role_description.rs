@@ -2,7 +2,7 @@ use aws_sdk_iam::operation::update_role_description::UpdateRoleDescriptionOutput
 use aws_smithy_xml::encode::XmlWriter;
 
 use crate::http::aws::iam::constants;
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 use local_cloud_xml::write_request_metadata_tag;
 
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;

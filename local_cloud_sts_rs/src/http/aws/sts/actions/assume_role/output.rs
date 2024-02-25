@@ -1,7 +1,7 @@
 use aws_sdk_sts::operation::assume_role::AssumeRoleOutput;
 use aws_smithy_xml::encode::XmlWriter;
 
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 
 use crate::http::aws::sts::actions::types::wrapper::OutputWrapper;
 use crate::http::aws::sts::constants;

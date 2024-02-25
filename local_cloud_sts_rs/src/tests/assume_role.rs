@@ -2,16 +2,14 @@ use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_sdk_sts::config::Region;
 
-use super::*;
-
-#[actix_rt::test]
+#[tokio::test]
 async fn assume_role() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = aws_config::SdkConfig::builder()
         .region(Some(Region::new("eu-local-1")))
         .endpoint_url(format!("http://localhost:{}/sts", port))
-        .credentials_provider(SharedCredentialsProvider::new(credentials_provider()))
+        .credentials_provider(SharedCredentialsProvider::new(super::credentials_provider()))
         .behavior_version(BehaviorVersion::latest())
         .build();
     let client = aws_sdk_sts::Client::new(&config);

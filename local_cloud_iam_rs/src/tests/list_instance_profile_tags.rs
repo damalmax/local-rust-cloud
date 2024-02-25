@@ -1,9 +1,9 @@
 use crate::tests::fixture::tag;
 use local_cloud_testing::assertions::assert_not_empty;
 
-#[actix_rt::test]
+#[tokio::test]
 async fn list_instance_profile_tags_with_marker() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
 
     let port = ctx.port;
     let config = super::aws_config(port);

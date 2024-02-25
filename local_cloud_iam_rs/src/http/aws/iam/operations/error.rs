@@ -46,7 +46,7 @@ impl From<sqlx::Error> for OperationError {
                 if db_error.kind() == sqlx::error::ErrorKind::UniqueViolation {
                     OperationError::Service {
                         kind: ApiErrorKind::EntityAlreadyExists,
-                        msg: error.to_string(),
+                        msg: "Entity already exists.".to_owned(),
                     }
                 } else {
                     OperationError::Service {

@@ -1,8 +1,8 @@
 use crate::tests::fixture::CREATE_USER_PERMISSIONS_BOUNDARY;
 
-#[actix_rt::test]
+#[tokio::test]
 async fn put_group_policy() {
-    let mut ctx = local_cloud_testing::suite::create_test_ctx(super::test_suite::start_server).await;
+    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);

@@ -1,6 +1,6 @@
 use aws_sdk_iam::operation::remove_client_id_from_open_id_connect_provider::RemoveClientIdFromOpenIdConnectProviderOutput;
 
-use local_cloud_actix::local::web::XmlResponse;
+use local_cloud_axum::local::web::XmlResponse;
 
 use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
 

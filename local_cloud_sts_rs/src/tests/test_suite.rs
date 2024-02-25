@@ -1,20 +1,12 @@
-use crate::config::{AppConfig, AppConfigFactory};
-use actix_server::Server;
-use local_cloud_testing::suite::TestAppConfig;
+use uuid::Uuid;
 
-pub(crate) struct TestAppConfigFactory {
-    config: TestAppConfig,
-}
+use crate::config::AppConfig;
 
-impl AppConfigFactory for TestAppConfigFactory {
-    fn get_config(&self) -> AppConfig {
-        AppConfig {
-            database_url: self.config.database_url.to_owned(),
-            service_port: self.config.port,
-        }
-    }
-}
-
-pub(crate) async fn start_server(config: TestAppConfig) -> std::io::Result<Server> {
-    crate::http::server::start(TestAppConfigFactory { config }).await
+pub(crate) async fn start_server(port: u16) -> std::io::Result<axum::Router> {
+    let db_file_name = Uuid::new_v4();
+    let app_config = AppConfig {
+        database_url: format!("file:{}?mode=memory&cache=shared", db_file_name),
+        service_port: port,
+    };
+    crate::http::server::router(&app_config).await
 }

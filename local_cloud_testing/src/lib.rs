@@ -1,2 +1,2 @@
 pub mod assertions;
-pub mod suite;
+pub mod axum_suite;
