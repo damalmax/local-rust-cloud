@@ -1,3 +1,4 @@
+use aws_sdk_iam::operation::update_ssh_public_key::UpdateSshPublicKeyOutput;
 use aws_sdk_iam::operation::upload_ssh_public_key::UploadSshPublicKeyOutput;
 use aws_sdk_iam::types::{SshPublicKey, StatusType};
 use aws_smithy_types::DateTime;
@@ -13,6 +14,7 @@ use crate::http::aws::iam::db::types::ssh_public_key_type::SshPublicKeyStatusTyp
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::update_ssh_public_key::UpdateSshPublicKeyRequest;
 use crate::http::aws::iam::types::upload_ssh_public_key::UploadSshPublicKeyRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -62,5 +64,20 @@ pub(crate) async fn upload_ssh_public_key(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn update_ssh_public_key(
+    ctx: &OperationCtx, input: &UpdateSshPublicKeyRequest, db: &LocalDb,
+) -> Result<UpdateSshPublicKeyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+
+    let output = UpdateSshPublicKeyOutput::builder().build();
+
+    tx.commit().await?;
     Ok(output)
 }

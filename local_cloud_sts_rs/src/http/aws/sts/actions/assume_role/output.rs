@@ -62,7 +62,7 @@ impl From<LocalAssumeRoleOutput> for XmlResponse {
         assume_role_result_tag.finish();
 
         let mut response_metadata_tag = assume_role_response_tag.start_el("ResponseMetadata").finish();
-        local_cloud_xml::write_tag_with_value(&mut response_metadata_tag, "RequestId", Option::Some(val.request_id));
+        local_cloud_xml::write_tag_with_value(&mut response_metadata_tag, "RequestId", Some(val.request_id));
         response_metadata_tag.finish();
 
         assume_role_response_tag.finish();

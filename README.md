@@ -173,7 +173,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] update_service_specific_credential
 - [ ] update_signing_certificate
 - [ ] update_ssh_public_key
-- [ ] update_user
+- [X] update_user
 - [X] upload_server_certificate
 - [X] upload_signing_certificate
 - [X] upload_ssh_public_key

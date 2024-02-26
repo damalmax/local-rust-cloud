@@ -1,3 +1,5 @@
+use local_cloud_validate::{validate_named, validate_required};
+
 use crate::http::aws::iam::types;
 use crate::http::aws::iam::types::policy_document_type::PolicyDocumentType;
 
@@ -31,7 +33,7 @@ impl SimulateCustomPolicyRequest {
     pub(crate) fn action_names(&self) -> Option<&[types::action_name_type::ActionNameType]> {
         self.action_names.as_deref()
     }
-    pub(crate) fn policy_input_list(&self) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
+    pub(crate) fn policy_input_list(&self) -> Option<&[PolicyDocumentType]> {
         self.policy_input_list.as_deref()
     }
     pub(crate) fn resource_policy(&self) -> Option<&str> {
@@ -56,9 +58,7 @@ impl SimulateCustomPolicyRequest {
     pub(crate) fn context_entries(&self) -> Option<&[types::context_entry::ContextEntry]> {
         self.context_entries.as_deref()
     }
-    pub(crate) fn permissions_boundary_policy_input_list(
-        &self,
-    ) -> Option<&[types::policy_document_type::PolicyDocumentType]> {
+    pub(crate) fn permissions_boundary_policy_input_list(&self) -> Option<&[PolicyDocumentType]> {
         self.permissions_boundary_policy_input_list.as_deref()
     }
     pub(crate) fn marker(&self) -> Option<&str> {
@@ -71,64 +71,40 @@ impl SimulateCustomPolicyRequest {
 
 impl local_cloud_validate::NamedValidator for &SimulateCustomPolicyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(self.action_names(), format!("{at}.{}", "ActionNames").as_str())?;
+        validate_required(self.action_names(), format!("{at}.{}", "ActionNames").as_str())?;
         if let Some(action_names) = self.action_names() {
             for (id, member) in action_names.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "ActionNames").as_str(),
-                )?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "ActionNames").as_str())?;
             }
         }
-        local_cloud_validate::validate_required(
-            self.policy_input_list(),
-            format!("{at}.{}", "PolicyInputList").as_str(),
-        )?;
+        validate_required(self.policy_input_list(), format!("{at}.{}", "PolicyInputList").as_str())?;
         if let Some(policy_input_list) = self.policy_input_list() {
             for (id, member) in policy_input_list.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "PolicyInputList").as_str(),
-                )?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "PolicyInputList").as_str())?;
             }
         }
-        local_cloud_validate::validate_named(
-            self.resource_policy_type(),
-            format!("{at}.{}", "ResourcePolicy").as_str(),
-        )?;
-        local_cloud_validate::validate_named(self.caller_arn.as_ref(), format!("{at}.{}", "CallerArn").as_str())?;
-        local_cloud_validate::validate_named(
-            self.resource_owner.as_ref(),
-            format!("{at}.{}", "ResourceOwner").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.resource_handling_option.as_ref(),
-            format!("{at}.{}", "ResourceHandlingOption").as_str(),
-        )?;
-        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
+        validate_named(self.resource_policy_type(), format!("{at}.{}", "ResourcePolicy").as_str())?;
+        validate_named(self.caller_arn.as_ref(), format!("{at}.{}", "CallerArn").as_str())?;
+        validate_named(self.resource_owner.as_ref(), format!("{at}.{}", "ResourceOwner").as_str())?;
+        validate_named(self.resource_handling_option.as_ref(), format!("{at}.{}", "ResourceHandlingOption").as_str())?;
+        validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
         if let Some(context_entries) = self.context_entries() {
             for (id, member) in context_entries.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "ContextEntries").as_str(),
-                )?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "ContextEntries").as_str())?;
             }
         }
         if let Some(permissions_boundary_policy_input_list) = self.permissions_boundary_policy_input_list() {
             for (id, member) in permissions_boundary_policy_input_list.iter().enumerate() {
-                local_cloud_validate::validate_named(
+                validate_named(
                     Some(member),
                     format!("{at}.{}.member.{id}", "PermissionsBoundaryPolicyInputList").as_str(),
                 )?;
             }
         }
-        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
+        validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
         if let Some(resource_arns) = self.resource_arns() {
             for (id, member) in resource_arns.iter().enumerate() {
-                local_cloud_validate::validate_named(
-                    Some(member),
-                    format!("{at}.{}.member.{id}", "ResourceArns").as_str(),
-                )?;
+                validate_named(Some(member), format!("{at}.{}.member.{id}", "ResourceArns").as_str())?;
             }
         }
         Ok(())
