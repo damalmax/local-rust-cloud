@@ -42,7 +42,6 @@ pub(crate) async fn create_group(
     input.validate("$")?;
 
     let current_time = Utc::now().timestamp();
-    let group_name = input.group_name().unwrap();
 
     let mut tx = db.new_tx().await?;
     let group_id = create_resource_id(&mut tx, constants::group::PREFIX, ResourceType::Group).await?;

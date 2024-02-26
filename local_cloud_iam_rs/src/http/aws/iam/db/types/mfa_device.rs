@@ -95,9 +95,9 @@ impl From<&SelectMfaDevice> for VirtualMfaDevice {
                     .set_user_name(value.user_name.as_ref().map(|s| s.to_owned()))
                     .set_arn(value.user_arn.as_ref().map(|s| s.to_owned()))
                     .set_path(value.user_path.as_ref().map(|s| s.to_owned()))
-                    .set_create_date(value.user_create_date.map(|secs| DateTime::from_secs(secs)))
+                    .set_create_date(value.user_create_date.map(DateTime::from_secs))
                     .set_user_id(value.user_user_id.as_ref().map(|s| s.to_owned()))
-                    .set_password_last_used(value.user_password_last_used.map(|secs| DateTime::from_secs(secs)))
+                    .set_password_last_used(value.user_password_last_used.map(DateTime::from_secs))
                     .build()
                     .unwrap();
                 Some(user)
@@ -106,7 +106,7 @@ impl From<&SelectMfaDevice> for VirtualMfaDevice {
 
         VirtualMfaDevice::builder()
             .serial_number(&value.serial_number)
-            .set_enable_date(value.enable_date.map(|secs| DateTime::from_secs(secs)))
+            .set_enable_date(value.enable_date.map(DateTime::from_secs))
             .set_user(user)
             .build()
             .unwrap()

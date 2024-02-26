@@ -4,12 +4,12 @@ const ROLE_NAME: &str = "Test-Role-1";
 
 #[tokio::test]
 async fn untag_role() {
-    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
+    let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    let create_role_output = client
+    client
         .create_role()
         .role_name(ROLE_NAME)
         .path("/")

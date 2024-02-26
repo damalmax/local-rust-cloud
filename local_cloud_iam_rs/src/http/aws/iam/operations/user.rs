@@ -20,7 +20,9 @@ use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
-use crate::http::aws::iam::db::types::user::{InsertUser, InsertUserBuilder, InsertUserBuilderError, SelectUser};
+use crate::http::aws::iam::db::types::user::{
+    InsertUser, InsertUserBuilder, InsertUserBuilderError, SelectUser, UpdateUserQuery,
+};
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
@@ -149,7 +151,7 @@ pub(crate) async fn attach_user_policy(
     let policy_arn = input.policy_arn().unwrap();
     let found_policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
 
-    db::user::assign_policy_to_user(&mut tx, found_user_id, found_policy_id).await?;
+    db::user::assign_policy_to_user(tx.as_mut(), found_user_id, found_policy_id).await?;
 
     let output = AttachUserPolicyOutput::builder().build();
 
@@ -329,6 +331,22 @@ pub(crate) async fn untag_user(
 pub(crate) async fn update_user(
     ctx: &OperationCtx, input: &UpdateUserRequest, db: &LocalDb,
 ) -> Result<UpdateUserOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let query = UpdateUserQuery {
+        user_name: input.user_name().unwrap().to_owned(),
+        new_path: input.new_path().map(|s| s.to_owned()),
+        new_user_name: input.new_user_name().map(|s| s.to_owned()),
+    };
+    let result = db::user::update(tx.as_mut(), ctx.account_id, &query).await?;
+    if !result {
+        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
+
     let output = UpdateUserOutput::builder().build();
+
+    tx.commit().await?;
     Ok(output)
 }

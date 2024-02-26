@@ -9,3 +9,9 @@ pub(crate) struct InsertSshPublicKey {
     pub(crate) status: SshPublicKeyStatusType,
     pub(crate) upload_date: i64,
 }
+
+pub(crate) struct UpdateSshPublicKey {
+    pub(crate) key_id: String,
+    pub(crate) status: SshPublicKeyStatusType,
+    pub(crate) user_id: i64,
+}

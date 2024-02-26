@@ -6,7 +6,7 @@ use super::fixture;
 
 #[tokio::test]
 async fn test_create_policy() {
-    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
+    let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
@@ -24,21 +24,21 @@ async fn test_create_policy() {
 
     assert!(response.policy().is_some());
     let policy = response.policy().unwrap();
-    assert!(policy.tags().len() > 0);
+    assert!(!policy.tags().is_empty());
     assert_eq!(policy.default_version_id.as_deref().unwrap(), "v1");
     assert!(policy.create_date.is_some());
     assert_eq!(policy.attachment_count.unwrap(), 0); // new policy is not attached to any user/role/group
     assert_eq!(policy.permissions_boundary_usage_count.unwrap(), 0); // new policy is not attached to any user/role/group
     assert_not_empty(policy.path());
     assert_not_empty(policy.policy_name());
-    assert_eq!(policy.is_attachable(), true);
+    assert!(policy.is_attachable());
 
     ctx.stop_server().await;
 }
 
 #[tokio::test]
 async fn create_policy_too_many_tags() {
-    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
+    let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);

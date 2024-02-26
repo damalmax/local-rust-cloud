@@ -66,8 +66,8 @@ mod test {
         let mut start_el = doc_writer.start_el("Root").write_ns("https://example.com", None);
         start_el.write_attribute("key1", "att1");
         let mut tag = start_el.finish();
-        crate::write_tag_with_value(&mut tag, "inner", Option::Some("value1"));
-        crate::write_tag_with_value(&mut tag, "inner", Option::Some("value2"));
+        crate::write_tag_with_value(&mut tag, "inner", Some("value1"));
+        crate::write_tag_with_value(&mut tag, "inner", Some("value2"));
         tag.finish();
 
         assert_ok(validate_body(

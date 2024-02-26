@@ -44,8 +44,8 @@ impl<'r> FromRow<'r, SqliteRow> for SelectUser {
         let path: String = row.try_get("path")?;
         let create_date: i64 = row.try_get("create_date")?;
         let username: String = row.try_get("username")?;
-        let policy_id: Option<i64> = row.try_get("policy_id").unwrap_or_else(|_| None);
-        let policy_arn: Option<String> = row.try_get("policy_arn").unwrap_or_else(|_| None);
+        let policy_id: Option<i64> = row.try_get("policy_id").unwrap_or(None);
+        let policy_arn: Option<String> = row.try_get("policy_arn").unwrap_or(None);
         let tags = super::tags::from_row(&row, "tags")?;
         Ok(SelectUser {
             id,
@@ -117,6 +117,13 @@ impl Into<ListUsersQuery> for &ListUsersRequest {
     }
 }
 
+#[derive(Debug)]
+pub(crate) struct UpdateUserQuery {
+    pub(crate) user_name: String,
+    pub(crate) new_path: Option<String>,
+    pub(crate) new_user_name: Option<String>,
+}
+
 impl From<&SelectUser> for User {
     fn from(value: &SelectUser) -> Self {
         let tags = match &value.tags {
@@ -124,15 +131,12 @@ impl From<&SelectUser> for User {
             Some(tags) => operations::tag::prepare_for_output(tags),
         };
 
-        let permissions_boundary = match &value.policy_arn {
-            None => None,
-            Some(arn) => Some(
-                AttachedPermissionsBoundary::builder()
-                    .permissions_boundary_type(PermissionsBoundaryAttachmentType::Policy)
-                    .permissions_boundary_arn(arn)
-                    .build(),
-            ),
-        };
+        let permissions_boundary = value.policy_arn.as_ref().map(|arn| {
+            AttachedPermissionsBoundary::builder()
+                .permissions_boundary_type(PermissionsBoundaryAttachmentType::Policy)
+                .permissions_boundary_arn(arn)
+                .build()
+        });
 
         User::builder()
             .path(&value.path)

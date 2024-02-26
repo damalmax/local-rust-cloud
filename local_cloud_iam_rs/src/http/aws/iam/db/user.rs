@@ -1,7 +1,9 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::user::{InsertUser, ListUsersByGroupQuery, ListUsersQuery, SelectUser};
+use crate::http::aws::iam::db::types::user::{
+    InsertUser, ListUsersByGroupQuery, ListUsersQuery, SelectUser, UpdateUserQuery,
+};
 
 pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, user: &mut InsertUser) -> Result<(), Error> {
     let result = sqlx::query(
@@ -117,13 +119,14 @@ where
     Ok(user_id)
 }
 
-pub(crate) async fn assign_policy_to_user<'a>(
-    tx: &mut Transaction<'a, Sqlite>, user_id: i64, policy_id: i64,
-) -> Result<(), Error> {
+pub(crate) async fn assign_policy_to_user<'a, E>(executor: E, user_id: i64, policy_id: i64) -> Result<(), Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
     sqlx::query(r#"INSERT INTO policy_users (user_id, policy_id) VALUES ($1, $2)"#)
         .bind(user_id)
         .bind(policy_id)
-        .execute(tx.as_mut())
+        .execute(executor)
         .await?;
     Ok(())
 }
@@ -159,4 +162,37 @@ where
         .fetch_all(executor)
         .await?;
     Ok(users)
+}
+
+pub(crate) async fn update<'a, E>(executor: E, account_id: i64, query: &UpdateUserQuery) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE users SET");
+    let mut added = false;
+    if let Some(new_user_name) = &query.new_user_name {
+        query_builder
+            .push(" username=")
+            .push_bind(new_user_name)
+            .push(" , unique_username=")
+            .push_bind(new_user_name.to_uppercase());
+        added = true;
+    }
+    if let Some(new_path) = &query.new_path {
+        if added {
+            query_builder.push(" ,");
+        }
+        query_builder.push(" path=").push_bind(new_path);
+    }
+
+    let result = query_builder
+        .push(" WHERE account_id=")
+        .push_bind(account_id)
+        .push(" AND unique_username=")
+        .push_bind(&query.user_name.to_uppercase())
+        .build()
+        .execute(executor)
+        .await?;
+
+    Ok(result.rows_affected() == 1)
 }

@@ -47,7 +47,7 @@ pub(crate) async fn create_login_profile(
 }
 
 pub(crate) async fn change_password(
-    ctx: &OperationCtx, input: &ChangePasswordRequest, db: &LocalDb,
+    _ctx: &OperationCtx, input: &ChangePasswordRequest, _db: &LocalDb,
 ) -> Result<ChangePasswordOutput, OperationError> {
     input.validate("$")?;
     // TODO:

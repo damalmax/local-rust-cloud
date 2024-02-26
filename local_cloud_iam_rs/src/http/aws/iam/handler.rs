@@ -150,6 +150,7 @@ action_handler! {
         UntagSAMLProvider: saml_provider.untag_saml_provider(UntagSamlProviderRequest) -> UntagSamlProviderOutput,
         UntagServerCertificate: server_certificate.untag_server_certificate(UntagServerCertificateRequest) -> UntagServerCertificateOutput,
         UntagUser: user.untag_user(UntagUserRequest) -> UntagUserOutput,
+        UpdateSSHPublicKey: ssh_public_key.update_ssh_public_key(UpdateSshPublicKeyRequest) -> UpdateSshPublicKeyOutput,
         UpdateUser: user.update_user(UpdateUserRequest) -> UpdateUserOutput,
         UploadServerCertificate: server_certificate.upload_server_certificate(UploadServerCertificateRequest) -> UploadServerCertificateOutput,
         UploadSigningCertificate: signing_certificate.upload_signing_certificate(UploadSigningCertificateRequest) -> UploadSigningCertificateOutput,

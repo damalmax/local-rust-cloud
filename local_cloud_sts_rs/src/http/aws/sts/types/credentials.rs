@@ -29,7 +29,7 @@ impl DbCredentials {
 }
 
 #[non_exhaustive]
-#[derive(std::clone::Clone, std::cmp::PartialEq, std::default::Default, std::fmt::Debug)]
+#[derive(Clone, PartialEq, Default, std::fmt::Debug)]
 pub struct DbCredentialsBuilder {
     pub(crate) id: Option<i64>,
     pub(crate) access_key_id: Option<String>,

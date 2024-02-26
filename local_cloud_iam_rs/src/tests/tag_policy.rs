@@ -4,7 +4,7 @@ use super::fixture;
 
 #[tokio::test]
 async fn test_tag_policy() {
-    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
+    let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
@@ -37,7 +37,7 @@ async fn test_tag_policy() {
 
 #[tokio::test]
 async fn test_tag_policy_limit_exceeded() {
-    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
+    let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
@@ -85,7 +85,7 @@ async fn test_tag_policy_limit_exceeded() {
 
 #[tokio::test]
 async fn test_tag_policy_with_replacement() {
-    let mut ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
+    let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);

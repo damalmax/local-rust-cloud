@@ -81,14 +81,14 @@ impl<'de> Deserialize<'de> for CertificateBodyType {
 
 impl NamedValidator for &CertificateBodyType {
     fn validate(&self, at: &str) -> Result<(), ValidationError> {
-        validate_str_length_min(Some(&self), 1usize, at)?;
-        validate_str_length_max(Some(&self), 16384usize, at)?;
-        validate_regexp(Some(&self), REGEX.deref(), at)?;
+        validate_str_length_min(Some(self), 1usize, at)?;
+        validate_str_length_max(Some(self), 16384usize, at)?;
+        validate_regexp(Some(self), REGEX.deref(), at)?;
 
         if let Err(err) = &self.cert {
             return Err(ValidationError::new(
                 ValidationErrorKind::Other,
-                format!("Failed to parse '{at}' parameter value. {}", err.to_string()),
+                format!("Failed to parse '{at}' parameter value. {}", err),
             ));
         }
 
