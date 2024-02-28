@@ -1,12 +1,18 @@
 use aws_sdk_iam::operation::add_user_to_group::AddUserToGroupOutput;
 use aws_sdk_iam::operation::attach_group_policy::AttachGroupPolicyOutput;
 use aws_sdk_iam::operation::create_group::CreateGroupOutput;
+use aws_sdk_iam::operation::delete_group::DeleteGroupOutput;
+use aws_sdk_iam::operation::delete_group_policy::DeleteGroupPolicyOutput;
+use aws_sdk_iam::operation::detach_group_policy::DetachGroupPolicyOutput;
 use aws_sdk_iam::operation::get_group::GetGroupOutput;
 use aws_sdk_iam::operation::get_group_policy::GetGroupPolicyOutput;
+use aws_sdk_iam::operation::list_attached_group_policies::ListAttachedGroupPoliciesOutput;
 use aws_sdk_iam::operation::list_group_policies::ListGroupPoliciesOutput;
 use aws_sdk_iam::operation::list_groups::ListGroupsOutput;
 use aws_sdk_iam::operation::list_groups_for_user::ListGroupsForUserOutput;
 use aws_sdk_iam::operation::put_group_policy::PutGroupPolicyOutput;
+use aws_sdk_iam::operation::remove_user_from_group::RemoveUserFromGroupOutput;
+use aws_sdk_iam::operation::update_group::UpdateGroupOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -28,12 +34,18 @@ use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_user_to_group::AddUserToGroupRequest;
 use crate::http::aws::iam::types::attach_group_policy::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::create_group::CreateGroupRequest;
+use crate::http::aws::iam::types::delete_group::DeleteGroupRequest;
+use crate::http::aws::iam::types::delete_group_policy::DeleteGroupPolicyRequest;
+use crate::http::aws::iam::types::detach_group_policy::DetachGroupPolicyRequest;
 use crate::http::aws::iam::types::get_group::GetGroupRequest;
 use crate::http::aws::iam::types::get_group_policy::GetGroupPolicyRequest;
+use crate::http::aws::iam::types::list_attached_group_policies::ListAttachedGroupPoliciesRequest;
 use crate::http::aws::iam::types::list_group_policies::ListGroupPoliciesRequest;
 use crate::http::aws::iam::types::list_groups::ListGroupsRequest;
 use crate::http::aws::iam::types::list_groups_for_user::ListGroupsForUserRequest;
 use crate::http::aws::iam::types::put_group_policy::PutGroupPolicyRequest;
+use crate::http::aws::iam::types::remove_user_from_group::RemoveUserFromGroupRequest;
+use crate::http::aws::iam::types::update_group::UpdateGroupRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn create_group(
@@ -339,5 +351,59 @@ pub(crate) async fn list_group_policies(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn list_attached_group_policies(
+    ctx: &OperationCtx, input: &ListAttachedGroupPoliciesRequest, db: &LocalDb,
+) -> Result<ListAttachedGroupPoliciesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListAttachedGroupPoliciesOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn update_group(
+    ctx: &OperationCtx, input: &UpdateGroupRequest, db: &LocalDb,
+) -> Result<UpdateGroupOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateGroupOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn remove_user_from_group(
+    ctx: &OperationCtx, input: &RemoveUserFromGroupRequest, db: &LocalDb,
+) -> Result<RemoveUserFromGroupOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = RemoveUserFromGroupOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_group(
+    ctx: &OperationCtx, input: &DeleteGroupRequest, db: &LocalDb,
+) -> Result<DeleteGroupOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteGroupOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn detach_group_policy(
+    ctx: &OperationCtx, input: &DetachGroupPolicyRequest, db: &LocalDb,
+) -> Result<DetachGroupPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DetachGroupPolicyOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_group_policy(
+    ctx: &OperationCtx, input: &DeleteGroupPolicyRequest, db: &LocalDb,
+) -> Result<DeleteGroupPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteGroupPolicyOutput::builder().build();
     Ok(output)
 }

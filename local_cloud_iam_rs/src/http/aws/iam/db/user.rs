@@ -103,12 +103,9 @@ where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     let user_id = sqlx::query(
-        r#"
-            SELECT 
-                id
-            FROM users
-            WHERE account_id = $1 AND unique_username = $2
-    "#,
+        "SELECT id \
+             FROM users \
+             WHERE account_id = $1 AND unique_username = $2",
     )
     .bind(account_id)
     .bind(user_name.to_uppercase())
@@ -123,7 +120,7 @@ pub(crate) async fn assign_policy_to_user<'a, E>(executor: E, user_id: i64, poli
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    sqlx::query(r#"INSERT INTO policy_users (user_id, policy_id) VALUES ($1, $2)"#)
+    sqlx::query("INSERT INTO policy_users (user_id, policy_id) VALUES ($1, $2)")
         .bind(user_id)
         .bind(policy_id)
         .execute(executor)

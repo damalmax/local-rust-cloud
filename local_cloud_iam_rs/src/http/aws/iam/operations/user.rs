@@ -1,9 +1,16 @@
 use aws_sdk_iam::operation::attach_user_policy::AttachUserPolicyOutput;
 use aws_sdk_iam::operation::create_user::CreateUserOutput;
+use aws_sdk_iam::operation::delete_user::DeleteUserOutput;
+use aws_sdk_iam::operation::delete_user_permissions_boundary::DeleteUserPermissionsBoundaryOutput;
+use aws_sdk_iam::operation::delete_user_policy::DeleteUserPolicyOutput;
+use aws_sdk_iam::operation::detach_user_policy::DetachUserPolicyOutput;
+use aws_sdk_iam::operation::get_user::GetUserOutput;
 use aws_sdk_iam::operation::get_user_policy::GetUserPolicyOutput;
+use aws_sdk_iam::operation::list_attached_user_policies::ListAttachedUserPoliciesOutput;
 use aws_sdk_iam::operation::list_user_policies::ListUserPoliciesOutput;
 use aws_sdk_iam::operation::list_user_tags::ListUserTagsOutput;
 use aws_sdk_iam::operation::list_users::ListUsersOutput;
+use aws_sdk_iam::operation::put_user_permissions_boundary::PutUserPermissionsBoundaryOutput;
 use aws_sdk_iam::operation::put_user_policy::PutUserPolicyOutput;
 use aws_sdk_iam::operation::tag_user::TagUserOutput;
 use aws_sdk_iam::operation::untag_user::UntagUserOutput;
@@ -28,10 +35,17 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_user_policy::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_user::CreateUserRequest;
+use crate::http::aws::iam::types::delete_user::DeleteUserRequest;
+use crate::http::aws::iam::types::delete_user_permissions_boundary::DeleteUserPermissionsBoundaryRequest;
+use crate::http::aws::iam::types::delete_user_policy::DeleteUserPolicyRequest;
+use crate::http::aws::iam::types::detach_user_policy::DetachUserPolicyRequest;
+use crate::http::aws::iam::types::get_user::GetUserRequest;
 use crate::http::aws::iam::types::get_user_policy::GetUserPolicyRequest;
+use crate::http::aws::iam::types::list_attached_user_policies::ListAttachedUserPoliciesRequest;
 use crate::http::aws::iam::types::list_user_policies::ListUserPoliciesRequest;
 use crate::http::aws::iam::types::list_user_tags::ListUserTagsRequest;
 use crate::http::aws::iam::types::list_users::ListUsersRequest;
+use crate::http::aws::iam::types::put_user_permissions_boundary::PutUserPermissionsBoundaryRequest;
 use crate::http::aws::iam::types::put_user_policy::PutUserPolicyRequest;
 use crate::http::aws::iam::types::tag_user::TagUserRequest;
 use crate::http::aws::iam::types::untag_user::UntagUserRequest;
@@ -348,5 +362,75 @@ pub(crate) async fn update_user(
     let output = UpdateUserOutput::builder().build();
 
     tx.commit().await?;
+    Ok(output)
+}
+
+pub(crate) async fn get_user(
+    ctx: &OperationCtx, input: &GetUserRequest, db: &LocalDb,
+) -> Result<GetUserOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetUserOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn put_user_permissions_boundary(
+    ctx: &OperationCtx, input: &PutUserPermissionsBoundaryRequest, db: &LocalDb,
+) -> Result<PutUserPermissionsBoundaryOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = PutUserPermissionsBoundaryOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn delete_user_permissions_boundary(
+    ctx: &OperationCtx, input: &DeleteUserPermissionsBoundaryRequest, db: &LocalDb,
+) -> Result<DeleteUserPermissionsBoundaryOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteUserPermissionsBoundaryOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn list_attached_user_policies(
+    ctx: &OperationCtx, input: &ListAttachedUserPoliciesRequest, db: &LocalDb,
+) -> Result<ListAttachedUserPoliciesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListAttachedUserPoliciesOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn delete_user(
+    ctx: &OperationCtx, input: &DeleteUserRequest, db: &LocalDb,
+) -> Result<DeleteUserOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteUserOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn delete_user_policy(
+    ctx: &OperationCtx, input: &DeleteUserPolicyRequest, db: &LocalDb,
+) -> Result<DeleteUserPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteUserPolicyOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn detach_user_policy(
+    ctx: &OperationCtx, input: &DetachUserPolicyRequest, db: &LocalDb,
+) -> Result<DetachUserPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DetachUserPolicyOutput::builder().build();
+
     Ok(output)
 }

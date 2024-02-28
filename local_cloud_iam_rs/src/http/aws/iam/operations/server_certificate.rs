@@ -1,6 +1,10 @@
+use aws_sdk_iam::operation::delete_server_certificate::DeleteServerCertificateOutput;
+use aws_sdk_iam::operation::get_server_certificate::GetServerCertificateOutput;
 use aws_sdk_iam::operation::list_server_certificate_tags::ListServerCertificateTagsOutput;
+use aws_sdk_iam::operation::list_server_certificates::ListServerCertificatesOutput;
 use aws_sdk_iam::operation::tag_server_certificate::TagServerCertificateOutput;
 use aws_sdk_iam::operation::untag_server_certificate::UntagServerCertificateOutput;
+use aws_sdk_iam::operation::update_server_certificate::UpdateServerCertificateOutput;
 use aws_sdk_iam::operation::upload_server_certificate::UploadServerCertificateOutput;
 use aws_sdk_iam::types::ServerCertificateMetadata;
 use aws_smithy_types::DateTime;
@@ -18,9 +22,13 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::delete_server_certificate::DeleteServerCertificateRequest;
+use crate::http::aws::iam::types::get_server_certificate::GetServerCertificateRequest;
 use crate::http::aws::iam::types::list_server_certificate_tags::ListServerCertificateTagsRequest;
+use crate::http::aws::iam::types::list_server_certificates::ListServerCertificatesRequest;
 use crate::http::aws::iam::types::tag_server_certificate::TagServerCertificateRequest;
 use crate::http::aws::iam::types::untag_server_certificate::UntagServerCertificateRequest;
+use crate::http::aws::iam::types::update_server_certificate::UpdateServerCertificateRequest;
 use crate::http::aws::iam::types::upload_server_certificate::UploadServerCertificateRequest;
 use crate::http::aws::iam::{constants, db};
 
@@ -176,5 +184,41 @@ pub(crate) async fn list_server_certificate_tags(
         .set_marker(marker)
         .build()
         .unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn get_server_certificate(
+    ctx: &OperationCtx, input: &GetServerCertificateRequest, db: &LocalDb,
+) -> Result<GetServerCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetServerCertificateOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn list_server_certificates(
+    ctx: &OperationCtx, input: &ListServerCertificatesRequest, db: &LocalDb,
+) -> Result<ListServerCertificatesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListServerCertificatesOutput::builder().build().unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn update_server_certificate(
+    ctx: &OperationCtx, input: &UpdateServerCertificateRequest, db: &LocalDb,
+) -> Result<UpdateServerCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateServerCertificateOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_server_certificate(
+    ctx: &OperationCtx, input: &DeleteServerCertificateRequest, db: &LocalDb,
+) -> Result<DeleteServerCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteServerCertificateOutput::builder().build();
     Ok(output)
 }
