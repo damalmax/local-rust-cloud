@@ -1,7 +1,11 @@
 use aws_sdk_iam::operation::create_saml_provider::CreateSamlProviderOutput;
+use aws_sdk_iam::operation::delete_saml_provider::DeleteSamlProviderOutput;
+use aws_sdk_iam::operation::get_saml_provider::GetSamlProviderOutput;
 use aws_sdk_iam::operation::list_saml_provider_tags::ListSamlProviderTagsOutput;
+use aws_sdk_iam::operation::list_saml_providers::ListSamlProvidersOutput;
 use aws_sdk_iam::operation::tag_saml_provider::TagSamlProviderOutput;
 use aws_sdk_iam::operation::untag_saml_provider::UntagSamlProviderOutput;
+use aws_sdk_iam::operation::update_saml_provider::UpdateSamlProviderOutput;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
 
@@ -14,9 +18,13 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_saml_provider::CreateSamlProviderRequest;
+use crate::http::aws::iam::types::delete_saml_provider::DeleteSamlProviderRequest;
+use crate::http::aws::iam::types::get_saml_provider::GetSamlProviderRequest;
 use crate::http::aws::iam::types::list_saml_provider_tags::ListSamlProviderTagsRequest;
+use crate::http::aws::iam::types::list_saml_providers::ListSamlProvidersRequest;
 use crate::http::aws::iam::types::tag_saml_provider::TagSamlProviderRequest;
 use crate::http::aws::iam::types::untag_saml_provider::UntagSamlProviderRequest;
+use crate::http::aws::iam::types::update_saml_provider::UpdateSamlProviderRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
@@ -143,5 +151,41 @@ pub(crate) async fn untag_saml_provider(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn list_saml_providers(
+    ctx: &OperationCtx, input: &ListSamlProvidersRequest, db: &LocalDb,
+) -> Result<ListSamlProvidersOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListSamlProvidersOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn update_saml_provider(
+    ctx: &OperationCtx, input: &UpdateSamlProviderRequest, db: &LocalDb,
+) -> Result<UpdateSamlProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateSamlProviderOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn get_saml_provider(
+    ctx: &OperationCtx, input: &GetSamlProviderRequest, db: &LocalDb,
+) -> Result<GetSamlProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetSamlProviderOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_saml_provider(
+    ctx: &OperationCtx, input: &DeleteSamlProviderRequest, db: &LocalDb,
+) -> Result<DeleteSamlProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteSamlProviderOutput::builder().build();
     Ok(output)
 }

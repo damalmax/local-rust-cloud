@@ -1,10 +1,14 @@
 use std::io::Cursor;
 
 use aws_sdk_iam::operation::create_virtual_mfa_device::CreateVirtualMfaDeviceOutput;
+use aws_sdk_iam::operation::deactivate_mfa_device::DeactivateMfaDeviceOutput;
+use aws_sdk_iam::operation::delete_virtual_mfa_device::DeleteVirtualMfaDeviceOutput;
 use aws_sdk_iam::operation::enable_mfa_device::EnableMfaDeviceOutput;
 use aws_sdk_iam::operation::get_mfa_device::GetMfaDeviceOutput;
 use aws_sdk_iam::operation::list_mfa_device_tags::ListMfaDeviceTagsOutput;
+use aws_sdk_iam::operation::list_mfa_devices::ListMfaDevicesOutput;
 use aws_sdk_iam::operation::list_virtual_mfa_devices::ListVirtualMfaDevicesOutput;
+use aws_sdk_iam::operation::resync_mfa_device::ResyncMfaDeviceOutput;
 use aws_sdk_iam::operation::tag_mfa_device::TagMfaDeviceOutput;
 use aws_sdk_iam::operation::untag_mfa_device::UntagMfaDeviceOutput;
 use aws_sdk_iam::types::VirtualMfaDevice;
@@ -26,10 +30,14 @@ use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_virtual_mfa_device::CreateVirtualMfaDeviceRequest;
+use crate::http::aws::iam::types::deactivate_mfa_device::DeactivateMfaDeviceRequest;
+use crate::http::aws::iam::types::delete_virtual_mfa_device::DeleteVirtualMfaDeviceRequest;
 use crate::http::aws::iam::types::enable_mfa_device::EnableMfaDeviceRequest;
 use crate::http::aws::iam::types::get_mfa_device::GetMfaDeviceRequest;
 use crate::http::aws::iam::types::list_mfa_device_tags::ListMfaDeviceTagsRequest;
+use crate::http::aws::iam::types::list_mfa_devices::ListMfaDevicesRequest;
 use crate::http::aws::iam::types::list_virtual_mfa_devices::ListVirtualMfaDevicesRequest;
+use crate::http::aws::iam::types::resync_mfa_device::ResyncMfaDeviceRequest;
 use crate::http::aws::iam::types::tag_mfa_device::TagMfaDeviceRequest;
 use crate::http::aws::iam::types::untag_mfa_device::UntagMfaDeviceRequest;
 use crate::http::aws::iam::{constants, db};
@@ -306,6 +314,46 @@ pub(crate) async fn list_mfa_device_tags(
         .set_marker(marker)
         .build()
         .unwrap();
+
+    Ok(output)
+}
+
+pub(crate) async fn deactivate_mfa_device(
+    ctx: &OperationCtx, input: &DeactivateMfaDeviceRequest, db: &LocalDb,
+) -> Result<DeactivateMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeactivateMfaDeviceOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn list_mfa_devices(
+    ctx: &OperationCtx, input: &ListMfaDevicesRequest, db: &LocalDb,
+) -> Result<ListMfaDevicesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListMfaDevicesOutput::builder().build().unwrap();
+
+    Ok(output)
+}
+
+pub(crate) async fn resync_mfa_device(
+    ctx: &OperationCtx, input: &ResyncMfaDeviceRequest, db: &LocalDb,
+) -> Result<ResyncMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ResyncMfaDeviceOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn delete_virtual_mfa_device(
+    ctx: &OperationCtx, input: &DeleteVirtualMfaDeviceRequest, db: &LocalDb,
+) -> Result<DeleteVirtualMfaDeviceOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteVirtualMfaDeviceOutput::builder().build();
 
     Ok(output)
 }

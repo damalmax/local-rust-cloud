@@ -1,6 +1,11 @@
 use aws_sdk_iam::operation::add_role_to_instance_profile::AddRoleToInstanceProfileOutput;
 use aws_sdk_iam::operation::create_instance_profile::CreateInstanceProfileOutput;
+use aws_sdk_iam::operation::delete_instance_profile::DeleteInstanceProfileOutput;
+use aws_sdk_iam::operation::get_instance_profile::GetInstanceProfileOutput;
 use aws_sdk_iam::operation::list_instance_profile_tags::ListInstanceProfileTagsOutput;
+use aws_sdk_iam::operation::list_instance_profiles::ListInstanceProfilesOutput;
+use aws_sdk_iam::operation::list_instance_profiles_for_role::ListInstanceProfilesForRoleOutput;
+use aws_sdk_iam::operation::remove_role_from_instance_profile::RemoveRoleFromInstanceProfileOutput;
 use aws_sdk_iam::operation::tag_instance_profile::TagInstanceProfileOutput;
 use aws_sdk_iam::operation::untag_instance_profile::UntagInstanceProfileOutput;
 use aws_sdk_iam::types::InstanceProfile;
@@ -20,7 +25,12 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_role_to_instance_profile::AddRoleToInstanceProfileRequest;
 use crate::http::aws::iam::types::create_instance_profile::CreateInstanceProfileRequest;
+use crate::http::aws::iam::types::delete_instance_profile::DeleteInstanceProfileRequest;
+use crate::http::aws::iam::types::get_instance_profile::GetInstanceProfileRequest;
 use crate::http::aws::iam::types::list_instance_profile_tags::ListInstanceProfileTagsRequest;
+use crate::http::aws::iam::types::list_instance_profiles::ListInstanceProfilesRequest;
+use crate::http::aws::iam::types::list_instance_profiles_for_role::ListInstanceProfilesForRoleRequest;
+use crate::http::aws::iam::types::remove_role_from_instance_profile::RemoveRoleFromInstanceProfileRequest;
 use crate::http::aws::iam::types::tag_instance_profile::TagInstanceProfileRequest;
 use crate::http::aws::iam::types::untag_instance_profile::UntagInstanceProfileRequest;
 use crate::http::aws::iam::{constants, db};
@@ -182,5 +192,50 @@ pub(crate) async fn list_instance_profile_tags(
         .build()
         .unwrap();
 
+    Ok(output)
+}
+
+pub(crate) async fn remove_role_from_instance_profile(
+    ctx: &OperationCtx, input: &RemoveRoleFromInstanceProfileRequest, db: &LocalDb,
+) -> Result<RemoveRoleFromInstanceProfileOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = RemoveRoleFromInstanceProfileOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_instance_profile(
+    ctx: &OperationCtx, input: &DeleteInstanceProfileRequest, db: &LocalDb,
+) -> Result<DeleteInstanceProfileOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteInstanceProfileOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn get_instance_profile(
+    ctx: &OperationCtx, input: &GetInstanceProfileRequest, db: &LocalDb,
+) -> Result<GetInstanceProfileOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetInstanceProfileOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn list_instance_profiles(
+    ctx: &OperationCtx, input: &ListInstanceProfilesRequest, db: &LocalDb,
+) -> Result<ListInstanceProfilesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListInstanceProfilesOutput::builder().build().unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn list_instance_profiles_for_role(
+    ctx: &OperationCtx, input: &ListInstanceProfilesForRoleRequest, db: &LocalDb,
+) -> Result<ListInstanceProfilesForRoleOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListInstanceProfilesForRoleOutput::builder().build().unwrap();
     Ok(output)
 }

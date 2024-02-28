@@ -1,12 +1,22 @@
 use aws_sdk_iam::operation::attach_role_policy::AttachRolePolicyOutput;
 use aws_sdk_iam::operation::create_role::CreateRoleOutput;
+use aws_sdk_iam::operation::delete_role::DeleteRoleOutput;
+use aws_sdk_iam::operation::delete_role_permissions_boundary::DeleteRolePermissionsBoundaryOutput;
+use aws_sdk_iam::operation::delete_role_policy::DeleteRolePolicyOutput;
+use aws_sdk_iam::operation::detach_role_policy::DetachRolePolicyOutput;
+use aws_sdk_iam::operation::get_role::GetRoleOutput;
 use aws_sdk_iam::operation::get_role_policy::GetRolePolicyOutput;
+use aws_sdk_iam::operation::list_attached_role_policies::ListAttachedRolePoliciesOutput;
 use aws_sdk_iam::operation::list_role_policies::ListRolePoliciesOutput;
 use aws_sdk_iam::operation::list_role_tags::ListRoleTagsOutput;
 use aws_sdk_iam::operation::list_roles::ListRolesOutput;
+use aws_sdk_iam::operation::put_role_permissions_boundary::PutRolePermissionsBoundaryOutput;
 use aws_sdk_iam::operation::put_role_policy::PutRolePolicyOutput;
 use aws_sdk_iam::operation::tag_role::TagRoleOutput;
 use aws_sdk_iam::operation::untag_role::UntagRoleOutput;
+use aws_sdk_iam::operation::update_assume_role_policy::UpdateAssumeRolePolicyOutput;
+use aws_sdk_iam::operation::update_role::UpdateRoleOutput;
+use aws_sdk_iam::operation::update_role_description::UpdateRoleDescriptionOutput;
 use aws_sdk_iam::types::Role;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
@@ -25,13 +35,23 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::attach_role_policy::AttachRolePolicyRequest;
 use crate::http::aws::iam::types::create_role::CreateRoleRequest;
+use crate::http::aws::iam::types::delete_role::DeleteRoleRequest;
+use crate::http::aws::iam::types::delete_role_permissions_boundary::DeleteRolePermissionsBoundaryRequest;
+use crate::http::aws::iam::types::delete_role_policy::DeleteRolePolicyRequest;
+use crate::http::aws::iam::types::detach_role_policy::DetachRolePolicyRequest;
+use crate::http::aws::iam::types::get_role::GetRoleRequest;
 use crate::http::aws::iam::types::get_role_policy::GetRolePolicyRequest;
+use crate::http::aws::iam::types::list_attached_role_policies::ListAttachedRolePoliciesRequest;
 use crate::http::aws::iam::types::list_role_policies::ListRolePoliciesRequest;
 use crate::http::aws::iam::types::list_role_tags::ListRoleTagsRequest;
 use crate::http::aws::iam::types::list_roles::ListRolesRequest;
+use crate::http::aws::iam::types::put_role_permissions_boundary::PutRolePermissionsBoundaryRequest;
 use crate::http::aws::iam::types::put_role_policy::PutRolePolicyRequest;
 use crate::http::aws::iam::types::tag_role::TagRoleRequest;
 use crate::http::aws::iam::types::untag_role::UntagRoleRequest;
+use crate::http::aws::iam::types::update_assume_role_policy::UpdateAssumeRolePolicyRequest;
+use crate::http::aws::iam::types::update_role::UpdateRoleRequest;
+use crate::http::aws::iam::types::update_role_description::UpdateRoleDescriptionRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub async fn create_role(
@@ -324,5 +344,95 @@ pub(crate) async fn untag_role(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn get_role(
+    ctx: &OperationCtx, input: &GetRoleRequest, db: &LocalDb,
+) -> Result<GetRoleOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetRoleOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn update_role(
+    ctx: &OperationCtx, input: &UpdateRoleRequest, db: &LocalDb,
+) -> Result<UpdateRoleOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateRoleOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn update_assume_role_policy(
+    ctx: &OperationCtx, input: &UpdateAssumeRolePolicyRequest, db: &LocalDb,
+) -> Result<UpdateAssumeRolePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateAssumeRolePolicyOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn list_attached_role_policies(
+    ctx: &OperationCtx, input: &ListAttachedRolePoliciesRequest, db: &LocalDb,
+) -> Result<ListAttachedRolePoliciesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListAttachedRolePoliciesOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn detach_role_policy(
+    ctx: &OperationCtx, input: &DetachRolePolicyRequest, db: &LocalDb,
+) -> Result<DetachRolePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DetachRolePolicyOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn put_role_permissions_boundary(
+    ctx: &OperationCtx, input: &PutRolePermissionsBoundaryRequest, db: &LocalDb,
+) -> Result<PutRolePermissionsBoundaryOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = PutRolePermissionsBoundaryOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn update_role_description(
+    ctx: &OperationCtx, input: &UpdateRoleDescriptionRequest, db: &LocalDb,
+) -> Result<UpdateRoleDescriptionOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateRoleDescriptionOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_role(
+    ctx: &OperationCtx, input: &DeleteRoleRequest, db: &LocalDb,
+) -> Result<DeleteRoleOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteRoleOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_role_permissions_boundary(
+    ctx: &OperationCtx, input: &DeleteRolePermissionsBoundaryRequest, db: &LocalDb,
+) -> Result<DeleteRolePermissionsBoundaryOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteRolePermissionsBoundaryOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_role_policy(
+    ctx: &OperationCtx, input: &DeleteRolePolicyRequest, db: &LocalDb,
+) -> Result<DeleteRolePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteRolePolicyOutput::builder().build();
     Ok(output)
 }

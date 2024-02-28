@@ -1,8 +1,17 @@
 use aws_sdk_iam::operation::create_policy::CreatePolicyOutput;
 use aws_sdk_iam::operation::create_policy_version::CreatePolicyVersionOutput;
+use aws_sdk_iam::operation::delete_policy::DeletePolicyOutput;
+use aws_sdk_iam::operation::delete_policy_version::DeletePolicyVersionOutput;
+use aws_sdk_iam::operation::get_context_keys_for_custom_policy::GetContextKeysForCustomPolicyOutput;
+use aws_sdk_iam::operation::get_context_keys_for_principal_policy::GetContextKeysForPrincipalPolicyOutput;
+use aws_sdk_iam::operation::get_policy::GetPolicyOutput;
+use aws_sdk_iam::operation::get_policy_version::GetPolicyVersionOutput;
+use aws_sdk_iam::operation::list_entities_for_policy::ListEntitiesForPolicyOutput;
 use aws_sdk_iam::operation::list_policies::ListPoliciesOutput;
+use aws_sdk_iam::operation::list_policies_granting_service_access::ListPoliciesGrantingServiceAccessOutput;
 use aws_sdk_iam::operation::list_policy_tags::ListPolicyTagsOutput;
 use aws_sdk_iam::operation::list_policy_versions::ListPolicyVersionsOutput;
+use aws_sdk_iam::operation::set_default_policy_version::SetDefaultPolicyVersionOutput;
 use aws_sdk_iam::operation::tag_policy::TagPolicyOutput;
 use aws_sdk_iam::operation::untag_policy::UntagPolicyOutput;
 use aws_sdk_iam::types::{Policy, PolicyVersion};
@@ -28,9 +37,18 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::create_policy::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version::CreatePolicyVersionRequest;
+use crate::http::aws::iam::types::delete_policy::DeletePolicyRequest;
+use crate::http::aws::iam::types::delete_policy_version::DeletePolicyVersionRequest;
+use crate::http::aws::iam::types::get_context_keys_for_custom_policy::GetContextKeysForCustomPolicyRequest;
+use crate::http::aws::iam::types::get_context_keys_for_principal_policy::GetContextKeysForPrincipalPolicyRequest;
+use crate::http::aws::iam::types::get_policy::GetPolicyRequest;
+use crate::http::aws::iam::types::get_policy_version::GetPolicyVersionRequest;
+use crate::http::aws::iam::types::list_entities_for_policy::ListEntitiesForPolicyRequest;
 use crate::http::aws::iam::types::list_policies::ListPoliciesRequest;
+use crate::http::aws::iam::types::list_policies_granting_service_access::ListPoliciesGrantingServiceAccessRequest;
 use crate::http::aws::iam::types::list_policy_tags::ListPolicyTagsRequest;
 use crate::http::aws::iam::types::list_policy_versions::ListPolicyVersionsRequest;
+use crate::http::aws::iam::types::set_default_policy_version::SetDefaultPolicyVersionRequest;
 use crate::http::aws::iam::types::tag_policy::TagPolicyRequest;
 use crate::http::aws::iam::types::untag_policy::UntagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
@@ -340,6 +358,116 @@ pub(crate) async fn untag_policy(
     let output = UntagPolicyOutput::builder().build();
 
     tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn get_policy(
+    ctx: &OperationCtx, input: &GetPolicyRequest, db: &LocalDb,
+) -> Result<GetPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let output = GetPolicyOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn get_policy_version(
+    ctx: &OperationCtx, input: &GetPolicyVersionRequest, db: &LocalDb,
+) -> Result<GetPolicyVersionOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let output = GetPolicyVersionOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn set_default_policy_version(
+    ctx: &OperationCtx, input: &SetDefaultPolicyVersionRequest, db: &LocalDb,
+) -> Result<SetDefaultPolicyVersionOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let output = SetDefaultPolicyVersionOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn delete_policy(
+    ctx: &OperationCtx, input: &DeletePolicyRequest, db: &LocalDb,
+) -> Result<DeletePolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let output = DeletePolicyOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn delete_policy_version(
+    ctx: &OperationCtx, input: &DeletePolicyVersionRequest, db: &LocalDb,
+) -> Result<DeletePolicyVersionOutput, OperationError> {
+    input.validate("$")?;
+
+    let mut tx = db.new_tx().await?;
+
+    let output = DeletePolicyVersionOutput::builder().build();
+
+    tx.commit().await?;
+
+    Ok(output)
+}
+
+pub(crate) async fn get_context_keys_for_custom_policy(
+    ctx: &OperationCtx, input: &GetContextKeysForCustomPolicyRequest, db: &LocalDb,
+) -> Result<GetContextKeysForCustomPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetContextKeysForCustomPolicyOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn get_context_keys_for_principal_policy(
+    ctx: &OperationCtx, input: &GetContextKeysForPrincipalPolicyRequest, db: &LocalDb,
+) -> Result<GetContextKeysForPrincipalPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetContextKeysForPrincipalPolicyOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn list_entities_for_policy(
+    ctx: &OperationCtx, input: &ListEntitiesForPolicyRequest, db: &LocalDb,
+) -> Result<ListEntitiesForPolicyOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListEntitiesForPolicyOutput::builder().build();
+
+    Ok(output)
+}
+
+pub(crate) async fn list_policies_granting_service_access(
+    ctx: &OperationCtx, input: &ListPoliciesGrantingServiceAccessRequest, db: &LocalDb,
+) -> Result<ListPoliciesGrantingServiceAccessOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListPoliciesGrantingServiceAccessOutput::builder().build().unwrap();
 
     Ok(output)
 }

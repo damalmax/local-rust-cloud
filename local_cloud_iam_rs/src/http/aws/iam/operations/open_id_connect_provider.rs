@@ -1,8 +1,13 @@
 use aws_sdk_iam::operation::add_client_id_to_open_id_connect_provider::AddClientIdToOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::create_open_id_connect_provider::CreateOpenIdConnectProviderOutput;
+use aws_sdk_iam::operation::delete_open_id_connect_provider::DeleteOpenIdConnectProviderOutput;
+use aws_sdk_iam::operation::get_open_id_connect_provider::GetOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::list_open_id_connect_provider_tags::ListOpenIdConnectProviderTagsOutput;
+use aws_sdk_iam::operation::list_open_id_connect_providers::ListOpenIdConnectProvidersOutput;
+use aws_sdk_iam::operation::remove_client_id_from_open_id_connect_provider::RemoveClientIdFromOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::tag_open_id_connect_provider::TagOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::untag_open_id_connect_provider::UntagOpenIdConnectProviderOutput;
+use aws_sdk_iam::operation::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintOutput;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite};
 
@@ -16,9 +21,14 @@ use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
 use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider::AddClientIdToOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::create_open_id_connect_provider::CreateOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::delete_open_id_connect_provider::DeleteOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::get_open_id_connect_provider::GetOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::list_open_id_connect_provider_tags::ListOpenIdConnectProviderTagsRequest;
+use crate::http::aws::iam::types::list_open_id_connect_providers::ListOpenIdConnectProvidersRequest;
+use crate::http::aws::iam::types::remove_client_id_from_open_id_connect_provider::RemoveClientIdFromOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::tag_open_id_connect_provider::TagOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::untag_open_id_connect_provider::UntagOpenIdConnectProviderRequest;
+use crate::http::aws::iam::types::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintRequest;
 use crate::http::aws::iam::{constants, db};
 
 pub(crate) async fn add_client_id_to_open_id_connect_provider(
@@ -173,5 +183,50 @@ pub(crate) async fn untag_open_id_connect_provider(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn update_open_id_connect_provider_thumbprint(
+    ctx: &OperationCtx, input: &UpdateOpenIdConnectProviderThumbprintRequest, db: &LocalDb,
+) -> Result<UpdateOpenIdConnectProviderThumbprintOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateOpenIdConnectProviderThumbprintOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn remove_client_id_from_open_id_connect_provider(
+    ctx: &OperationCtx, input: &RemoveClientIdFromOpenIdConnectProviderRequest, db: &LocalDb,
+) -> Result<RemoveClientIdFromOpenIdConnectProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = RemoveClientIdFromOpenIdConnectProviderOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn delete_open_id_connect_provider(
+    ctx: &OperationCtx, input: &DeleteOpenIdConnectProviderRequest, db: &LocalDb,
+) -> Result<DeleteOpenIdConnectProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteOpenIdConnectProviderOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn get_open_id_connect_provider(
+    ctx: &OperationCtx, input: &GetOpenIdConnectProviderRequest, db: &LocalDb,
+) -> Result<GetOpenIdConnectProviderOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = GetOpenIdConnectProviderOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn list_open_id_connect_providers(
+    ctx: &OperationCtx, input: &ListOpenIdConnectProvidersRequest, db: &LocalDb,
+) -> Result<ListOpenIdConnectProvidersOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListOpenIdConnectProvidersOutput::builder().build();
     Ok(output)
 }

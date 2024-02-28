@@ -1,3 +1,6 @@
+use aws_sdk_iam::operation::delete_signing_certificate::DeleteSigningCertificateOutput;
+use aws_sdk_iam::operation::list_signing_certificates::ListSigningCertificatesOutput;
+use aws_sdk_iam::operation::update_signing_certificate::UpdateSigningCertificateOutput;
 use aws_sdk_iam::operation::upload_signing_certificate::UploadSigningCertificateOutput;
 use aws_sdk_iam::types::{SigningCertificate, StatusType};
 use aws_smithy_types::DateTime;
@@ -12,6 +15,9 @@ use crate::http::aws::iam::db::types::signing_certificate::InsertSigningCertific
 use crate::http::aws::iam::db::types::signing_certificate_status_type::SigningCertificateStatusType;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::types::delete_signing_certificate::DeleteSigningCertificateRequest;
+use crate::http::aws::iam::types::list_signing_certificates::ListSigningCertificatesRequest;
+use crate::http::aws::iam::types::update_signing_certificate::UpdateSigningCertificateRequest;
 use crate::http::aws::iam::types::upload_signing_certificate::UploadSigningCertificateRequest;
 
 pub(crate) async fn upload_signing_certificate(
@@ -63,5 +69,32 @@ pub(crate) async fn upload_signing_certificate(
 
     tx.commit().await?;
 
+    Ok(output)
+}
+
+pub(crate) async fn update_signing_certificate(
+    ctx: &OperationCtx, input: &UpdateSigningCertificateRequest, db: &LocalDb,
+) -> Result<UpdateSigningCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = UpdateSigningCertificateOutput::builder().build();
+    Ok(output)
+}
+
+pub(crate) async fn list_signing_certificates(
+    ctx: &OperationCtx, input: &ListSigningCertificatesRequest, db: &LocalDb,
+) -> Result<ListSigningCertificatesOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = ListSigningCertificatesOutput::builder().build().unwrap();
+    Ok(output)
+}
+
+pub(crate) async fn delete_signing_certificate(
+    ctx: &OperationCtx, input: &DeleteSigningCertificateRequest, db: &LocalDb,
+) -> Result<DeleteSigningCertificateOutput, OperationError> {
+    input.validate("$")?;
+
+    let output = DeleteSigningCertificateOutput::builder().build();
     Ok(output)
 }
