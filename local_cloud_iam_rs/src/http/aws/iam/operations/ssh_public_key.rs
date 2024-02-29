@@ -12,7 +12,7 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
-use crate::http::aws::iam::db::types::ssh_public_key::InsertSshPublicKey;
+use crate::http::aws::iam::db::types::ssh_public_key::{InsertSshPublicKey, UpdateSshPublicKeyQuery};
 use crate::http::aws::iam::db::types::ssh_public_key_type::SshPublicKeyStatusType;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
@@ -82,8 +82,17 @@ pub(crate) async fn update_ssh_public_key(
 
     let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
 
-    let output = UpdateSshPublicKeyOutput::builder().build();
+    let query = UpdateSshPublicKeyQuery {
+        key_id: input.ssh_public_key_id().unwrap().to_string(),
+        status: input.status().unwrap().into(),
+        user_id,
+    };
+    let result = db::ssh_public_key::update(tx.as_mut(), &query).await?;
+    if !result {
+        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
 
+    let output = UpdateSshPublicKeyOutput::builder().build();
     tx.commit().await?;
     Ok(output)
 }

@@ -1,3 +1,5 @@
+use local_cloud_validate::{validate_named, validate_required};
+
 use crate::http::aws::iam::types;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
@@ -24,17 +26,11 @@ impl UpdateSshPublicKeyRequest {
 
 impl local_cloud_validate::NamedValidator for &UpdateSshPublicKeyRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(self.status(), format!("{at}.{}", "Status").as_str())?;
-        local_cloud_validate::validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
-        local_cloud_validate::validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
-        local_cloud_validate::validate_required(
-            self.ssh_public_key_id(),
-            format!("{at}.{}", "SSHPublicKeyId").as_str(),
-        )?;
-        local_cloud_validate::validate_named(
-            self.ssh_public_key_id.as_ref(),
-            format!("{at}.{}", "SSHPublicKeyId").as_str(),
-        )?;
+        validate_required(self.status(), format!("{at}.{}", "Status").as_str())?;
+        validate_required(self.user_name(), format!("{at}.{}", "UserName").as_str())?;
+        validate_named(self.user_name.as_ref(), format!("{at}.{}", "UserName").as_str())?;
+        validate_required(self.ssh_public_key_id(), format!("{at}.{}", "SSHPublicKeyId").as_str())?;
+        validate_named(self.ssh_public_key_id.as_ref(), format!("{at}.{}", "SSHPublicKeyId").as_str())?;
         Ok(())
     }
 }
