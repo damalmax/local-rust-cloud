@@ -1,3 +1,5 @@
+use crate::http::aws::iam::types::status_type::StatusType;
+
 #[derive(Debug, Clone, sqlx::Type)]
 #[repr(i32)]
 pub enum SshPublicKeyStatusType {
@@ -36,6 +38,15 @@ impl From<i32> for SshPublicKeyStatusType {
             Self::Active
         } else {
             Self::Inactive
+        }
+    }
+}
+
+impl From<&StatusType> for SshPublicKeyStatusType {
+    fn from(value: &StatusType) -> Self {
+        match value {
+            StatusType::Inactive => Self::Inactive,
+            StatusType::Active => Self::Active,
         }
     }
 }
