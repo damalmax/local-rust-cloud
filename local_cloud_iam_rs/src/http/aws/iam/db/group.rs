@@ -2,7 +2,9 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
 use crate::http::aws::iam::db::types::common::Pageable;
-use crate::http::aws::iam::db::types::group::{InsertGroup, ListGroupsByUserQuery, ListGroupsQuery, SelectGroup};
+use crate::http::aws::iam::db::types::group::{
+    InsertGroup, ListGroupsByUserQuery, ListGroupsQuery, SelectGroup, UpdateGroupQuery,
+};
 
 pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, group: &mut InsertGroup) -> Result<(), Error> {
     let result = sqlx::query(
@@ -174,4 +176,37 @@ where
     .await?;
 
     Ok(groups)
+}
+
+pub(crate) async fn update<'a, E>(executor: E, account_id: i64, query: &UpdateGroupQuery) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE groups SET");
+    let mut added = false;
+    if let Some(new_group_name) = &query.new_group_name {
+        query_builder
+            .push(" group_name=")
+            .push_bind(new_group_name)
+            .push(" , unique_group_name=")
+            .push_bind(new_group_name.to_uppercase());
+        added = true;
+    }
+    if let Some(new_path) = &query.new_path {
+        if added {
+            query_builder.push(" ,");
+        }
+        query_builder.push(" path=").push_bind(new_path);
+    }
+
+    let result = query_builder
+        .push(" WHERE account_id=")
+        .push_bind(account_id)
+        .push(" AND unique_group_name=")
+        .push_bind(&query.group_name.to_uppercase())
+        .build()
+        .execute(executor)
+        .await?;
+
+    Ok(result.rows_affected() == 1)
 }
