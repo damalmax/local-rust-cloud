@@ -10,3 +10,10 @@ pub(crate) struct InsertSigningCertificate {
     pub(crate) upload_date: i64,
     pub(crate) user_id: i64,
 }
+
+#[derive(Debug)]
+pub(crate) struct UpdateSigningCertificateQuery {
+    pub(crate) certificate_id: String,
+    pub(crate) status: SigningCertificateStatusType,
+    pub(crate) user_id: i64,
+}

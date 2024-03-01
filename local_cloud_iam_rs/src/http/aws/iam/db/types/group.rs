@@ -95,3 +95,10 @@ impl From<&SelectGroup> for Group {
             .unwrap()
     }
 }
+
+#[derive(Debug)]
+pub(crate) struct UpdateGroupQuery {
+    pub(crate) group_name: String,
+    pub(crate) new_group_name: Option<String>,
+    pub(crate) new_path: Option<String>,
+}

@@ -10,8 +10,9 @@ use uuid::Uuid;
 use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
+use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db;
-use crate::http::aws::iam::db::types::signing_certificate::InsertSigningCertificate;
+use crate::http::aws::iam::db::types::signing_certificate::{InsertSigningCertificate, UpdateSigningCertificateQuery};
 use crate::http::aws::iam::db::types::signing_certificate_status_type::SigningCertificateStatusType;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::OperationError;
@@ -77,7 +78,23 @@ pub(crate) async fn update_signing_certificate(
 ) -> Result<UpdateSigningCertificateOutput, OperationError> {
     input.validate("$")?;
 
+    let mut tx = db.new_tx().await?;
+
+    let user_name = input.user_name().unwrap();
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
+
+    let query = UpdateSigningCertificateQuery {
+        user_id,
+        status: input.status().unwrap().into(),
+        certificate_id: input.certificate_id().unwrap().to_owned(),
+    };
+    let result = db::sighing_certificate::update(tx.as_mut(), &query).await?;
+    if !result {
+        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
+
     let output = UpdateSigningCertificateOutput::builder().build();
+    tx.commit().await?;
     Ok(output)
 }
 
@@ -85,6 +102,8 @@ pub(crate) async fn list_signing_certificates(
     ctx: &OperationCtx, input: &ListSigningCertificatesRequest, db: &LocalDb,
 ) -> Result<ListSigningCertificatesOutput, OperationError> {
     input.validate("$")?;
+
+    let mut connection = db.new_connection().await?;
 
     let output = ListSigningCertificatesOutput::builder().build().unwrap();
     Ok(output)
@@ -95,6 +114,9 @@ pub(crate) async fn delete_signing_certificate(
 ) -> Result<DeleteSigningCertificateOutput, OperationError> {
     input.validate("$")?;
 
+    let mut tx = db.new_tx().await?;
+
     let output = DeleteSigningCertificateOutput::builder().build();
+    tx.commit().await?;
     Ok(output)
 }

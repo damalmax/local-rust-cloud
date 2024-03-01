@@ -1,3 +1,5 @@
+use crate::http::aws::iam::types::status_type::StatusType;
+
 #[derive(Debug, Clone, sqlx::Type)]
 #[repr(i32)]
 pub enum SigningCertificateStatusType {
@@ -40,6 +42,15 @@ impl From<i32> for SigningCertificateStatusType {
             1 => Self::Active,
             2 => Self::Inactive,
             _ => Self::Expired,
+        }
+    }
+}
+
+impl From<&StatusType> for SigningCertificateStatusType {
+    fn from(value: &StatusType) -> Self {
+        match value {
+            StatusType::Inactive => Self::Inactive,
+            StatusType::Active => Self::Active,
         }
     }
 }

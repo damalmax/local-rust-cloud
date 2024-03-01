@@ -1,7 +1,7 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::signing_certificate::InsertSigningCertificate;
+use crate::http::aws::iam::db::types::signing_certificate::{InsertSigningCertificate, UpdateSigningCertificateQuery};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, cert: &mut InsertSigningCertificate,
@@ -30,4 +30,22 @@ pub(crate) async fn create<'a>(
 
     cert.id = Some(result);
     Ok(())
+}
+
+pub(crate) async fn update<'a, E>(executor: E, query: &UpdateSigningCertificateQuery) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "UPDATE signing_certificates \
+            SET status=$1 \
+            WHERE certificate_id=$2 AND user_id=$3",
+    )
+    .bind(query.status.as_i32())
+    .bind(&query.certificate_id)
+    .bind(query.user_id)
+    .execute(executor)
+    .await?;
+
+    Ok(result.rows_affected() == 1)
 }

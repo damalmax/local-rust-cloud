@@ -163,7 +163,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] update_access_key
 - [ ] update_account_password_policy
 - [ ] update_assume_role_policy
-- [ ] update_group
+- [X] update_group
 - [ ] update_login_profile
 - [ ] update_open_id_connect_provider_thumbprint
 - [ ] update_role
@@ -171,7 +171,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] update_saml_provider
 - [ ] update_server_certificate
 - [ ] update_service_specific_credential
-- [ ] update_signing_certificate
+- [X] update_signing_certificate
 - [X] update_ssh_public_key
 - [X] update_user
 - [X] upload_server_certificate

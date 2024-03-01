@@ -24,6 +24,7 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::group::{
     InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, ListGroupsByUserQuery, ListGroupsQuery, SelectGroup,
+    UpdateGroupQuery,
 };
 use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
@@ -368,7 +369,20 @@ pub(crate) async fn update_group(
 ) -> Result<UpdateGroupOutput, OperationError> {
     input.validate("$")?;
 
+    let mut tx = db.new_tx().await?;
+
+    let query = UpdateGroupQuery {
+        group_name: input.group_name().unwrap().to_owned(),
+        new_group_name: input.new_group_name().map(|s| s.to_owned()),
+        new_path: input.new_path().map(|s| s.to_owned()),
+    };
+
+    let result = db::group::update(tx.as_mut(), ctx.account_id, &query).await?;
+    if !result {
+        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
     let output = UpdateGroupOutput::builder().build();
+    tx.commit().await?;
     Ok(output)
 }
 
