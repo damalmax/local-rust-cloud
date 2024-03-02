@@ -6,6 +6,8 @@ use aws_sdk_iam::operation::list_saml_providers::ListSamlProvidersOutput;
 use aws_sdk_iam::operation::tag_saml_provider::TagSamlProviderOutput;
 use aws_sdk_iam::operation::untag_saml_provider::UntagSamlProviderOutput;
 use aws_sdk_iam::operation::update_saml_provider::UpdateSamlProviderOutput;
+use aws_sdk_iam::types::SamlProviderListEntry;
+use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
 
@@ -136,7 +138,21 @@ pub(crate) async fn list_saml_providers<'a>(
 ) -> Result<ListSamlProvidersOutput, ActionError> {
     input.validate("$")?;
 
-    let output = ListSamlProvidersOutput::builder().build();
+    let result_vec = db::saml_provider::list(tx.as_mut(), ctx.account_id).await?;
+
+    let mut saml_provider_list = vec![];
+    for provider in result_vec {
+        saml_provider_list.push(
+            SamlProviderListEntry::builder()
+                .arn(&provider.arn)
+                .create_date(DateTime::from_secs(provider.create_date))
+                .set_valid_until(provider.valid_until.map(DateTime::from_secs))
+                .build(),
+        )
+    }
+    let output = ListSamlProvidersOutput::builder()
+        .set_saml_provider_list(Some(saml_provider_list))
+        .build();
     Ok(output)
 }
 
