@@ -1,7 +1,7 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::saml_provider::InsertSamlProvider;
+use crate::http::aws::iam::db::types::saml_provider::{InsertSamlProvider, SelectSamlProvider};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, provider: &mut InsertSamlProvider,
@@ -44,5 +44,20 @@ where
         .map(|row: SqliteRow| row.get::<i64, &str>("id"))
         .fetch_optional(executor)
         .await?;
+    Ok(result)
+}
+
+pub(crate) async fn list<'a, E>(executor: E, account_id: i64) -> Result<Vec<SelectSamlProvider>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT id, name, arn, create_date, valid_until, metadata_document \
+        FROM saml_providers WHERE account_id = $1",
+    )
+    .bind(account_id)
+    .map(|row: SqliteRow| SelectSamlProvider::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
     Ok(result)
 }
