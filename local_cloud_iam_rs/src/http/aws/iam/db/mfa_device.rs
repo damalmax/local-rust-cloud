@@ -129,6 +129,21 @@ pub(crate) async fn enable<'a>(tx: &mut Transaction<'a, Sqlite>, query: &EnableM
     Ok(())
 }
 
+pub(crate) async fn disable<'a>(
+    tx: &mut Transaction<'a, Sqlite>, mfa_device_id: i64, user_id: i64,
+) -> Result<bool, Error> {
+    let result = sqlx::query(
+        "UPDATE mfa_devices \
+        SET user_id = NULL, enable_date = NULL, code1 = NULL, code2 = NULL \
+        WHERE id = $1 AND user_id = $2",
+    )
+    .bind(mfa_device_id)
+    .bind(user_id)
+    .execute(tx.as_mut())
+    .await?;
+    Ok(result.rows_affected() == 1)
+}
+
 pub(crate) async fn list_virtual<'a, E>(
     executor: E, account_id: i64, query: &ListVirtualMfaDevicesQuery,
 ) -> Result<Vec<SelectMfaDevice>, Error>
