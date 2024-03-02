@@ -6,26 +6,24 @@ use aws_sdk_iam::operation::update_login_profile::UpdateLoginProfileOutput;
 use aws_sdk_iam::types::LoginProfile;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
+use sqlx::{Sqlite, Transaction};
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::login_profile::InsertLoginProfile;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::change_password::ChangePasswordRequest;
 use crate::http::aws::iam::types::create_login_profile::CreateLoginProfileRequest;
 use crate::http::aws::iam::types::delete_login_profile::DeleteLoginProfileRequest;
 use crate::http::aws::iam::types::get_login_profile::GetLoginProfileRequest;
 use crate::http::aws::iam::types::update_login_profile::UpdateLoginProfileRequest;
 
-pub(crate) async fn create_login_profile(
-    ctx: &OperationCtx, input: &CreateLoginProfileRequest, db: &LocalDb,
-) -> Result<CreateLoginProfileOutput, OperationError> {
+pub(crate) async fn create_login_profile<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreateLoginProfileRequest,
+) -> Result<CreateLoginProfileOutput, ActionError> {
     input.validate("$")?;
-    let mut tx = db.new_tx().await?;
-
     let found_user = super::user::find_by_name(ctx, tx.as_mut(), input.user_name().unwrap().trim()).await?;
 
     let current_time = Utc::now().timestamp_millis();
@@ -38,7 +36,7 @@ pub(crate) async fn create_login_profile(
         password_reset_required,
         create_date: current_time,
     };
-    db::login_profile::create(&mut tx, &mut insert_login_profile).await?;
+    db::login_profile::create(tx, &mut insert_login_profile).await?;
     let login_profile = LoginProfile::builder()
         .create_date(DateTime::from_millis(current_time))
         .user_name(&found_user.username)
@@ -47,39 +45,37 @@ pub(crate) async fn create_login_profile(
         .unwrap();
 
     let output = CreateLoginProfileOutput::builder().login_profile(login_profile).build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn change_password(
-    _ctx: &OperationCtx, input: &ChangePasswordRequest, _db: &LocalDb,
-) -> Result<ChangePasswordOutput, OperationError> {
+pub(crate) async fn change_password<'a>(
+    tx: &mut Transaction<'a, Sqlite>, _ctx: &OperationCtx, input: &ChangePasswordRequest,
+) -> Result<ChangePasswordOutput, ActionError> {
     input.validate("$")?;
     // TODO:
     let output = ChangePasswordOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn update_login_profile(
-    _ctx: &OperationCtx, input: &UpdateLoginProfileRequest, _db: &LocalDb,
-) -> Result<UpdateLoginProfileOutput, OperationError> {
+pub(crate) async fn update_login_profile<'a>(
+    tx: &mut Transaction<'a, Sqlite>, _ctx: &OperationCtx, input: &UpdateLoginProfileRequest,
+) -> Result<UpdateLoginProfileOutput, ActionError> {
     input.validate("$")?;
     let output = UpdateLoginProfileOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn get_login_profile(
-    _ctx: &OperationCtx, input: &GetLoginProfileRequest, _db: &LocalDb,
-) -> Result<GetLoginProfileOutput, OperationError> {
+pub(crate) async fn get_login_profile<'a>(
+    tx: &mut Transaction<'a, Sqlite>, _ctx: &OperationCtx, input: &GetLoginProfileRequest,
+) -> Result<GetLoginProfileOutput, ActionError> {
     input.validate("$")?;
     let output = GetLoginProfileOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn delete_login_profile(
-    _ctx: &OperationCtx, input: &DeleteLoginProfileRequest, _db: &LocalDb,
-) -> Result<DeleteLoginProfileOutput, OperationError> {
+pub(crate) async fn delete_login_profile<'a>(
+    tx: &mut Transaction<'a, Sqlite>, _ctx: &OperationCtx, input: &DeleteLoginProfileRequest,
+) -> Result<DeleteLoginProfileOutput, ActionError> {
     input.validate("$")?;
     let output = DeleteLoginProfileOutput::builder().build();
     Ok(output)

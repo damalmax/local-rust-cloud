@@ -1,4 +1,3 @@
-use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
@@ -91,9 +90,12 @@ where
     Ok(result)
 }
 
-pub(crate) async fn list(
-    connection: &mut PoolConnection<Sqlite>, account_id: i64, query: &ListPoliciesQuery,
-) -> Result<Vec<SelectPolicy>, Error> {
+pub(crate) async fn list<'a, E>(
+    executor: E, account_id: i64, query: &ListPoliciesQuery,
+) -> Result<Vec<SelectPolicy>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
     let scopes: Vec<i32> = query.policy_scope_types.iter().map(|v| v.as_i32()).collect();
 
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
@@ -138,7 +140,7 @@ pub(crate) async fn list(
         .push_bind(query.skip)
         .build()
         .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
-        .fetch_all(connection.as_mut())
+        .fetch_all(executor)
         .await?;
     Ok(policies)
 }

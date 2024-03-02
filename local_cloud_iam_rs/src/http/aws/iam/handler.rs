@@ -10,6 +10,7 @@ macro_rules! action_handler {
         use axum::extract::State;
         use axum::http::StatusCode;
         use uuid::Uuid;
+        use sqlx::{Sqlite, Transaction};
 
         use local_cloud_axum::local::web::{AwsQueryBody, XmlResponse};
         use local_cloud_db::LocalDb;
@@ -18,7 +19,7 @@ macro_rules! action_handler {
         use crate::http::aws::iam::actions::error::ApiError;
         use crate::http::aws::iam::outputs::wrapper::OutputWrapper;
         use crate::http::aws::iam::operations::ctx::OperationCtx;
-        use crate::http::aws::iam::operations::error::OperationError;
+        use crate::http::aws::iam::operations::error::ActionError;
 
         $(
             use aws_sdk_iam::operation::$action::$response;
@@ -40,19 +41,28 @@ macro_rules! action_handler {
             let account_id = 1i64;
             let aws_request = aws_query.into_inner();
             let aws_request_id = Uuid::new_v4().to_string();
-            let output: Result<XmlResponse, ApiError> = match aws_request {
+
+
+            let output: Result<XmlResponse, ActionError> = match aws_request {
                 $(
-                    $name::$variant(request) => request.execute(account_id, &aws_request_id, &db)
-                        .await
-                        .map(|out| out.into()),
+                    $name::$variant(request) => handle_action_with_tx(&db, account_id, &aws_request_id, request).await,
                 )+
             };
+            let output: Result<XmlResponse, ApiError> = output.map_err(|error| match error {
+                ActionError::Service { kind, msg } => {
+                    tracing::error!("Failed to execute operation. Error message: {}", msg);
+                    ApiError::new(kind, &msg, &aws_request_id)
+                }
+                ActionError::Validation(error) => ApiError::from_validation_error(&error, &aws_request_id)
+            });
             match output {
-                Ok(body) => Response::builder()
+                Ok(body) => {
+                    Response::builder()
                                 .header(CONTENT_TYPE_HEADER, CONTENT_TYPE_HEADER_VALUE)
                                 .status(StatusCode::OK)
                                 .body(body.to_owned())
-                                .unwrap(),
+                                .unwrap()
+                }
                 Err(err) => {
                     let error_code = err.kind.status_code();
                     let body: XmlResponse = err.into();
@@ -65,20 +75,21 @@ macro_rules! action_handler {
             }
         }
 
+        async fn handle_action_with_tx(db: &LocalDb, account_id: i64, aws_request_id: &str, action: impl Action) -> Result<XmlResponse, ActionError> {
+            let mut tx = db.new_tx().await?;
+            let response = action.execute(&mut tx, account_id, &aws_request_id)
+                            .await
+                            .map(|out| out.into())?;
+            tx.commit().await?;
+            Ok(response)
+        }
+
         $(
             impl Action for $request {
                 type Output = OutputWrapper<$response>;
-                async fn execute(&self, account_id: i64, aws_request_id: &str, db: &LocalDb) -> Result<Self::Output, ApiError> {
+                async fn execute<'a>(&self, tx: &mut Transaction<'a, Sqlite>, account_id: i64, aws_request_id: &str) -> Result<Self::Output, ActionError> {
                     let ctx = OperationCtx::new(account_id, aws_request_id);
-                    let output = crate::http::aws::iam::operations::$resource::$action(&ctx, self, db)
-                        .await
-                        .map_err(|error| match error {
-                            OperationError::Service { kind, msg } => ApiError::new(kind, &msg, aws_request_id),
-                            OperationError::Validation(error) => {
-                                ApiError::from_validation_error(&error, aws_request_id)
-                            }
-                        })?;
-
+                    let output = crate::http::aws::iam::operations::$resource::$action(tx, &ctx, self).await?;
                     Ok(OutputWrapper::new(output, aws_request_id))
                 }
             }

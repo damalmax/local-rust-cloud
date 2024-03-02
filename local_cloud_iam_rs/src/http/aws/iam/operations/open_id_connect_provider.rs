@@ -9,16 +9,15 @@ use aws_sdk_iam::operation::tag_open_id_connect_provider::TagOpenIdConnectProvid
 use aws_sdk_iam::operation::untag_open_id_connect_provider::UntagOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintOutput;
 use chrono::Utc;
-use sqlx::{Executor, Sqlite};
+use sqlx::{Executor, Sqlite, Transaction};
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::open_id_connect_provider::InsertOpenIdConnectProvider;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::add_client_id_to_open_id_connect_provider::AddClientIdToOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::create_open_id_connect_provider::CreateOpenIdConnectProviderRequest;
 use crate::http::aws::iam::types::delete_open_id_connect_provider::DeleteOpenIdConnectProviderRequest;
@@ -31,27 +30,25 @@ use crate::http::aws::iam::types::untag_open_id_connect_provider::UntagOpenIdCon
 use crate::http::aws::iam::types::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub(crate) async fn add_client_id_to_open_id_connect_provider(
-    ctx: &OperationCtx, input: &AddClientIdToOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<AddClientIdToOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn add_client_id_to_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AddClientIdToOpenIdConnectProviderRequest,
+) -> Result<AddClientIdToOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
-    let mut tx = db.new_tx().await?;
     let arn = input.open_id_connect_provider_arn().unwrap();
     let provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
-    db::open_id_connect_provider_client_id::create(&mut tx, provider_id, input.client_id().unwrap()).await?;
+    db::open_id_connect_provider_client_id::create(tx, provider_id, input.client_id().unwrap()).await?;
     let output = AddClientIdToOpenIdConnectProviderOutput::builder().build();
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::open_id_connect_provider::find_id_by_arn(executor, account_id, arn).await? {
         Some(provider_id) => Ok(provider_id),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM OpenID connect provider with ARN '{}' doesn't exist.", arn).as_str(),
             ));
@@ -59,9 +56,9 @@ where
     }
 }
 
-pub(crate) async fn create_open_id_connect_provider(
-    ctx: &OperationCtx, input: &CreateOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<CreateOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn create_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreateOpenIdConnectProviderRequest,
+) -> Result<CreateOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
 
     let current_time = Utc::now().timestamp();
@@ -76,8 +73,6 @@ pub(crate) async fn create_open_id_connect_provider(
             .unwrap()
     );
 
-    let mut tx = db.new_tx().await?;
-
     let mut insert_provider = InsertOpenIdConnectProvider {
         id: None,
         account_id: ctx.account_id,
@@ -85,42 +80,38 @@ pub(crate) async fn create_open_id_connect_provider(
         url: input.url().unwrap().to_owned(),
         create_date: current_time,
     };
-    db::open_id_connect_provider::create(&mut tx, &mut insert_provider).await?;
+    db::open_id_connect_provider::create(tx, &mut insert_provider).await?;
     let provider_id = insert_provider.id.unwrap();
 
     if let Some(client_id_list) = input.client_id_list() {
-        db::open_id_connect_provider_client_id::create_all(&mut tx, provider_id, client_id_list).await?;
+        db::open_id_connect_provider_client_id::create_all(tx, provider_id, client_id_list).await?;
     }
 
     if let Some(thumbprints) = input.thumbprint_list() {
-        db::open_id_connect_provider_client_thumbprint::create_all(&mut tx, provider_id, thumbprints).await?;
+        db::open_id_connect_provider_client_thumbprint::create_all(tx, provider_id, thumbprints).await?;
     }
 
     let mut tags = super::tag::prepare_for_db(input.tags(), provider_id);
-    db::Tags::OpenIdConnectProvider.save_all(&mut tx, &mut tags).await?;
+    db::Tags::OpenIdConnectProvider.save_all(tx, &mut tags).await?;
 
     let output = CreateOpenIdConnectProviderOutput::builder()
         .open_id_connect_provider_arn(&insert_provider.arn)
         .set_tags(super::tag::prepare_for_output(&tags))
         .build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_open_id_connect_provider_tags(
-    ctx: &OperationCtx, input: &ListOpenIdConnectProviderTagsRequest, db: &LocalDb,
-) -> Result<ListOpenIdConnectProviderTagsOutput, OperationError> {
+pub(crate) async fn list_open_id_connect_provider_tags<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListOpenIdConnectProviderTagsRequest,
+) -> Result<ListOpenIdConnectProviderTagsOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let provider_id =
-        find_id_by_arn(connection.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
+        find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
     let found_tags = db::Tags::OpenIdConnectProvider
-        .list(connection.as_mut(), provider_id, &query)
+        .list(tx.as_mut(), provider_id, &query)
         .await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
@@ -135,23 +126,19 @@ pub(crate) async fn list_open_id_connect_provider_tags(
     Ok(output)
 }
 
-pub(crate) async fn tag_open_id_connect_provider(
-    ctx: &OperationCtx, input: &TagOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<TagOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn tag_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &TagOpenIdConnectProviderRequest,
+) -> Result<TagOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let provider_id =
         find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap()).await?;
     let mut provider_tags = super::tag::prepare_for_db(input.tags(), provider_id);
 
-    db::Tags::OpenIdConnectProvider
-        .save_all(&mut tx, &mut provider_tags)
-        .await?;
+    db::Tags::OpenIdConnectProvider.save_all(tx, &mut provider_tags).await?;
     let count = db::Tags::OpenIdConnectProvider.count(tx.as_mut(), provider_id).await?;
     if count > constants::tag::MAX_COUNT {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::LimitExceeded,
             format!("Cannot assign more than {} tags to IAM OpenID connect provider.", constants::tag::MAX_COUNT)
                 .as_str(),
@@ -159,72 +146,64 @@ pub(crate) async fn tag_open_id_connect_provider(
     }
 
     let output = TagOpenIdConnectProviderOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn untag_open_id_connect_provider(
-    ctx: &OperationCtx, input: &UntagOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<UntagOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn untag_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UntagOpenIdConnectProviderRequest,
+) -> Result<UntagOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let provider_id =
         find_id_by_arn(tx.as_mut(), ctx.account_id, input.open_id_connect_provider_arn().unwrap().trim()).await?;
 
     db::Tags::OpenIdConnectProvider
-        .delete_all(&mut tx, provider_id, &input.tag_keys())
+        .delete_all(tx, provider_id, &input.tag_keys())
         .await?;
 
     let output = UntagOpenIdConnectProviderOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn update_open_id_connect_provider_thumbprint(
-    ctx: &OperationCtx, input: &UpdateOpenIdConnectProviderThumbprintRequest, db: &LocalDb,
-) -> Result<UpdateOpenIdConnectProviderThumbprintOutput, OperationError> {
+pub(crate) async fn update_open_id_connect_provider_thumbprint<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UpdateOpenIdConnectProviderThumbprintRequest,
+) -> Result<UpdateOpenIdConnectProviderThumbprintOutput, ActionError> {
     input.validate("$")?;
 
     let output = UpdateOpenIdConnectProviderThumbprintOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn remove_client_id_from_open_id_connect_provider(
-    ctx: &OperationCtx, input: &RemoveClientIdFromOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<RemoveClientIdFromOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn remove_client_id_from_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &RemoveClientIdFromOpenIdConnectProviderRequest,
+) -> Result<RemoveClientIdFromOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
 
     let output = RemoveClientIdFromOpenIdConnectProviderOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn delete_open_id_connect_provider(
-    ctx: &OperationCtx, input: &DeleteOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<DeleteOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn delete_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteOpenIdConnectProviderRequest,
+) -> Result<DeleteOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteOpenIdConnectProviderOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn get_open_id_connect_provider(
-    ctx: &OperationCtx, input: &GetOpenIdConnectProviderRequest, db: &LocalDb,
-) -> Result<GetOpenIdConnectProviderOutput, OperationError> {
+pub(crate) async fn get_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetOpenIdConnectProviderRequest,
+) -> Result<GetOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
 
     let output = GetOpenIdConnectProviderOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn list_open_id_connect_providers(
-    ctx: &OperationCtx, input: &ListOpenIdConnectProvidersRequest, db: &LocalDb,
-) -> Result<ListOpenIdConnectProvidersOutput, OperationError> {
+pub(crate) async fn list_open_id_connect_providers<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListOpenIdConnectProvidersRequest,
+) -> Result<ListOpenIdConnectProvidersOutput, ActionError> {
     input.validate("$")?;
 
     let output = ListOpenIdConnectProvidersOutput::builder().build();

@@ -5,9 +5,9 @@ use aws_sdk_iam::operation::upload_signing_certificate::UploadSigningCertificate
 use aws_sdk_iam::types::{SigningCertificate, StatusType};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
+use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
@@ -15,18 +15,17 @@ use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::signing_certificate::{InsertSigningCertificate, UpdateSigningCertificateQuery};
 use crate::http::aws::iam::db::types::signing_certificate_status_type::SigningCertificateStatusType;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::delete_signing_certificate::DeleteSigningCertificateRequest;
 use crate::http::aws::iam::types::list_signing_certificates::ListSigningCertificatesRequest;
 use crate::http::aws::iam::types::update_signing_certificate::UpdateSigningCertificateRequest;
 use crate::http::aws::iam::types::upload_signing_certificate::UploadSigningCertificateRequest;
 
-pub(crate) async fn upload_signing_certificate(
-    ctx: &OperationCtx, input: &UploadSigningCertificateRequest, db: &LocalDb,
-) -> Result<UploadSigningCertificateOutput, OperationError> {
+pub(crate) async fn upload_signing_certificate<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UploadSigningCertificateRequest,
+) -> Result<UploadSigningCertificateOutput, ActionError> {
     input.validate("$")?;
 
-    let mut tx = db.new_tx().await?;
     let current_time = Utc::now().timestamp();
 
     let user = super::user::find_by_name(ctx, tx.as_mut(), input.user_name().unwrap().trim()).await?;
@@ -53,7 +52,7 @@ pub(crate) async fn upload_signing_certificate(
         user_id: user.id,
     };
 
-    db::sighing_certificate::create(&mut tx, &mut insert_signing_certificate).await?;
+    db::sighing_certificate::create(tx, &mut insert_signing_certificate).await?;
 
     let certificate = SigningCertificate::builder()
         .certificate_id(&insert_signing_certificate.certificate_id)
@@ -67,18 +66,13 @@ pub(crate) async fn upload_signing_certificate(
     let output = UploadSigningCertificateOutput::builder()
         .certificate(certificate)
         .build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn update_signing_certificate(
-    ctx: &OperationCtx, input: &UpdateSigningCertificateRequest, db: &LocalDb,
-) -> Result<UpdateSigningCertificateOutput, OperationError> {
+pub(crate) async fn update_signing_certificate<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UpdateSigningCertificateRequest,
+) -> Result<UpdateSigningCertificateOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let user_name = input.user_name().unwrap();
     let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
@@ -90,33 +84,27 @@ pub(crate) async fn update_signing_certificate(
     };
     let result = db::sighing_certificate::update(tx.as_mut(), &query).await?;
     if !result {
-        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
     }
 
     let output = UpdateSigningCertificateOutput::builder().build();
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_signing_certificates(
-    ctx: &OperationCtx, input: &ListSigningCertificatesRequest, db: &LocalDb,
-) -> Result<ListSigningCertificatesOutput, OperationError> {
+pub(crate) async fn list_signing_certificates<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListSigningCertificatesRequest,
+) -> Result<ListSigningCertificatesOutput, ActionError> {
     input.validate("$")?;
-
-    let mut connection = db.new_connection().await?;
 
     let output = ListSigningCertificatesOutput::builder().build().unwrap();
     Ok(output)
 }
 
-pub(crate) async fn delete_signing_certificate(
-    ctx: &OperationCtx, input: &DeleteSigningCertificateRequest, db: &LocalDb,
-) -> Result<DeleteSigningCertificateOutput, OperationError> {
+pub(crate) async fn delete_signing_certificate<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteSigningCertificateRequest,
+) -> Result<DeleteSigningCertificateOutput, ActionError> {
     input.validate("$")?;
 
-    let mut tx = db.new_tx().await?;
-
     let output = DeleteSigningCertificateOutput::builder().build();
-    tx.commit().await?;
     Ok(output)
 }

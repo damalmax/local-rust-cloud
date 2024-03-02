@@ -19,7 +19,6 @@ use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
@@ -34,7 +33,7 @@ use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::create_policy::CreatePolicyRequest;
 use crate::http::aws::iam::types::create_policy_version::CreatePolicyVersionRequest;
 use crate::http::aws::iam::types::delete_policy::DeletePolicyRequest;
@@ -53,25 +52,22 @@ use crate::http::aws::iam::types::tag_policy::TagPolicyRequest;
 use crate::http::aws::iam::types::untag_policy::UntagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub(crate) async fn create_policy(
-    ctx: &OperationCtx, input: &CreatePolicyRequest, db: &LocalDb,
-) -> Result<CreatePolicyOutput, OperationError> {
+pub(crate) async fn create_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreatePolicyRequest,
+) -> Result<CreatePolicyOutput, ActionError> {
     // validate
     input.validate("$")?;
     let policy_document = input.policy_document().unwrap();
 
-    // init transaction
-    let mut tx = db.new_tx().await?;
-
-    let policy_id = create_resource_id(&mut tx, constants::policy::PREFIX, ResourceType::Policy).await?;
+    let policy_id = create_resource_id(tx, constants::policy::PREFIX, ResourceType::Policy).await?;
     let current_time = Utc::now().timestamp();
     let mut insert_policy: InsertPolicy = prepare_policy_for_insert(ctx, input, &policy_id, current_time)
-        .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+        .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
-    db::policy::create(&mut tx, &mut insert_policy).await?;
+    db::policy::create(tx, &mut insert_policy).await?;
 
     let policy_version_id =
-        create_resource_id(&mut tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
+        create_resource_id(tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
     let mut policy_version = prepare_policy_version_for_insert(
         ctx,
         policy_document,
@@ -79,12 +75,12 @@ pub(crate) async fn create_policy(
         policy_version_id,
         current_time,
     )
-    .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
-    db::policy_version::create(&mut tx, &mut policy_version).await?;
+    .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+    db::policy_version::create(tx, &mut policy_version).await?;
 
     let mut policy_tags = super::tag::prepare_for_db(input.tags(), insert_policy.id.unwrap());
 
-    db::Tags::Policy.save_all(&mut tx, &mut policy_tags).await?;
+    db::Tags::Policy.save_all(tx, &mut policy_tags).await?;
 
     let response_policy_builder = Policy::builder()
         .arn(insert_policy.arn)
@@ -101,38 +97,32 @@ pub(crate) async fn create_policy(
         .policy_name(&insert_policy.policy_name);
     let policy = response_policy_builder.build();
     let output = CreatePolicyOutput::builder().policy(policy).build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn create_policy_version(
-    ctx: &OperationCtx, input: &CreatePolicyVersionRequest, db: &LocalDb,
-) -> Result<CreatePolicyVersionOutput, OperationError> {
+pub(crate) async fn create_policy_version<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreatePolicyVersionRequest,
+) -> Result<CreatePolicyVersionOutput, ActionError> {
     // validate
     input.validate("$")?;
     let policy_document = input.policy_document().unwrap();
 
-    // init transaction
-    let mut tx = db.new_tx().await?;
-
     let policy_id = db::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap()).await?;
     if policy_id.is_none() {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::NoSuchEntity,
             format!("Unable to find policy with ARN '{}'.", input.policy_arn().unwrap()).as_str(),
         ));
     }
 
     let policy_id = policy_id.unwrap();
-    check_policy_version_count(&mut tx, policy_id).await?;
+    check_policy_version_count(tx, policy_id).await?;
 
     // check whether new policy version should be set as default. True by default
     let set_as_default = input.set_as_default().unwrap_or(true);
     if set_as_default {
         // find and disable previous default policy version
-        db::policy_version::disable_default_by_policy_id(&mut tx, policy_id).await?;
+        db::policy_version::disable_default_by_policy_id(tx, policy_id).await?;
     }
 
     let current_time = Utc::now().timestamp();
@@ -143,30 +133,26 @@ pub(crate) async fn create_policy_version(
         .build();
 
     let policy_version_id =
-        create_resource_id(&mut tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
+        create_resource_id(tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
     let mut insert_policy_version =
         prepare_policy_version_for_insert(ctx, policy_document, policy_id, policy_version_id, current_time)
-            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
-    db::policy_version::create(&mut tx, &mut insert_policy_version).await?;
+            .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+    db::policy_version::create(tx, &mut insert_policy_version).await?;
 
     let output = CreatePolicyVersionOutput::builder()
         .policy_version(policy_version)
         .build();
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn list_policy_versions(
-    ctx: &OperationCtx, input: &ListPolicyVersionsRequest, db: &LocalDb,
-) -> Result<ListPolicyVersionsOutput, OperationError> {
+pub(crate) async fn list_policy_versions<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListPolicyVersionsRequest,
+) -> Result<ListPolicyVersionsOutput, ActionError> {
     input.validate("$")?;
 
     let policy_arn = input.policy_arn().unwrap().trim();
 
-    let mut connection = db.new_connection().await?;
-
-    let policy_id = find_id_by_arn(connection.as_mut(), ctx.account_id, policy_arn).await?;
+    let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
 
     let query = ListPolicyVersionsQuery {
         policy_id,
@@ -180,7 +166,7 @@ pub(crate) async fn list_policy_versions(
         },
     };
 
-    let found_policy_versions = db::policy_version::find_by_policy_id(connection.as_mut(), &query).await?;
+    let found_policy_versions = db::policy_version::find_by_policy_id(tx.as_mut(), &query).await?;
 
     let policy_versions = super::common::convert_and_limit(&found_policy_versions, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policy_versions.len())?;
@@ -193,12 +179,10 @@ pub(crate) async fn list_policy_versions(
     Ok(output)
 }
 
-async fn check_policy_version_count<'a>(
-    tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
-) -> Result<(), OperationError> {
+async fn check_policy_version_count<'a>(tx: &mut Transaction<'a, Sqlite>, policy_id: i64) -> Result<(), ActionError> {
     let policy_version_count = db::policy_version::count_by_policy_id(tx, policy_id).await?;
     if policy_version_count >= constants::policy_version::POLICY_VERSION_MAX_COUNT {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::LimitExceeded,
             format!(
                 "Number of Policy Versions cannot be greater than '{}'. Actual count: '{}'.",
@@ -211,14 +195,14 @@ async fn check_policy_version_count<'a>(
     Ok(())
 }
 
-pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, OperationError>
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::policy::find_id_by_arn(executor, account_id, arn).await? {
         Some(policy_id) => Ok(policy_id),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM policy with ARN '{}' doesn't exist.", arn).as_str(),
             ));
@@ -226,17 +210,14 @@ where
     }
 }
 
-pub(crate) async fn list_policies(
-    ctx: &OperationCtx, input: &ListPoliciesRequest, db: &LocalDb,
-) -> Result<ListPoliciesOutput, OperationError> {
+pub(crate) async fn list_policies<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListPoliciesRequest,
+) -> Result<ListPoliciesOutput, ActionError> {
     input.validate("$")?;
 
     let query = input.into();
 
-    // obtain connection
-    let mut connection = db.new_connection().await?;
-
-    let found_policies: Vec<SelectPolicy> = db::policy::list(&mut connection, ctx.account_id, &query).await?;
+    let found_policies: Vec<SelectPolicy> = db::policy::list(tx.as_mut(), ctx.account_id, &query).await?;
 
     let policies = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
@@ -246,26 +227,19 @@ pub(crate) async fn list_policies(
         .set_is_truncated(marker.as_ref().map(|_v| true))
         .set_marker(marker)
         .build();
-
     Ok(output)
 }
 
-pub(crate) async fn list_policy_tags(
-    ctx: &OperationCtx, input: &ListPolicyTagsRequest, db: &LocalDb,
-) -> Result<ListPolicyTagsOutput, OperationError> {
+pub(crate) async fn list_policy_tags<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListPolicyTagsRequest,
+) -> Result<ListPolicyTagsOutput, ActionError> {
     input.validate("$")?;
 
-    // obtain connection
-    let mut connection = db.new_connection().await?;
-
-    let found_policy_id =
-        find_id_by_arn(connection.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
+    let found_policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
 
-    let found_tags = db::Tags::Policy
-        .list(connection.as_mut(), found_policy_id, &query)
-        .await?;
+    let found_tags = db::Tags::Policy.list(tx.as_mut(), found_policy_id, &query).await?;
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
 
@@ -278,29 +252,24 @@ pub(crate) async fn list_policy_tags(
     Ok(output)
 }
 
-pub(crate) async fn tag_policy(
-    ctx: &OperationCtx, input: &TagPolicyRequest, db: &LocalDb,
-) -> Result<TagPolicyOutput, OperationError> {
+pub(crate) async fn tag_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &TagPolicyRequest,
+) -> Result<TagPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
     let mut policy_tags = super::tag::prepare_for_db(input.tags(), policy_id);
 
-    db::Tags::Policy.save_all(&mut tx, &mut policy_tags).await?;
+    db::Tags::Policy.save_all(tx, &mut policy_tags).await?;
     let count = db::Tags::Policy.count(tx.as_mut(), policy_id).await?;
     if count > constants::tag::MAX_COUNT {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::LimitExceeded,
             format!("Cannot assign more than {} tags to IAM policy.", constants::tag::MAX_COUNT).as_str(),
         ));
     }
 
     let output = TagPolicyOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
@@ -342,132 +311,96 @@ fn prepare_policy_version_for_insert(
         .build()
 }
 
-pub(crate) async fn untag_policy(
-    ctx: &OperationCtx, input: &UntagPolicyRequest, db: &LocalDb,
-) -> Result<UntagPolicyOutput, OperationError> {
+pub(crate) async fn untag_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UntagPolicyRequest,
+) -> Result<UntagPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
-    db::Tags::Policy
-        .delete_all(&mut tx, policy_id, &input.tag_keys())
-        .await?;
+    db::Tags::Policy.delete_all(tx, policy_id, &input.tag_keys()).await?;
 
     let output = UntagPolicyOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn get_policy(
-    ctx: &OperationCtx, input: &GetPolicyRequest, db: &LocalDb,
-) -> Result<GetPolicyOutput, OperationError> {
+pub(crate) async fn get_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetPolicyRequest,
+) -> Result<GetPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let output = GetPolicyOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn get_policy_version(
-    ctx: &OperationCtx, input: &GetPolicyVersionRequest, db: &LocalDb,
-) -> Result<GetPolicyVersionOutput, OperationError> {
+pub(crate) async fn get_policy_version<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetPolicyVersionRequest,
+) -> Result<GetPolicyVersionOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let output = GetPolicyVersionOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn set_default_policy_version(
-    ctx: &OperationCtx, input: &SetDefaultPolicyVersionRequest, db: &LocalDb,
-) -> Result<SetDefaultPolicyVersionOutput, OperationError> {
+pub(crate) async fn set_default_policy_version<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &SetDefaultPolicyVersionRequest,
+) -> Result<SetDefaultPolicyVersionOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let output = SetDefaultPolicyVersionOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn delete_policy(
-    ctx: &OperationCtx, input: &DeletePolicyRequest, db: &LocalDb,
-) -> Result<DeletePolicyOutput, OperationError> {
+pub(crate) async fn delete_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeletePolicyRequest,
+) -> Result<DeletePolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let output = DeletePolicyOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn delete_policy_version(
-    ctx: &OperationCtx, input: &DeletePolicyVersionRequest, db: &LocalDb,
-) -> Result<DeletePolicyVersionOutput, OperationError> {
+pub(crate) async fn delete_policy_version<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeletePolicyVersionRequest,
+) -> Result<DeletePolicyVersionOutput, ActionError> {
     input.validate("$")?;
 
-    let mut tx = db.new_tx().await?;
-
     let output = DeletePolicyVersionOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn get_context_keys_for_custom_policy(
-    ctx: &OperationCtx, input: &GetContextKeysForCustomPolicyRequest, db: &LocalDb,
-) -> Result<GetContextKeysForCustomPolicyOutput, OperationError> {
+pub(crate) async fn get_context_keys_for_custom_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetContextKeysForCustomPolicyRequest,
+) -> Result<GetContextKeysForCustomPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = GetContextKeysForCustomPolicyOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn get_context_keys_for_principal_policy(
-    ctx: &OperationCtx, input: &GetContextKeysForPrincipalPolicyRequest, db: &LocalDb,
-) -> Result<GetContextKeysForPrincipalPolicyOutput, OperationError> {
+pub(crate) async fn get_context_keys_for_principal_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetContextKeysForPrincipalPolicyRequest,
+) -> Result<GetContextKeysForPrincipalPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = GetContextKeysForPrincipalPolicyOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn list_entities_for_policy(
-    ctx: &OperationCtx, input: &ListEntitiesForPolicyRequest, db: &LocalDb,
-) -> Result<ListEntitiesForPolicyOutput, OperationError> {
+pub(crate) async fn list_entities_for_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListEntitiesForPolicyRequest,
+) -> Result<ListEntitiesForPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = ListEntitiesForPolicyOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn list_policies_granting_service_access(
-    ctx: &OperationCtx, input: &ListPoliciesGrantingServiceAccessRequest, db: &LocalDb,
-) -> Result<ListPoliciesGrantingServiceAccessOutput, OperationError> {
+pub(crate) async fn list_policies_granting_service_access<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListPoliciesGrantingServiceAccessRequest,
+) -> Result<ListPoliciesGrantingServiceAccessOutput, ActionError> {
     input.validate("$")?;
 
     let output = ListPoliciesGrantingServiceAccessOutput::builder().build().unwrap();
-
     Ok(output)
 }

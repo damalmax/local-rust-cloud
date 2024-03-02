@@ -16,9 +16,8 @@ use aws_sdk_iam::operation::update_group::UpdateGroupOutput;
 use aws_sdk_iam::types::Group;
 use aws_smithy_types::DateTime;
 use chrono::Utc;
-use sqlx::{Executor, Sqlite};
+use sqlx::{Executor, Sqlite, Transaction};
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
@@ -31,7 +30,7 @@ use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::add_user_to_group::AddUserToGroupRequest;
 use crate::http::aws::iam::types::attach_group_policy::AttachGroupPolicyRequest;
 use crate::http::aws::iam::types::create_group::CreateGroupRequest;
@@ -49,20 +48,19 @@ use crate::http::aws::iam::types::remove_user_from_group::RemoveUserFromGroupReq
 use crate::http::aws::iam::types::update_group::UpdateGroupRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub(crate) async fn create_group(
-    ctx: &OperationCtx, input: &CreateGroupRequest, db: &LocalDb,
-) -> Result<CreateGroupOutput, OperationError> {
+pub(crate) async fn create_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreateGroupRequest,
+) -> Result<CreateGroupOutput, ActionError> {
     input.validate("$")?;
 
     let current_time = Utc::now().timestamp();
 
-    let mut tx = db.new_tx().await?;
-    let group_id = create_resource_id(&mut tx, constants::group::PREFIX, ResourceType::Group).await?;
+    let group_id = create_resource_id(tx, constants::group::PREFIX, ResourceType::Group).await?;
 
     let mut insert_group = prepare_group_for_insert(ctx, input, &group_id, current_time)
-        .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+        .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
-    db::group::create(&mut tx, &mut insert_group).await?;
+    db::group::create(tx, &mut insert_group).await?;
 
     let group = Group::builder()
         .group_id(group_id)
@@ -73,8 +71,6 @@ pub(crate) async fn create_group(
         .build()
         .unwrap();
     let output = CreateGroupOutput::builder().group(group).build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
@@ -95,17 +91,14 @@ fn prepare_group_for_insert(
         .build()
 }
 
-pub(crate) async fn list_groups(
-    ctx: &OperationCtx, input: &ListGroupsRequest, db: &LocalDb,
-) -> Result<ListGroupsOutput, OperationError> {
+pub(crate) async fn list_groups<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListGroupsRequest,
+) -> Result<ListGroupsOutput, ActionError> {
     input.validate("$")?;
 
     let query: ListGroupsQuery = input.into();
 
-    // obtain connection
-    let mut connection = db.new_connection().await?;
-
-    let found_groups: Vec<SelectGroup> = db::group::list(connection.as_mut(), ctx.account_id, &query).await?;
+    let found_groups: Vec<SelectGroup> = db::group::list(tx.as_mut(), ctx.account_id, &query).await?;
 
     let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
     let groups = super::common::convert_and_limit(&found_groups, query.limit).unwrap_or_default();
@@ -121,14 +114,14 @@ pub(crate) async fn list_groups(
 
 pub(crate) async fn find_by_name<'a, E>(
     ctx: &OperationCtx, executor: E, group_name: &str,
-) -> Result<SelectGroup, OperationError>
+) -> Result<SelectGroup, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::group::find_by_name(executor, ctx.account_id, group_name).await? {
         Some(group) => Ok(group),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
             ));
@@ -136,16 +129,14 @@ where
     }
 }
 
-pub(crate) async fn find_id_by_name<'a, E>(
-    executor: E, account_id: i64, group_name: &str,
-) -> Result<i64, OperationError>
+pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, group_name: &str) -> Result<i64, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::group::find_id_by_name(executor, account_id, group_name).await? {
         Some(id) => Ok(id),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
             ));
@@ -153,29 +144,24 @@ where
     }
 }
 
-pub(crate) async fn add_user_to_group(
-    ctx: &OperationCtx, input: &AddUserToGroupRequest, db: &LocalDb,
-) -> Result<AddUserToGroupOutput, OperationError> {
+pub(crate) async fn add_user_to_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AddUserToGroupRequest,
+) -> Result<AddUserToGroupOutput, ActionError> {
     input.validate("$")?;
-    let mut tx = db.new_tx().await?;
 
     let found_group = find_by_name(ctx, tx.as_mut(), input.group_name().unwrap().trim()).await?;
     let found_user = super::user::find_by_name(ctx, tx.as_mut(), input.user_name().unwrap().trim()).await?;
-    db::group::assign_user_to_group(&mut tx, found_group.id, found_user.id).await?;
+    db::group::assign_user_to_group(tx, found_group.id, found_user.id).await?;
     let output = AddUserToGroupOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_groups_for_user(
-    ctx: &OperationCtx, input: &ListGroupsForUserRequest, db: &LocalDb,
-) -> Result<ListGroupsForUserOutput, OperationError> {
+pub(crate) async fn list_groups_for_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListGroupsForUserRequest,
+) -> Result<ListGroupsForUserOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_tx().await?;
-
-    let user_id = super::user::find_id_by_name(connection.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
 
     let query = ListGroupsByUserQuery {
         user_id,
@@ -190,7 +176,7 @@ pub(crate) async fn list_groups_for_user(
         },
     };
 
-    let found_groups = db::group::find_by_user_id(connection.as_mut(), &query).await?;
+    let found_groups = db::group::find_by_user_id(tx.as_mut(), &query).await?;
 
     let groups = super::common::convert_and_limit(&found_groups, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_groups.len())?;
@@ -204,37 +190,31 @@ pub(crate) async fn list_groups_for_user(
     Ok(output)
 }
 
-pub(crate) async fn attach_group_policy(
-    ctx: &OperationCtx, input: &AttachGroupPolicyRequest, db: &LocalDb,
-) -> Result<AttachGroupPolicyOutput, OperationError> {
+pub(crate) async fn attach_group_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AttachGroupPolicyRequest,
+) -> Result<AttachGroupPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let found_group = find_by_name(ctx, tx.as_mut(), input.group_name().unwrap().trim()).await?;
     let found_policy_id =
         super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
-    db::group::assign_policy_to_group(&mut tx, found_group.id, found_policy_id).await?;
+    db::group::assign_policy_to_group(tx, found_group.id, found_policy_id).await?;
 
     let output = AttachGroupPolicyOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn get_group(
-    ctx: &OperationCtx, input: &GetGroupRequest, db: &LocalDb,
-) -> Result<GetGroupOutput, OperationError> {
+pub(crate) async fn get_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetGroupRequest,
+) -> Result<GetGroupOutput, ActionError> {
     input.validate("$")?;
 
     let group_name = input.group_name().unwrap().trim();
-    // obtain connection
-    let mut connection = db.new_connection().await?;
 
-    match db::group::find_by_name(connection.as_mut(), ctx.account_id, group_name).await? {
+    match db::group::find_by_name(tx.as_mut(), ctx.account_id, group_name).await? {
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM group with name '{}' doesn't exist.", group_name).as_str(),
             ));
@@ -256,7 +236,7 @@ pub(crate) async fn get_group(
                 skip,
             };
 
-            let found_users = db::user::find_by_group_id(connection.as_mut(), &query).await?;
+            let found_users = db::user::find_by_group_id(tx.as_mut(), &query).await?;
 
             let marker = super::common::create_encoded_marker(&query, found_users.len())?;
 
@@ -278,22 +258,19 @@ pub(crate) async fn get_group(
     }
 }
 
-pub(crate) async fn get_group_policy(
-    ctx: &OperationCtx, input: &GetGroupPolicyRequest, db: &LocalDb,
-) -> Result<GetGroupPolicyOutput, OperationError> {
+pub(crate) async fn get_group_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetGroupPolicyRequest,
+) -> Result<GetGroupPolicyOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let group_name = input.group_name().unwrap().trim();
-    let group_id = find_id_by_name(connection.as_mut(), ctx.account_id, group_name).await?;
+    let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, group_name).await?;
 
     let policy_name = input.policy_name().unwrap().trim();
-    let inline_policy =
-        db::group_inline_policy::find_by_group_id_and_name(connection.as_mut(), group_id, policy_name).await?;
+    let inline_policy = db::group_inline_policy::find_by_group_id_and_name(tx.as_mut(), group_id, policy_name).await?;
 
     match inline_policy {
-        None => Err(OperationError::new(
+        None => Err(ActionError::new(
             ApiErrorKind::NoSuchEntity,
             format!("IAM inline policy with name '{policy_name}' not found for group with name '{group_name}'.")
                 .as_str(),
@@ -310,38 +287,32 @@ pub(crate) async fn get_group_policy(
     }
 }
 
-pub(crate) async fn put_group_policy(
-    ctx: &OperationCtx, input: &PutGroupPolicyRequest, db: &LocalDb,
-) -> Result<PutGroupPolicyOutput, OperationError> {
+pub(crate) async fn put_group_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &PutGroupPolicyRequest,
+) -> Result<PutGroupPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.group_name().unwrap().trim()).await?;
 
     let mut inline_policy =
         DbInlinePolicy::new(group_id, input.policy_name().unwrap(), input.policy_document().unwrap());
 
-    db::group_inline_policy::save(&mut tx, &mut inline_policy).await?;
+    db::group_inline_policy::save(tx, &mut inline_policy).await?;
 
     let output = PutGroupPolicyOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_group_policies(
-    ctx: &OperationCtx, input: &ListGroupPoliciesRequest, db: &LocalDb,
-) -> Result<ListGroupPoliciesOutput, OperationError> {
+pub(crate) async fn list_group_policies<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListGroupPoliciesRequest,
+) -> Result<ListGroupPoliciesOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let group_name = input.group_name().unwrap().trim();
-    let group_id = find_id_by_name(connection.as_mut(), ctx.account_id, group_name).await?;
+    let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, group_name).await?;
 
     let query = ListInlinePoliciesQuery::new(group_id, input.max_items(), input.marker_type());
-    let found_policies = db::group_inline_policy::find_by_group_id(connection.as_mut(), &query).await?;
+    let found_policies = db::group_inline_policy::find_by_group_id(tx.as_mut(), &query).await?;
 
     let policy_names = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
@@ -355,21 +326,19 @@ pub(crate) async fn list_group_policies(
     Ok(output)
 }
 
-pub(crate) async fn list_attached_group_policies(
-    ctx: &OperationCtx, input: &ListAttachedGroupPoliciesRequest, db: &LocalDb,
-) -> Result<ListAttachedGroupPoliciesOutput, OperationError> {
+pub(crate) async fn list_attached_group_policies<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListAttachedGroupPoliciesRequest,
+) -> Result<ListAttachedGroupPoliciesOutput, ActionError> {
     input.validate("$")?;
 
     let output = ListAttachedGroupPoliciesOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn update_group(
-    ctx: &OperationCtx, input: &UpdateGroupRequest, db: &LocalDb,
-) -> Result<UpdateGroupOutput, OperationError> {
+pub(crate) async fn update_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UpdateGroupRequest,
+) -> Result<UpdateGroupOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let query = UpdateGroupQuery {
         group_name: input.group_name().unwrap().to_owned(),
@@ -379,43 +348,42 @@ pub(crate) async fn update_group(
 
     let result = db::group::update(tx.as_mut(), ctx.account_id, &query).await?;
     if !result {
-        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
     }
     let output = UpdateGroupOutput::builder().build();
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn remove_user_from_group(
-    ctx: &OperationCtx, input: &RemoveUserFromGroupRequest, db: &LocalDb,
-) -> Result<RemoveUserFromGroupOutput, OperationError> {
+pub(crate) async fn remove_user_from_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &RemoveUserFromGroupRequest,
+) -> Result<RemoveUserFromGroupOutput, ActionError> {
     input.validate("$")?;
 
     let output = RemoveUserFromGroupOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn delete_group(
-    ctx: &OperationCtx, input: &DeleteGroupRequest, db: &LocalDb,
-) -> Result<DeleteGroupOutput, OperationError> {
+pub(crate) async fn delete_group<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteGroupRequest,
+) -> Result<DeleteGroupOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteGroupOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn detach_group_policy(
-    ctx: &OperationCtx, input: &DetachGroupPolicyRequest, db: &LocalDb,
-) -> Result<DetachGroupPolicyOutput, OperationError> {
+pub(crate) async fn detach_group_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DetachGroupPolicyRequest,
+) -> Result<DetachGroupPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = DetachGroupPolicyOutput::builder().build();
     Ok(output)
 }
 
-pub(crate) async fn delete_group_policy(
-    ctx: &OperationCtx, input: &DeleteGroupPolicyRequest, db: &LocalDb,
-) -> Result<DeleteGroupPolicyOutput, OperationError> {
+pub(crate) async fn delete_group_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteGroupPolicyRequest,
+) -> Result<DeleteGroupPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteGroupPolicyOutput::builder().build();
