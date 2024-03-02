@@ -27,7 +27,9 @@ use local_cloud_validate::NamedValidator;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
-use crate::http::aws::iam::db::types::role::{InsertRole, InsertRoleBuilder, InsertRoleBuilderError, SelectRole};
+use crate::http::aws::iam::db::types::role::{
+    InsertRole, InsertRoleBuilder, InsertRoleBuilderError, SelectRole, SelectRoleWithDetails,
+};
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
@@ -136,6 +138,23 @@ where
     }
 }
 
+pub(crate) async fn find_by_name<'a, E>(
+    executor: E, account_id: i64, role_name: &str,
+) -> Result<SelectRoleWithDetails, ActionError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::role::find_by_name(executor, account_id, role_name).await? {
+        Some(role) => Ok(role),
+        None => {
+            return Err(ActionError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM role with name '{}' doesn't exist.", role_name).as_str(),
+            ));
+        }
+    }
+}
+
 pub(crate) async fn attach_role_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AttachRolePolicyRequest,
 ) -> Result<AttachRolePolicyOutput, ActionError> {
@@ -179,7 +198,6 @@ pub(crate) async fn list_roles<'a>(
     input.validate("$")?;
 
     let query = input.into();
-
     let found_roles: Vec<SelectRole> = db::role::list(tx.as_mut(), ctx.account_id, &query).await?;
     let marker = super::common::create_encoded_marker(&query, found_roles.len())?;
 
@@ -188,19 +206,7 @@ pub(crate) async fn list_roles<'a>(
         let found_role = found_roles.get(i as usize);
         match found_role {
             None => break,
-            Some(select_role) => {
-                let role = Role::builder()
-                    .role_id(&select_role.role_id)
-                    .assume_role_policy_document(&select_role.assume_role_policy_document)
-                    .role_name(&select_role.role_name)
-                    .path(&select_role.path)
-                    .arn(&select_role.arn)
-                    .set_description(select_role.description.as_ref().map(|s| s.to_owned()))
-                    .create_date(DateTime::from_secs(select_role.create_date))
-                    .build()
-                    .unwrap();
-                roles.push(role);
-            }
+            Some(select_role) => roles.push(select_role.into()),
         }
     }
 
@@ -318,8 +324,9 @@ pub(crate) async fn get_role<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetRoleRequest,
 ) -> Result<GetRoleOutput, ActionError> {
     input.validate("$")?;
-
-    let output = GetRoleOutput::builder().build();
+    let role_name = input.role_name().unwrap();
+    let role = find_by_name(tx.as_mut(), ctx.account_id, role_name).await?;
+    let output = GetRoleOutput::builder().role((&role).into()).build();
     Ok(output)
 }
 
