@@ -47,7 +47,7 @@ async fn get_group_group_does_not_exist() {
 
     assert!(response.is_err());
     let sdk_error = response.unwrap_err();
-    assert_eq!(400u16, sdk_error.raw_response().unwrap().status().as_u16());
+    assert_eq!(404u16, sdk_error.raw_response().unwrap().status().as_u16());
 
     let error = sdk_error.into_service_error();
     assert!(error.is_no_such_entity_exception());

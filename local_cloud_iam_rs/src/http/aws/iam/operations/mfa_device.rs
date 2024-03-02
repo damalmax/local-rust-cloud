@@ -293,6 +293,19 @@ pub(crate) async fn deactivate_mfa_device<'a>(
 ) -> Result<DeactivateMfaDeviceOutput, ActionError> {
     input.validate("$")?;
 
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
+
+    let serial_number = input.serial_number().unwrap().trim();
+    let mfa_device_id = find_id_by_serial_number(tx.as_mut(), ctx.account_id, serial_number).await?;
+
+    let is_disabled = db::mfa_device::disable(tx, mfa_device_id, user_id).await?;
+    if !is_disabled {
+        return Err(ActionError::new(
+            ApiErrorKind::NoSuchEntity,
+            "Failed to disable MFA device. It is assigned to a different user.",
+        ));
+    }
+
     let output = DeactivateMfaDeviceOutput::builder().build();
     Ok(output)
 }
