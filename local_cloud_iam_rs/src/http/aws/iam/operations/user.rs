@@ -18,9 +18,8 @@ use aws_sdk_iam::operation::update_user::UpdateUserOutput;
 use aws_sdk_iam::types::{AttachedPermissionsBoundary, PermissionsBoundaryAttachmentType, User};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
-use sqlx::{Executor, Sqlite};
+use sqlx::{Executor, Sqlite, Transaction};
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
@@ -32,7 +31,7 @@ use crate::http::aws::iam::db::types::user::{
 };
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::attach_user_policy::AttachUserPolicyRequest;
 use crate::http::aws::iam::types::create_user::CreateUserRequest;
 use crate::http::aws::iam::types::delete_user::DeleteUserRequest;
@@ -52,14 +51,13 @@ use crate::http::aws::iam::types::untag_user::UntagUserRequest;
 use crate::http::aws::iam::types::update_user::UpdateUserRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub async fn create_user(
-    ctx: &OperationCtx, input: &CreateUserRequest, db: &LocalDb,
-) -> Result<CreateUserOutput, OperationError> {
+pub async fn create_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreateUserRequest,
+) -> Result<CreateUserOutput, ActionError> {
     input.validate("$")?;
     let current_time = Utc::now().timestamp();
 
-    let mut tx = db.new_tx().await?;
-    let user_id = create_resource_id(&mut tx, constants::user::PREFIX, ResourceType::User).await?;
+    let user_id = create_resource_id(tx, constants::user::PREFIX, ResourceType::User).await?;
 
     let policy_id = match input.permissions_boundary() {
         None => None,
@@ -69,12 +67,12 @@ pub async fn create_user(
     };
 
     let mut insert_user = prepare_user_for_insert(ctx, input, &user_id, policy_id, current_time)
-        .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+        .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
-    db::user::create(&mut tx, &mut insert_user).await?;
+    db::user::create(tx, &mut insert_user).await?;
 
     let mut user_tags = super::tag::prepare_for_db(input.tags(), insert_user.id.unwrap());
-    db::Tags::User.save_all(&mut tx, &mut user_tags).await?;
+    db::Tags::User.save_all(tx, &mut user_tags).await?;
 
     let permissions_boundary = match policy_id {
         None => None,
@@ -97,8 +95,6 @@ pub async fn create_user(
         .build()
         .unwrap();
     let output = CreateUserOutput::builder().user(user).build();
-    tx.commit().await?;
-
     Ok(output)
 }
 
@@ -122,14 +118,14 @@ fn prepare_user_for_insert(
 
 pub(crate) async fn find_by_name<'a, E>(
     ctx: &OperationCtx, executor: E, user_name: &str,
-) -> Result<SelectUser, OperationError>
+) -> Result<SelectUser, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::user::find_by_name(executor, ctx.account_id, user_name).await? {
         Some(user) => Ok(user),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
             ));
@@ -137,14 +133,14 @@ where
     }
 }
 
-pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, user_name: &str) -> Result<i64, OperationError>
+pub(crate) async fn find_id_by_name<'a, E>(executor: E, account_id: i64, user_name: &str) -> Result<i64, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::user::find_id_by_name(executor, account_id, user_name).await? {
         Some(id) => Ok(id),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
             ));
@@ -152,12 +148,10 @@ where
     }
 }
 
-pub(crate) async fn attach_user_policy(
-    ctx: &OperationCtx, input: &AttachUserPolicyRequest, db: &LocalDb,
-) -> Result<AttachUserPolicyOutput, OperationError> {
+pub(crate) async fn attach_user_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AttachUserPolicyRequest,
+) -> Result<AttachUserPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let user_name = input.user_name().unwrap();
     let found_user_id = find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
@@ -168,21 +162,17 @@ pub(crate) async fn attach_user_policy(
     db::user::assign_policy_to_user(tx.as_mut(), found_user_id, found_policy_id).await?;
 
     let output = AttachUserPolicyOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_users(
-    ctx: &OperationCtx, input: &ListUsersRequest, db: &LocalDb,
-) -> Result<ListUsersOutput, OperationError> {
+pub(crate) async fn list_users<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListUsersRequest,
+) -> Result<ListUsersOutput, ActionError> {
     input.validate("$")?;
-
-    let mut connection = db.new_connection().await?;
 
     let query = input.into();
 
-    let found_users: Vec<SelectUser> = db::user::list(connection.as_mut(), ctx.account_id, &query).await?;
+    let found_users: Vec<SelectUser> = db::user::list(tx.as_mut(), ctx.account_id, &query).await?;
 
     let users = super::common::convert_and_limit(&found_users, query.limit).unwrap_or_default();
     let marker = super::common::create_encoded_marker(&query, found_users.len())?;
@@ -193,22 +183,18 @@ pub(crate) async fn list_users(
         .set_marker(marker)
         .build()
         .unwrap();
-
     Ok(output)
 }
 
-pub(crate) async fn list_user_tags(
-    ctx: &OperationCtx, input: &ListUserTagsRequest, db: &LocalDb,
-) -> Result<ListUserTagsOutput, OperationError> {
+pub(crate) async fn list_user_tags<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListUserTagsRequest,
+) -> Result<ListUserTagsOutput, ActionError> {
     input.validate("$")?;
 
-    // obtain connection
-    let mut connection = db.new_connection().await?;
-
-    let found_user_id = find_id_by_name(connection.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
+    let found_user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::Tags::User.list(connection.as_mut(), found_user_id, &query).await?;
+    let found_tags = db::Tags::User.list(tx.as_mut(), found_user_id, &query).await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
@@ -222,48 +208,40 @@ pub(crate) async fn list_user_tags(
     Ok(output)
 }
 
-pub(crate) async fn tag_user(
-    ctx: &OperationCtx, input: &TagUserRequest, db: &LocalDb,
-) -> Result<TagUserOutput, OperationError> {
+pub(crate) async fn tag_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &TagUserRequest,
+) -> Result<TagUserOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
     let mut user_tags = super::tag::prepare_for_db(input.tags(), user_id);
 
-    db::Tags::User.save_all(&mut tx, &mut user_tags).await?;
+    db::Tags::User.save_all(tx, &mut user_tags).await?;
     let count = db::Tags::User.count(tx.as_mut(), user_id).await?;
     if count > constants::tag::MAX_COUNT {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::LimitExceeded,
             format!("Cannot assign more than {} tags to IAM user.", constants::tag::MAX_COUNT).as_str(),
         ));
     }
 
     let output = TagUserOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn get_user_policy(
-    ctx: &OperationCtx, input: &GetUserPolicyRequest, db: &LocalDb,
-) -> Result<GetUserPolicyOutput, OperationError> {
+pub(crate) async fn get_user_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetUserPolicyRequest,
+) -> Result<GetUserPolicyOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let user_name = input.user_name().unwrap().trim();
-    let user_id = find_id_by_name(connection.as_mut(), ctx.account_id, user_name).await?;
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
 
     let policy_name = input.policy_name().unwrap().trim();
-    let inline_policy =
-        db::user_inline_policy::find_by_user_id_and_name(connection.as_mut(), user_id, policy_name).await?;
+    let inline_policy = db::user_inline_policy::find_by_user_id_and_name(tx.as_mut(), user_id, policy_name).await?;
 
     match inline_policy {
-        None => Err(OperationError::new(
+        None => Err(ActionError::new(
             ApiErrorKind::NoSuchEntity,
             format!("IAM inline policy with name '{policy_name}' not found for user with name '{user_name}'.").as_str(),
         )),
@@ -279,38 +257,32 @@ pub(crate) async fn get_user_policy(
     }
 }
 
-pub(crate) async fn put_user_policy(
-    ctx: &OperationCtx, input: &PutUserPolicyRequest, db: &LocalDb,
-) -> Result<PutUserPolicyOutput, OperationError> {
+pub(crate) async fn put_user_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &PutUserPolicyRequest,
+) -> Result<PutUserPolicyOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
 
     let mut inline_policy =
         DbInlinePolicy::new(user_id, input.policy_name().unwrap(), input.policy_document().unwrap());
 
-    db::user_inline_policy::save(&mut tx, &mut inline_policy).await?;
+    db::user_inline_policy::save(tx, &mut inline_policy).await?;
 
     let output = PutUserPolicyOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_user_policies(
-    ctx: &OperationCtx, input: &ListUserPoliciesRequest, db: &LocalDb,
-) -> Result<ListUserPoliciesOutput, OperationError> {
+pub(crate) async fn list_user_policies<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListUserPoliciesRequest,
+) -> Result<ListUserPoliciesOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let user_name = input.user_name().unwrap().trim();
-    let user_id = find_id_by_name(connection.as_mut(), ctx.account_id, user_name).await?;
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
 
     let query = ListInlinePoliciesQuery::new(user_id, input.max_items(), input.marker_type());
-    let found_policies = db::user_inline_policy::find_by_user_id(connection.as_mut(), &query).await?;
+    let found_policies = db::user_inline_policy::find_by_user_id(tx.as_mut(), &query).await?;
 
     let policy_names = super::common::convert_and_limit(&found_policies, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_policies.len())?;
@@ -324,30 +296,23 @@ pub(crate) async fn list_user_policies(
     Ok(output)
 }
 
-pub(crate) async fn untag_user(
-    ctx: &OperationCtx, input: &UntagUserRequest, db: &LocalDb,
-) -> Result<UntagUserOutput, OperationError> {
+pub(crate) async fn untag_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UntagUserRequest,
+) -> Result<UntagUserOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
 
-    db::Tags::User.delete_all(&mut tx, user_id, &input.tag_keys()).await?;
+    db::Tags::User.delete_all(tx, user_id, &input.tag_keys()).await?;
 
     let output = UntagUserOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn update_user(
-    ctx: &OperationCtx, input: &UpdateUserRequest, db: &LocalDb,
-) -> Result<UpdateUserOutput, OperationError> {
+pub(crate) async fn update_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UpdateUserRequest,
+) -> Result<UpdateUserOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let query = UpdateUserQuery {
         user_name: input.user_name().unwrap().to_owned(),
@@ -356,81 +321,72 @@ pub(crate) async fn update_user(
     };
     let result = db::user::update(tx.as_mut(), ctx.account_id, &query).await?;
     if !result {
-        return Err(OperationError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
     }
 
     let output = UpdateUserOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn get_user(
-    ctx: &OperationCtx, input: &GetUserRequest, db: &LocalDb,
-) -> Result<GetUserOutput, OperationError> {
+pub(crate) async fn get_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetUserRequest,
+) -> Result<GetUserOutput, ActionError> {
     input.validate("$")?;
 
     let output = GetUserOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn put_user_permissions_boundary(
-    ctx: &OperationCtx, input: &PutUserPermissionsBoundaryRequest, db: &LocalDb,
-) -> Result<PutUserPermissionsBoundaryOutput, OperationError> {
+pub(crate) async fn put_user_permissions_boundary<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &PutUserPermissionsBoundaryRequest,
+) -> Result<PutUserPermissionsBoundaryOutput, ActionError> {
     input.validate("$")?;
 
     let output = PutUserPermissionsBoundaryOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn delete_user_permissions_boundary(
-    ctx: &OperationCtx, input: &DeleteUserPermissionsBoundaryRequest, db: &LocalDb,
-) -> Result<DeleteUserPermissionsBoundaryOutput, OperationError> {
+pub(crate) async fn delete_user_permissions_boundary<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteUserPermissionsBoundaryRequest,
+) -> Result<DeleteUserPermissionsBoundaryOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteUserPermissionsBoundaryOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn list_attached_user_policies(
-    ctx: &OperationCtx, input: &ListAttachedUserPoliciesRequest, db: &LocalDb,
-) -> Result<ListAttachedUserPoliciesOutput, OperationError> {
+pub(crate) async fn list_attached_user_policies<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListAttachedUserPoliciesRequest,
+) -> Result<ListAttachedUserPoliciesOutput, ActionError> {
     input.validate("$")?;
 
     let output = ListAttachedUserPoliciesOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn delete_user(
-    ctx: &OperationCtx, input: &DeleteUserRequest, db: &LocalDb,
-) -> Result<DeleteUserOutput, OperationError> {
+pub(crate) async fn delete_user<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteUserRequest,
+) -> Result<DeleteUserOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteUserOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn delete_user_policy(
-    ctx: &OperationCtx, input: &DeleteUserPolicyRequest, db: &LocalDb,
-) -> Result<DeleteUserPolicyOutput, OperationError> {
+pub(crate) async fn delete_user_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteUserPolicyRequest,
+) -> Result<DeleteUserPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteUserPolicyOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn detach_user_policy(
-    ctx: &OperationCtx, input: &DetachUserPolicyRequest, db: &LocalDb,
-) -> Result<DetachUserPolicyOutput, OperationError> {
+pub(crate) async fn detach_user_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DetachUserPolicyRequest,
+) -> Result<DetachUserPolicyOutput, ActionError> {
     input.validate("$")?;
 
     let output = DetachUserPolicyOutput::builder().build();
-
     Ok(output)
 }

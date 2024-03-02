@@ -6,56 +6,56 @@ use local_cloud_validate::ValidationError;
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 
 #[derive(Debug)]
-pub(crate) enum OperationError {
+pub(crate) enum ActionError {
     Service { kind: ApiErrorKind, msg: String },
     Validation(ValidationError),
 }
 
-impl Display for OperationError {
+impl Display for ActionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            OperationError::Service { kind, msg } => {
-                writeln!(f, "Operation Error. Kind: {}, Error Message: {}", kind, msg)
+            ActionError::Service { kind, msg } => {
+                writeln!(f, "Action Error. Kind: {}, Error Message: {}", kind, msg)
             }
-            OperationError::Validation(error) => error.fmt(f),
+            ActionError::Validation(error) => error.fmt(f),
         }
     }
 }
 
-impl Error for OperationError {}
+impl Error for ActionError {}
 
-impl OperationError {
+impl ActionError {
     pub(crate) fn new(kind: ApiErrorKind, msg: &str) -> Self {
-        OperationError::Service {
+        ActionError::Service {
             kind,
             msg: msg.to_owned(),
         }
     }
 }
 
-impl From<ValidationError> for OperationError {
+impl From<ValidationError> for ActionError {
     fn from(value: ValidationError) -> Self {
-        OperationError::Validation(value)
+        ActionError::Validation(value)
     }
 }
 
-impl From<sqlx::Error> for OperationError {
+impl From<sqlx::Error> for ActionError {
     fn from(error: sqlx::Error) -> Self {
         match error {
             sqlx::Error::Database(ref db_error) => {
                 if db_error.kind() == sqlx::error::ErrorKind::UniqueViolation {
-                    OperationError::Service {
+                    ActionError::Service {
                         kind: ApiErrorKind::EntityAlreadyExists,
                         msg: "Entity already exists.".to_owned(),
                     }
                 } else {
-                    OperationError::Service {
+                    ActionError::Service {
                         kind: ApiErrorKind::ServiceFailure,
                         msg: error.to_string(),
                     }
                 }
             }
-            _ => OperationError::Service {
+            _ => ActionError::Service {
                 kind: ApiErrorKind::ServiceFailure,
                 msg: error.to_string(),
             },

@@ -4,15 +4,15 @@ use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db;
 use crate::http::aws::iam::db::types::common::Pageable;
 use crate::http::aws::iam::db::types::resource_identifier::{ResourceIdentifier, ResourceType};
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::marker_type::Marker;
 
 pub(crate) async fn create_resource_id<'a>(
     tx: &mut Transaction<'a, Sqlite>, prefix: &str, resource_type: ResourceType,
-) -> Result<String, OperationError> {
+) -> Result<String, ActionError> {
     loop {
         let id = local_cloud_common::naming::generate_id(prefix, 21)
-            .map_err(|err| OperationError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+            .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
 
         let mut resource_identifier = ResourceIdentifier::new(&id, resource_type);
         if let Ok(()) = db::resource_identifier::create(tx, &mut resource_identifier).await {
@@ -23,11 +23,11 @@ pub(crate) async fn create_resource_id<'a>(
 
 pub(crate) fn create_encoded_marker(
     pageable: impl Pageable, found_items: usize,
-) -> Result<Option<String>, OperationError> {
+) -> Result<Option<String>, ActionError> {
     if pageable.limit() < found_items as i32 {
         let marker = Marker::new(pageable.limit() + pageable.skip())
             .encode()
-            .map_err(|_err| OperationError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value."))?;
+            .map_err(|_err| ActionError::new(ApiErrorKind::ServiceFailure, "Failed to generate Marker value."))?;
         Ok(Some(marker))
     } else {
         Ok(None)

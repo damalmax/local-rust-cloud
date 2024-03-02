@@ -17,9 +17,8 @@ use chrono::Utc;
 use data_encoding::BASE64;
 use image::{ImageOutputFormat, Luma};
 use qrcode::QrCode;
-use sqlx::{Executor, Sqlite};
+use sqlx::{Executor, Sqlite, Transaction};
 
-use local_cloud_db::LocalDb;
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
@@ -28,7 +27,7 @@ use crate::http::aws::iam::db::types::mfa_device::{
 };
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
-use crate::http::aws::iam::operations::error::OperationError;
+use crate::http::aws::iam::operations::error::ActionError;
 use crate::http::aws::iam::types::create_virtual_mfa_device::CreateVirtualMfaDeviceRequest;
 use crate::http::aws::iam::types::deactivate_mfa_device::DeactivateMfaDeviceRequest;
 use crate::http::aws::iam::types::delete_virtual_mfa_device::DeleteVirtualMfaDeviceRequest;
@@ -42,14 +41,12 @@ use crate::http::aws::iam::types::tag_mfa_device::TagMfaDeviceRequest;
 use crate::http::aws::iam::types::untag_mfa_device::UntagMfaDeviceRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub(crate) async fn create_virtual_mfa_device(
-    ctx: &OperationCtx, input: &CreateVirtualMfaDeviceRequest, db: &LocalDb,
-) -> Result<CreateVirtualMfaDeviceOutput, OperationError> {
+pub(crate) async fn create_virtual_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreateVirtualMfaDeviceRequest,
+) -> Result<CreateVirtualMfaDeviceOutput, ActionError> {
     input.validate("$")?;
 
     let current_time = Utc::now().timestamp();
-
-    let mut tx = db.new_tx().await?;
 
     let path = input.path().unwrap_or("/").to_owned();
     let device_name = input.virtual_mfa_device_name().unwrap().trim();
@@ -66,11 +63,11 @@ pub(crate) async fn create_virtual_mfa_device(
         create_date: current_time,
     };
 
-    db::mfa_device::create(&mut tx, &mut insert_mfa_device).await?;
+    db::mfa_device::create(tx, &mut insert_mfa_device).await?;
 
     let devices_count = db::mfa_device::count(tx.as_mut(), ctx.account_id, None).await?;
     if devices_count > constants::mfa::DEVICE_MAX_COUNT_PER_USER {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::LimitExceeded,
             format!(
                 "It is allowed to register up to {} MFA devices per user.",
@@ -81,7 +78,7 @@ pub(crate) async fn create_virtual_mfa_device(
     }
 
     let mut device_tags = super::tag::prepare_for_db(input.tags(), insert_mfa_device.id.unwrap());
-    db::Tags::MfaDevice.save_all(&mut tx, &mut device_tags).await?;
+    db::Tags::MfaDevice.save_all(tx, &mut device_tags).await?;
 
     // Using account ID since User is not available when we register a new MFA device.
     let account_name = format!("{:0>12}", ctx.account_id);
@@ -95,7 +92,7 @@ pub(crate) async fn create_virtual_mfa_device(
     image
         .write_to(&mut image_bytes_cursor, ImageOutputFormat::Png)
         .map_err(|_| {
-            OperationError::new(
+            ActionError::new(
                 ApiErrorKind::ServiceFailure,
                 "Failed to generate QRCode image. Please contact service team for resolution.",
             )
@@ -112,22 +109,19 @@ pub(crate) async fn create_virtual_mfa_device(
     let output = CreateVirtualMfaDeviceOutput::builder()
         .virtual_mfa_device(device)
         .build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
 pub(crate) async fn find_id_by_serial_number<'a, E>(
     executor: E, account_id: i64, serial_number: &str,
-) -> Result<i64, OperationError>
+) -> Result<i64, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
     match db::mfa_device::find_id_by_serial_number(executor, account_id, serial_number).await? {
         Some(mfa_device_id) => Ok(mfa_device_id),
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM MFA device with serial number '{}' doesn't exist.", serial_number).as_str(),
             ));
@@ -137,7 +131,7 @@ where
 
 pub(crate) async fn find_by_serial_number<'a, E>(
     executor: E, account_id: i64, serial_number: &str, user_name: Option<&str>,
-) -> Result<SelectMfaDevice, OperationError>
+) -> Result<SelectMfaDevice, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
@@ -150,7 +144,7 @@ where
             {
                 Ok(mfa_device)
             } else {
-                Err(OperationError::new(
+                Err(ActionError::new(
                     ApiErrorKind::NoSuchEntity,
                     format!("IAM MFA device with serial number '{}' assigned to a different user.", serial_number)
                         .as_str(),
@@ -158,7 +152,7 @@ where
             }
         }
         None => {
-            return Err(OperationError::new(
+            return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
                 format!("IAM MFA device with serial number '{}' doesn't exist.", serial_number).as_str(),
             ));
@@ -166,17 +160,14 @@ where
     }
 }
 
-pub(crate) async fn get_mfa_device(
-    ctx: &OperationCtx, input: &GetMfaDeviceRequest, db: &LocalDb,
-) -> Result<GetMfaDeviceOutput, OperationError> {
+pub(crate) async fn get_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &GetMfaDeviceRequest,
+) -> Result<GetMfaDeviceOutput, ActionError> {
     input.validate("$")?;
-
-    let mut connection = db.new_connection().await?;
 
     let serial_number = input.serial_number().unwrap();
     let user_name = input.user_name();
-    let select_mfa_device =
-        find_by_serial_number(connection.as_mut(), ctx.account_id, serial_number, user_name).await?;
+    let select_mfa_device = find_by_serial_number(tx.as_mut(), ctx.account_id, serial_number, user_name).await?;
 
     let output = GetMfaDeviceOutput::builder()
         .serial_number(&select_mfa_device.serial_number)
@@ -188,20 +179,18 @@ pub(crate) async fn get_mfa_device(
     Ok(output)
 }
 
-pub(crate) async fn enable_mfa_device(
-    ctx: &OperationCtx, input: &EnableMfaDeviceRequest, db: &LocalDb,
-) -> Result<EnableMfaDeviceOutput, OperationError> {
+pub(crate) async fn enable_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &EnableMfaDeviceRequest,
+) -> Result<EnableMfaDeviceOutput, ActionError> {
     input.validate("$")?;
 
     let current_time = Utc::now().timestamp();
-
-    let mut tx = db.new_tx().await?;
 
     let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap()).await?;
 
     let mfa_device = find_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap(), None).await?;
     if mfa_device.user_id.is_some() && mfa_device.enable_date.is_some() {
-        return Err(OperationError::new(ApiErrorKind::EntityAlreadyExists, "MFA device is already activated."));
+        return Err(ActionError::new(ApiErrorKind::EntityAlreadyExists, "MFA device is already activated."));
     }
 
     let query = EnableMfaDeviceQuery {
@@ -212,23 +201,19 @@ pub(crate) async fn enable_mfa_device(
         code2: input.authentication_code_2().unwrap().to_owned(),
     };
 
-    db::mfa_device::enable(&mut tx, &query).await?;
+    db::mfa_device::enable(tx, &query).await?;
 
     let output = EnableMfaDeviceOutput::builder().build();
-
-    tx.commit().await?;
     Ok(output)
 }
 
-pub(crate) async fn list_virtual_mfa_devices(
-    ctx: &OperationCtx, input: &ListVirtualMfaDevicesRequest, db: &LocalDb,
-) -> Result<ListVirtualMfaDevicesOutput, OperationError> {
+pub(crate) async fn list_virtual_mfa_devices<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListVirtualMfaDevicesRequest,
+) -> Result<ListVirtualMfaDevicesOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let query: ListVirtualMfaDevicesQuery = input.into();
-    let found_mfa_devices = db::mfa_device::list_virtual(connection.as_mut(), ctx.account_id, &query).await?;
+    let found_mfa_devices = db::mfa_device::list_virtual(tx.as_mut(), ctx.account_id, &query).await?;
 
     let marker = super::common::create_encoded_marker(&query, found_mfa_devices.len())?;
     let mfa_devices = super::common::convert_and_limit(&found_mfa_devices, query.limit).unwrap_or_default();
@@ -242,68 +227,54 @@ pub(crate) async fn list_virtual_mfa_devices(
     Ok(output)
 }
 
-pub(crate) async fn tag_mfa_device(
-    ctx: &OperationCtx, input: &TagMfaDeviceRequest, db: &LocalDb,
-) -> Result<TagMfaDeviceOutput, OperationError> {
+pub(crate) async fn tag_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &TagMfaDeviceRequest,
+) -> Result<TagMfaDeviceOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let mfa_device_id =
         find_id_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
     let mut mfa_device_tags = super::tag::prepare_for_db(input.tags(), mfa_device_id);
 
-    db::Tags::MfaDevice.save_all(&mut tx, &mut mfa_device_tags).await?;
+    db::Tags::MfaDevice.save_all(tx, &mut mfa_device_tags).await?;
     let count = db::Tags::MfaDevice.count(tx.as_mut(), mfa_device_id).await?;
     if count > constants::tag::MAX_COUNT {
-        return Err(OperationError::new(
+        return Err(ActionError::new(
             ApiErrorKind::LimitExceeded,
             format!("Cannot assign more than {} tags to IAM MFA device.", constants::tag::MAX_COUNT).as_str(),
         ));
     }
 
     let output = TagMfaDeviceOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn untag_mfa_device(
-    ctx: &OperationCtx, input: &UntagMfaDeviceRequest, db: &LocalDb,
-) -> Result<UntagMfaDeviceOutput, OperationError> {
+pub(crate) async fn untag_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UntagMfaDeviceRequest,
+) -> Result<UntagMfaDeviceOutput, ActionError> {
     input.validate("$")?;
-
-    let mut tx = db.new_tx().await?;
 
     let mfa_device_id =
         find_id_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
 
     db::Tags::MfaDevice
-        .delete_all(&mut tx, mfa_device_id, &input.tag_keys())
+        .delete_all(tx, mfa_device_id, &input.tag_keys())
         .await?;
 
     let output = UntagMfaDeviceOutput::builder().build();
-
-    tx.commit().await?;
-
     Ok(output)
 }
 
-pub(crate) async fn list_mfa_device_tags(
-    ctx: &OperationCtx, input: &ListMfaDeviceTagsRequest, db: &LocalDb,
-) -> Result<ListMfaDeviceTagsOutput, OperationError> {
+pub(crate) async fn list_mfa_device_tags<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListMfaDeviceTagsRequest,
+) -> Result<ListMfaDeviceTagsOutput, ActionError> {
     input.validate("$")?;
 
-    let mut connection = db.new_connection().await?;
-
     let mfa_device_id =
-        find_id_by_serial_number(connection.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
+        find_id_by_serial_number(tx.as_mut(), ctx.account_id, input.serial_number().unwrap().trim()).await?;
 
     let query = ListTagsQuery::new(input.max_items(), input.marker_type());
-    let found_tags = db::Tags::MfaDevice
-        .list(connection.as_mut(), mfa_device_id, &query)
-        .await?;
+    let found_tags = db::Tags::MfaDevice.list(tx.as_mut(), mfa_device_id, &query).await?;
 
     let tags = super::common::convert_and_limit(&found_tags, query.limit);
     let marker = super::common::create_encoded_marker(&query, found_tags.len())?;
@@ -314,23 +285,21 @@ pub(crate) async fn list_mfa_device_tags(
         .set_marker(marker)
         .build()
         .unwrap();
-
     Ok(output)
 }
 
-pub(crate) async fn deactivate_mfa_device(
-    ctx: &OperationCtx, input: &DeactivateMfaDeviceRequest, db: &LocalDb,
-) -> Result<DeactivateMfaDeviceOutput, OperationError> {
+pub(crate) async fn deactivate_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeactivateMfaDeviceRequest,
+) -> Result<DeactivateMfaDeviceOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeactivateMfaDeviceOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn list_mfa_devices(
-    ctx: &OperationCtx, input: &ListMfaDevicesRequest, db: &LocalDb,
-) -> Result<ListMfaDevicesOutput, OperationError> {
+pub(crate) async fn list_mfa_devices<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListMfaDevicesRequest,
+) -> Result<ListMfaDevicesOutput, ActionError> {
     input.validate("$")?;
 
     let output = ListMfaDevicesOutput::builder().build().unwrap();
@@ -338,22 +307,20 @@ pub(crate) async fn list_mfa_devices(
     Ok(output)
 }
 
-pub(crate) async fn resync_mfa_device(
-    ctx: &OperationCtx, input: &ResyncMfaDeviceRequest, db: &LocalDb,
-) -> Result<ResyncMfaDeviceOutput, OperationError> {
+pub(crate) async fn resync_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ResyncMfaDeviceRequest,
+) -> Result<ResyncMfaDeviceOutput, ActionError> {
     input.validate("$")?;
 
     let output = ResyncMfaDeviceOutput::builder().build();
-
     Ok(output)
 }
 
-pub(crate) async fn delete_virtual_mfa_device(
-    ctx: &OperationCtx, input: &DeleteVirtualMfaDeviceRequest, db: &LocalDb,
-) -> Result<DeleteVirtualMfaDeviceOutput, OperationError> {
+pub(crate) async fn delete_virtual_mfa_device<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteVirtualMfaDeviceRequest,
+) -> Result<DeleteVirtualMfaDeviceOutput, ActionError> {
     input.validate("$")?;
 
     let output = DeleteVirtualMfaDeviceOutput::builder().build();
-
     Ok(output)
 }
