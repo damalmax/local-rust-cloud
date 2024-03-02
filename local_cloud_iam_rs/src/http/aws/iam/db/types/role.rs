@@ -33,7 +33,6 @@ pub(crate) struct SelectRole {
     pub(crate) arn: String,
     pub(crate) path: String,
     pub(crate) role_id: String,
-    pub(crate) policy_id: Option<i64>,
     pub(crate) create_date: i64,
 }
 
@@ -75,7 +74,6 @@ impl<'r> FromRow<'r, SqliteRow> for SelectRole {
             arn,
             path,
             role_id,
-            policy_id: None,
             create_date,
         })
     }
