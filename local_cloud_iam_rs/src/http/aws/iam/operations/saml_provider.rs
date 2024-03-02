@@ -14,7 +14,7 @@ use sqlx::{Executor, Sqlite, Transaction};
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::saml_provider::InsertSamlProvider;
+use crate::http::aws::iam::db::types::saml_provider::{InsertSamlProvider, SelectSamlProvider};
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::ActionError;
@@ -34,6 +34,23 @@ where
 {
     match db::saml_provider::find_id_by_arn(executor, account_id, arn).await? {
         Some(provider_id) => Ok(provider_id),
+        None => {
+            return Err(ActionError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM SAML provider with ARN '{}' doesn't exist.", arn).as_str(),
+            ));
+        }
+    }
+}
+
+pub(crate) async fn find_by_arn<'a, E>(
+    executor: E, account_id: i64, arn: &str,
+) -> Result<SelectSamlProvider, ActionError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::saml_provider::find_by_arn(executor, account_id, arn).await? {
+        Some(provider) => Ok(provider),
         None => {
             return Err(ActionError::new(
                 ApiErrorKind::NoSuchEntity,
@@ -170,7 +187,14 @@ pub(crate) async fn get_saml_provider<'a>(
 ) -> Result<GetSamlProviderOutput, ActionError> {
     input.validate("$")?;
 
-    let output = GetSamlProviderOutput::builder().build();
+    let arn = input.saml_provider_arn().unwrap();
+    let provider = find_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
+
+    let output = GetSamlProviderOutput::builder()
+        .create_date(DateTime::from_secs(provider.create_date))
+        .set_valid_until(provider.valid_until.map(DateTime::from_secs))
+        .saml_metadata_document(&provider.metadata_document)
+        .build();
     Ok(output)
 }
 

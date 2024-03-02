@@ -88,7 +88,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_policy_version
 - [ ] get_role
 - [X] get_role_policy
-- [ ] get_saml_provider
+- [X] get_saml_provider
 - [ ] get_server_certificate
 - [ ] get_service_last_accessed_details
 - [ ] get_service_last_accessed_details_with_entities
