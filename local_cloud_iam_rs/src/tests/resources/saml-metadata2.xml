@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+                     entityID="https://local-rust-cloud" validUntil="2026-10-02T18:27:19.710Z">
+    <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+            <ds:KeyInfo>
+                <ds:X509Data>
+                    <ds:X509Certificate>
+                        MIIDujCCAqKgAwIBAgIBATANBgkqhkiG9w0BAQsFADBdMQswCQYDVQQGEwJCWTEQMA4GA1UECAwHVml0ZWJzazEQMA4GA1UEBwwHVml0ZWJzazEUMBIGA1UECgwLTG9jYWwgQ2xvdWQxFDASBgNVBAMMC0xvY2FsIENsb3VkMB4XDTI0MDIxMjE5MjMzNVoXDTI1MDIxMTE5MjMzNVowczELMAkGA1UEBhMCQlkxEDAOBgNVBAgMB1ZpdGVic2sxEDAOBgNVBAcMB1ZpdGVic2sxFDASBgNVBAoMC0xvY2FsIENsb3VkMRQwEgYDVQQLDAtMb2NhbCBDbG91ZDEUMBIGA1UEAwwLTG9jYWwgQ2xvdWQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDNmfg0SGlZHGilvRuhNk4/C7qtXFI12jRn9s9ZRUnHEFV1zepm/SeXWPGR7urlum0aH2k2hW0OHQazBNpnfqSEwhZooY3HMV84zimgWjqZRqbZ9LyitNurCdNXGQMhqMyBW87dzpW4tlNXpeh0jjqwnefajtXNIi0jUm235UW3bhbO4ry3jTGPD72qir73qL9EMV5xg+i1tP8ztqTdyTY3tlnXVzHCUVa+pOJAL/QVMmRDCpDHm8aSwIvvaqlAKihefff8fr83OP4rlbtmuJOvbAEXP5soQRkJ8qbCbq7wZtdNJZhwEj+zjTj/j3/KG+SnUCVWslsM5wn1/2TOmaTTAgMBAAGjbzBtMBYGA1UdEQQPMA2CC2xvY2FsLWNsb3VkMBMGA1UdJQQMMAoGCCsGAQUFBwMBMB0GA1UdDgQWBBToeRsDyd12d2Jzf0iEuwdqbbeErjAfBgNVHSMEGDAWgBSSRg3+k73vnAIE6BaJsrLEAgYq3zANBgkqhkiG9w0BAQsFAAOCAQEAAQEycqAvslYC32NmTmgLDFHteOTUiLTcXJ8zIUhzxU3yKpE7zKgWNOFdtXfUhOJ0B/8HdWIGe8U6806WXZadPmZNVBnMqH+BDlyN58tNcRVUM6+Jztn2QyAR6GGTkY5d5GbDpvW9L4OVg53Rgd/oX+fpqIlKhSw9lvNM4ZMS19nH89hxUpzqDx6ssSY1GaqM4ghanGEnW2qRnNLEJB/25cUT
+                        jSvdtgTiziME5sXKSZS7h/jU4ggqiCdIE9V3H9SKe505e/KRsLFru23otozAyts8jM/RPri3jvjSn78rL5uHZfIQJ6kIOTX01yBtc6mLMPTHsI8FDSOX5h0MsjZnDg==
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                Location="https://local-rust-cloud/idp/endpoint/HttpPost"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                                Location="https://local-rust-cloud/idp/endpoint/HttpRedirect"/>
+    </md:IDPSSODescriptor>
+</md:EntityDescriptor>

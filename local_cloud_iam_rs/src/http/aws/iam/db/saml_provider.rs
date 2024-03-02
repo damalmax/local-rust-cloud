@@ -65,6 +65,24 @@ where
     Ok(result)
 }
 
+pub(crate) async fn update_metadata<'a, E>(
+    executor: E, account_id: i64, arn: &str, metadata_document: &str,
+) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "UPDATE saml_providers SET metadata_document=$1 \
+        WHERE account_id = $2 AND arn = $3",
+    )
+    .bind(metadata_document)
+    .bind(account_id)
+    .bind(arn)
+    .execute(executor)
+    .await?;
+    Ok(result.rows_affected() == 1)
+}
+
 pub(crate) async fn list<'a, E>(executor: E, account_id: i64) -> Result<Vec<SelectSamlProvider>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
