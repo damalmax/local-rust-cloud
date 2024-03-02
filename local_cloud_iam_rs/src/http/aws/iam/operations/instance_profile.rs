@@ -8,7 +8,7 @@ use aws_sdk_iam::operation::list_instance_profiles_for_role::ListInstanceProfile
 use aws_sdk_iam::operation::remove_role_from_instance_profile::RemoveRoleFromInstanceProfileOutput;
 use aws_sdk_iam::operation::tag_instance_profile::TagInstanceProfileOutput;
 use aws_sdk_iam::operation::untag_instance_profile::UntagInstanceProfileOutput;
-use aws_sdk_iam::types::InstanceProfile;
+use aws_sdk_iam::types::{InstanceProfile, Role};
 use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
@@ -16,7 +16,7 @@ use sqlx::{Executor, Sqlite, Transaction};
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::instance_profile::InsertInstanceProfile;
+use crate::http::aws::iam::db::types::instance_profile::{InsertInstanceProfile, ListInstanceProfilesQuery};
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
@@ -207,7 +207,51 @@ pub(crate) async fn list_instance_profiles<'a>(
 ) -> Result<ListInstanceProfilesOutput, ActionError> {
     input.validate("$")?;
 
-    let output = ListInstanceProfilesOutput::builder().build().unwrap();
+    let query: ListInstanceProfilesQuery = input.into();
+
+    let found_profiles = db::instance_profile::list(tx.as_mut(), ctx.account_id, &query).await?;
+    let marker = super::common::create_encoded_marker(&query, found_profiles.len())?;
+
+    let mut instance_profiles: Vec<InstanceProfile> = vec![];
+    for i in 0..query.limit {
+        let item = found_profiles.get(i as usize);
+        match item {
+            None => break,
+            Some(select_profile) => {
+                let select_roles = db::instance_profile::list_roles(tx.as_mut(), select_profile.id).await?;
+                let mut roles = vec![];
+                for select_role in select_roles {
+                    let role = Role::builder()
+                        .arn(&select_role.arn)
+                        .create_date(DateTime::from_secs(select_role.create_date))
+                        .path(&select_role.path)
+                        .assume_role_policy_document(&select_role.assume_role_policy_document)
+                        .role_name(&select_role.role_name)
+                        .role_id(&select_role.role_id)
+                        .build()
+                        .unwrap();
+                    roles.push(role);
+                }
+                let profile = InstanceProfile::builder()
+                    .path(&select_profile.path)
+                    .set_roles(Some(roles))
+                    .create_date(DateTime::from_secs(select_profile.create_date))
+                    .instance_profile_id(&select_profile.instance_profile_id)
+                    .instance_profile_name(&select_profile.instance_profile_name)
+                    .arn(&select_profile.arn)
+                    .build()
+                    .unwrap();
+                instance_profiles.push(profile);
+            }
+        }
+    }
+
+    let output = ListInstanceProfilesOutput::builder()
+        .set_instance_profiles(Some(instance_profiles))
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
 
