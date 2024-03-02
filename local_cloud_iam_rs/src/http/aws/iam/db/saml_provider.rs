@@ -47,6 +47,24 @@ where
     Ok(result)
 }
 
+pub(crate) async fn find_by_arn<'a, E>(
+    executor: E, account_id: i64, arn: &str,
+) -> Result<Option<SelectSamlProvider>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT id, name, arn, create_date, valid_until, metadata_document \
+     FROM saml_providers WHERE account_id = $1 AND arn = $2",
+    )
+    .bind(account_id)
+    .bind(arn)
+    .map(|row: SqliteRow| SelectSamlProvider::from_row(&row).unwrap())
+    .fetch_optional(executor)
+    .await?;
+    Ok(result)
+}
+
 pub(crate) async fn list<'a, E>(executor: E, account_id: i64) -> Result<Vec<SelectSamlProvider>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,

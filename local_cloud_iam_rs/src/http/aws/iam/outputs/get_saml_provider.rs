@@ -15,7 +15,7 @@ impl From<LocalGetSamlProviderOutput> for XmlResponse {
         let mut doc = XmlWriter::new(&mut out);
 
         let mut response_tag = doc
-            .start_el("GetSAMLProviderResponse ")
+            .start_el("GetSAMLProviderResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
