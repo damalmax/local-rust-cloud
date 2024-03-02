@@ -168,7 +168,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] update_open_id_connect_provider_thumbprint
 - [ ] update_role
 - [ ] update_role_description
-- [ ] update_saml_provider
+- [X] update_saml_provider
 - [ ] update_server_certificate
 - [ ] update_service_specific_credential
 - [X] update_signing_certificate

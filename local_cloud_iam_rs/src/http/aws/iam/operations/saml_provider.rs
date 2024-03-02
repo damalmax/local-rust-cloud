@@ -178,6 +178,16 @@ pub(crate) async fn update_saml_provider<'a>(
 ) -> Result<UpdateSamlProviderOutput, ActionError> {
     input.validate("$")?;
 
+    let arn = input.saml_provider_arn().unwrap();
+    let metadata_document = input.saml_metadata_document().unwrap();
+    let is_updated = db::saml_provider::update_metadata(tx.as_mut(), ctx.account_id, arn, metadata_document).await?;
+    if !is_updated {
+        return Err(ActionError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM SAML provider with ARN '{}' doesn't exist.", arn).as_str(),
+        ));
+    }
+
     let output = UpdateSamlProviderOutput::builder().build();
     Ok(output)
 }
