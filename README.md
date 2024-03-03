@@ -60,7 +60,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] delete_signing_certificate
 - [ ] delete_ssh_public_key
 - [ ] delete_user
-- [ ] delete_user_permissions_boundary
+- [X] delete_user_permissions_boundary
 - [ ] delete_user_policy
 - [ ] delete_virtual_mfa_device
 - [ ] detach_group_policy
