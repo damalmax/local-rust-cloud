@@ -1,5 +1,6 @@
-use crate::tests::fixture::{tag, CREATE_USER_PERMISSIONS_BOUNDARY};
 use local_cloud_testing::assertions::assert_not_empty;
+
+use crate::tests::fixture::CREATE_USER_PERMISSIONS_BOUNDARY;
 
 #[tokio::test]
 async fn get_policy_version() {

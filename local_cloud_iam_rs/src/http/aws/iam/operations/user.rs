@@ -342,6 +342,18 @@ pub(crate) async fn put_user_permissions_boundary<'a>(
 ) -> Result<PutUserPermissionsBoundaryOutput, ActionError> {
     input.validate("$")?;
 
+    let policy_arn = input.permissions_boundary().unwrap();
+    let policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
+
+    let user_name = input.user_name().unwrap();
+    let is_updated = db::user::update_permissions_boundary(tx.as_mut(), ctx.account_id, user_name, policy_id).await?;
+    if !is_updated {
+        // There is only one reason why `is_updated == false` - user doesn't exist.
+        return Err(ActionError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
+        ));
+    }
     let output = PutUserPermissionsBoundaryOutput::builder().build();
     Ok(output)
 }
