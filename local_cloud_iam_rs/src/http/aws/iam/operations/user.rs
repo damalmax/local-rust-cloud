@@ -363,6 +363,16 @@ pub(crate) async fn delete_user_permissions_boundary<'a>(
 ) -> Result<DeleteUserPermissionsBoundaryOutput, ActionError> {
     input.validate("$")?;
 
+    let user_name = input.user_name().unwrap();
+    let is_updated = db::user::delete_permissions_boundary(tx.as_mut(), ctx.account_id, user_name).await?;
+    if !is_updated {
+        // There is only one reason why `is_updated == false` - user doesn't exist.
+        return Err(ActionError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM user with name '{}' doesn't exist.", user_name).as_str(),
+        ));
+    }
+
     let output = DeleteUserPermissionsBoundaryOutput::builder().build();
     Ok(output)
 }
