@@ -193,3 +193,22 @@ where
 
     Ok(result.rows_affected() == 1)
 }
+
+pub(crate) async fn update_permissions_boundary<'a, E>(
+    executor: E, account_id: i64, user_name: &str, policy_id: i64,
+) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "UPDATE users SET policy_id=$1 \
+        WHERE account_id=$2 AND unique_username=$3",
+    )
+    .bind(policy_id)
+    .bind(account_id)
+    .bind(&user_name.to_uppercase())
+    .execute(executor)
+    .await?;
+
+    Ok(result.rows_affected() == 1)
+}
