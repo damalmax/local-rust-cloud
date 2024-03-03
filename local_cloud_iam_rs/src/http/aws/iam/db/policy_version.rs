@@ -80,6 +80,35 @@ where
     Ok(result)
 }
 
+pub(crate) async fn find_by_policy_arn_and_version<'a, E>(
+    executor: E, account_id: i64, policy_arn: &str, version: u16,
+) -> Result<Option<SelectPolicyVersion>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        r#"SELECT
+                pv.id AS id,
+                pv.account_id AS account_id,
+                pv.policy_id AS policy_id,
+                pv.policy_version_id AS policy_version_id,
+                pv.policy_document AS policy_document,
+                pv.create_date AS create_date,
+                pv.is_default AS is_default,
+                pv.version AS version
+              FROM policies p
+              LEFT JOIN policy_versions pv ON p.id = pv.policy_id
+              WHERE pv.account_id = $1 AND p.arn = $2 AND pv.version = $3"#,
+    )
+    .bind(account_id)
+    .bind(policy_arn)
+    .bind(version)
+    .map(|row: SqliteRow| SelectPolicyVersion::from_row(&row).unwrap())
+    .fetch_optional(executor)
+    .await?;
+    Ok(result)
+}
+
 pub(crate) async fn disable_default_by_policy_id<'a>(
     tx: &mut Transaction<'a, Sqlite>, policy_id: i64,
 ) -> Result<(), Error> {
