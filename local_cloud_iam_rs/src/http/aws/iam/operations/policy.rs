@@ -52,6 +52,36 @@ use crate::http::aws::iam::types::tag_policy::TagPolicyRequest;
 use crate::http::aws::iam::types::untag_policy::UntagPolicyRequest;
 use crate::http::aws::iam::{constants, db};
 
+pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, ActionError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::policy::find_id_by_arn(executor, account_id, arn).await? {
+        Some(policy_id) => Ok(policy_id),
+        None => {
+            return Err(ActionError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM policy with ARN '{}' doesn't exist.", arn).as_str(),
+            ));
+        }
+    }
+}
+
+pub(crate) async fn find_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<SelectPolicy, ActionError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::policy::find_by_arn(executor, account_id, arn).await? {
+        Some(policy_id) => Ok(policy_id),
+        None => {
+            return Err(ActionError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM policy with ARN '{}' doesn't exist.", arn).as_str(),
+            ));
+        }
+    }
+}
+
 pub(crate) async fn create_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &CreatePolicyRequest,
 ) -> Result<CreatePolicyOutput, ActionError> {
@@ -195,21 +225,6 @@ async fn check_policy_version_count<'a>(tx: &mut Transaction<'a, Sqlite>, policy
     Ok(())
 }
 
-pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, ActionError>
-where
-    E: 'a + Executor<'a, Database = Sqlite>,
-{
-    match db::policy::find_id_by_arn(executor, account_id, arn).await? {
-        Some(policy_id) => Ok(policy_id),
-        None => {
-            return Err(ActionError::new(
-                ApiErrorKind::NoSuchEntity,
-                format!("IAM policy with ARN '{}' doesn't exist.", arn).as_str(),
-            ));
-        }
-    }
-}
-
 pub(crate) async fn list_policies<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &ListPoliciesRequest,
 ) -> Result<ListPoliciesOutput, ActionError> {
@@ -329,7 +344,23 @@ pub(crate) async fn get_policy<'a>(
 ) -> Result<GetPolicyOutput, ActionError> {
     input.validate("$")?;
 
-    let output = GetPolicyOutput::builder().build();
+    let arn = input.policy_arn().unwrap();
+    let select_policy = find_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
+
+    let policy = Policy::builder()
+        .arn(&select_policy.arn)
+        .create_date(DateTime::from_secs(select_policy.create_date))
+        .update_date(DateTime::from_secs(select_policy.update_date))
+        .path(&select_policy.path)
+        .policy_id(select_policy.policy_id)
+        .is_attachable(select_policy.is_attachable)
+        .set_description(select_policy.description)
+        .attachment_count(select_policy.attachment_count)
+        .permissions_boundary_usage_count(select_policy.permissions_boundary_usage_count)
+        .set_default_version_id(Some(format!("v{}", select_policy.version)))
+        .policy_name(&select_policy.policy_name)
+        .build();
+    let output = GetPolicyOutput::builder().policy(policy).build();
     Ok(output)
 }
 
