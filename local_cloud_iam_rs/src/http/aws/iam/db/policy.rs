@@ -90,6 +90,41 @@ where
     Ok(result)
 }
 
+pub(crate) async fn find_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<Option<SelectPolicy>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        r#"
+            SELECT
+                p.id AS id,
+                p.account_id AS account_id,
+                p.policy_name AS policy_name,
+                p.arn AS arn,
+                p.policy_id AS policy_id,
+                p.path AS path,
+                p.create_date AS create_date,
+                p.update_date AS update_date,
+                p.policy_type AS policy_type,
+                p.description AS description,
+                p.is_attachable AS is_attachable,
+                ((SELECT COUNT(pg.policy_id) FROM policy_groups pg WHERE pg.policy_id = p.id)
+                + (SELECT COUNT(pr.policy_id) FROM policy_roles pr WHERE pr.policy_id = p.id)
+                + (SELECT COUNT(pu.policy_id) FROM policy_users pu WHERE pu.policy_id = p.id)) AS attachment_count,
+                ((SELECT COUNT(r.policy_id) FROM roles r WHERE r.policy_id = p.id)
+                + (SELECT COUNT(u.policy_id) FROM users u WHERE u.policy_id = p.id)) AS permissions_boundary_usage_count,
+                pv.version AS version
+            FROM policies p LEFT JOIN policy_versions pv ON p.id = pv.policy_id AND pv.is_default = true
+            WHERE p.arn = $1 AND p.account_id = $2"#,
+    )
+        .bind(arn)
+        .bind(account_id)
+        .map(|row: SqliteRow| SelectPolicy::from_row(&row).unwrap())
+        .fetch_optional(executor)
+        .await?;
+    Ok(result)
+}
+
 pub(crate) async fn list<'a, E>(
     executor: E, account_id: i64, query: &ListPoliciesQuery,
 ) -> Result<Vec<SelectPolicy>, Error>
