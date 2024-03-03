@@ -370,7 +370,18 @@ pub(crate) async fn put_role_permissions_boundary<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &PutRolePermissionsBoundaryRequest,
 ) -> Result<PutRolePermissionsBoundaryOutput, ActionError> {
     input.validate("$")?;
+    let policy_arn = input.permissions_boundary().unwrap();
+    let policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
 
+    let role_name = input.role_name().unwrap();
+    let is_updated = db::role::update_permissions_boundary(tx.as_mut(), ctx.account_id, role_name, policy_id).await?;
+    if !is_updated {
+        // There is only one reason why `is_updated == false` - role doesn't exist.
+        return Err(ActionError::new(
+            ApiErrorKind::NoSuchEntity,
+            format!("IAM role with name '{}' doesn't exist.", role_name).as_str(),
+        ));
+    }
     let output = PutRolePermissionsBoundaryOutput::builder().build();
     Ok(output)
 }
