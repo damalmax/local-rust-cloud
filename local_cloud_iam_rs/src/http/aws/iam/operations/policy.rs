@@ -103,6 +103,7 @@ pub(crate) async fn create_policy<'a>(
         policy_document,
         insert_policy.id.unwrap(),
         policy_version_id,
+        true,
         current_time,
     )
     .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
@@ -156,18 +157,24 @@ pub(crate) async fn create_policy_version<'a>(
     }
 
     let current_time = Utc::now().timestamp();
+    let policy_version_id =
+        create_resource_id(tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
+    let mut insert_policy_version = prepare_policy_version_for_insert(
+        ctx,
+        policy_document,
+        policy_id,
+        policy_version_id,
+        set_as_default,
+        current_time,
+    )
+    .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
+    db::policy_version::create(tx, &mut insert_policy_version).await?;
+
     let policy_version = PolicyVersion::builder()
         .is_default_version(set_as_default)
         .create_date(DateTime::from_secs(current_time))
-        .version_id("v2")
+        .version_id(format!("v{}", insert_policy_version.version.unwrap()))
         .build();
-
-    let policy_version_id =
-        create_resource_id(tx, constants::policy_version::PREFIX, ResourceType::PolicyVersion).await?;
-    let mut insert_policy_version =
-        prepare_policy_version_for_insert(ctx, policy_document, policy_id, policy_version_id, current_time)
-            .map_err(|err| ActionError::new(ApiErrorKind::ServiceFailure, err.to_string().as_str()))?;
-    db::policy_version::create(tx, &mut insert_policy_version).await?;
 
     let output = CreatePolicyVersionOutput::builder()
         .policy_version(policy_version)
@@ -312,11 +319,12 @@ fn prepare_policy_for_insert(
 }
 
 fn prepare_policy_version_for_insert(
-    ctx: &OperationCtx, policy_document: &str, policy_id: i64, policy_version_id: String, current_time: i64,
+    ctx: &OperationCtx, policy_document: &str, policy_id: i64, policy_version_id: String, is_default: bool,
+    current_time: i64,
 ) -> Result<InsertPolicyVersion, InsertPolicyVersionBuilderError> {
     InsertPolicyVersionBuilder::default()
         .id(None)
-        .is_default(true)
+        .is_default(is_default)
         .policy_id(policy_id)
         .policy_document(policy_document.to_owned())
         .policy_version_id(policy_version_id)
@@ -369,7 +377,21 @@ pub(crate) async fn get_policy_version<'a>(
 ) -> Result<GetPolicyVersionOutput, ActionError> {
     input.validate("$")?;
 
-    let output = GetPolicyVersionOutput::builder().build();
+    let policy_arn = input.policy_arn().unwrap();
+    let version: u16 = input.version_id().unwrap().strip_prefix("v").unwrap().parse().unwrap();
+    let policy_version =
+        match db::policy_version::find_by_policy_arn_and_version(tx.as_mut(), ctx.account_id, policy_arn, version)
+            .await?
+        {
+            None => return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist.")),
+            Some(select_policy) => PolicyVersion::builder()
+                .create_date(DateTime::from_secs(select_policy.create_date))
+                .document(&select_policy.policy_document)
+                .is_default_version(select_policy.is_default)
+                .version_id(input.version_id().unwrap())
+                .build(),
+        };
+    let output = GetPolicyVersionOutput::builder().policy_version(policy_version).build();
     Ok(output)
 }
 

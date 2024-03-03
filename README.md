@@ -85,7 +85,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] get_open_id_connect_provider
 - [ ] get_organizations_access_report
 - [X] get_policy
-- [ ] get_policy_version
+- [X] get_policy_version
 - [X] get_role
 - [X] get_role_policy
 - [X] get_saml_provider
