@@ -1,7 +1,7 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::server_certificate::InsertServerCertificate;
+use crate::http::aws::iam::db::types::server_certificate::{InsertServerCertificate, UpdateServerCertificateQuery};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, cert: &mut InsertServerCertificate,
@@ -61,4 +61,39 @@ where
     .await?;
 
     Ok(id)
+}
+
+pub(crate) async fn update<'a, E>(
+    executor: E, account_id: i64, query: &UpdateServerCertificateQuery,
+) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE server_certificates SET");
+    let mut added = false;
+    if let Some(new_server_certificate_name) = &query.new_server_certificate_name {
+        query_builder
+            .push(" server_certificate_name=")
+            .push_bind(new_server_certificate_name)
+            .push(" , unique_server_certificate_name=")
+            .push_bind(new_server_certificate_name.to_uppercase());
+        added = true;
+    }
+    if let Some(new_path) = &query.new_path {
+        if added {
+            query_builder.push(" ,");
+        }
+        query_builder.push(" path=").push_bind(new_path);
+    }
+
+    let result = query_builder
+        .push(" WHERE account_id=")
+        .push_bind(account_id)
+        .push(" AND unique_server_certificate_name=")
+        .push_bind(&query.server_certificate_name.to_uppercase())
+        .build()
+        .execute(executor)
+        .await?;
+
+    Ok(result.rows_affected() == 1)
 }

@@ -16,7 +16,7 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
-use crate::http::aws::iam::db::types::server_certificate::InsertServerCertificate;
+use crate::http::aws::iam::db::types::server_certificate::{InsertServerCertificate, UpdateServerCertificateQuery};
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
@@ -191,6 +191,16 @@ pub(crate) async fn update_server_certificate<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &UpdateServerCertificateRequest,
 ) -> Result<UpdateServerCertificateOutput, ActionError> {
     input.validate("$")?;
+
+    let query = UpdateServerCertificateQuery {
+        server_certificate_name: input.server_certificate_name().unwrap().to_owned(),
+        new_server_certificate_name: input.new_server_certificate_name().map(|s| s.to_owned()),
+        new_path: input.new_path().map(|s| s.to_owned()),
+    };
+    let result = db::server_certificate::update(tx.as_mut(), ctx.account_id, &query).await?;
+    if !result {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
 
     let output = UpdateServerCertificateOutput::builder().build();
     Ok(output)
