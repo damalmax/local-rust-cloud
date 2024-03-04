@@ -140,7 +140,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] remove_user_from_group
 - [ ] reset_service_specific_credential
 - [ ] resync_mfa_device
-- [ ] set_default_policy_version
+- [X] set_default_policy_version
 - [ ] set_security_token_service_preferences
 - [ ] simulate_custom_policy
 - [ ] simulate_principal_policy
