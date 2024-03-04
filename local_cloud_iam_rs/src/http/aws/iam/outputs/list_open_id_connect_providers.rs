@@ -15,15 +15,15 @@ impl From<LocalListOpenIdConnectProvidersOutput> for XmlResponse {
         let mut doc = XmlWriter::new(&mut out);
 
         let mut response_tag = doc
-            .start_el("ListOpenIdConnectProvidersResponse")
+            .start_el("ListOpenIDConnectProvidersResponse")
             .write_ns(constants::xml::IAM_XMLNS, None)
             .finish();
 
-        let mut result_tag = response_tag.start_el("ListOpenIdConnectProvidersResult").finish();
+        let mut result_tag = response_tag.start_el("ListOpenIDConnectProvidersResult").finish();
 
         super::open_id_connect_providers::write_slice(
             &mut result_tag,
-            "OpenIdConnectProviderList",
+            "OpenIDConnectProviderList",
             val.inner.open_id_connect_provider_list(),
         );
         result_tag.finish();

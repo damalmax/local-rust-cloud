@@ -1,6 +1,6 @@
-use sqlx::{sqlite::SqliteRow, Error, Executor, Row, Sqlite, Transaction};
+use sqlx::{sqlite::SqliteRow, Error, Executor, FromRow, Row, Sqlite, Transaction};
 
-use super::types::open_id_connect_provider::InsertOpenIdConnectProvider;
+use super::types::open_id_connect_provider::{InsertOpenIdConnectProvider, SelectOpenIdConnectProvider};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, provider: &mut InsertOpenIdConnectProvider,
@@ -30,5 +30,20 @@ where
         .map(|row: SqliteRow| row.get::<i64, &str>("id"))
         .fetch_optional(executor)
         .await?;
+    Ok(result)
+}
+
+pub(crate) async fn list<'a, E>(executor: E, account_id: i64) -> Result<Vec<SelectOpenIdConnectProvider>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT id, account_id, arn, url, create_date \
+        FROM open_id_connect_providers WHERE account_id = $1",
+    )
+    .bind(account_id)
+    .map(|row: SqliteRow| SelectOpenIdConnectProvider::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
     Ok(result)
 }
