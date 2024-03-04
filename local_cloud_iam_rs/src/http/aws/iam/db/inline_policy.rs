@@ -1,8 +1,8 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::common::Pageable;
-use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
+use crate::http::aws::iam::db::types::common::{ListByIdQuery, Pageable};
+use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 
 pub(crate) async fn save<'a>(
     tx: &mut Transaction<'a, Sqlite>, table_name: &str, inline_policy: &mut DbInlinePolicy,
@@ -63,7 +63,7 @@ where
 }
 
 pub(crate) async fn find_by_parent_id<'a, E>(
-    executor: E, parent_table_name: &str, table_name: &str, query: &ListInlinePoliciesQuery,
+    executor: E, parent_table_name: &str, table_name: &str, query: &ListByIdQuery,
 ) -> Result<Vec<DbInlinePolicy>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,

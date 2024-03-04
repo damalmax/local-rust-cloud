@@ -11,6 +11,7 @@ use sqlx::{Sqlite, Transaction};
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
+use crate::http::aws::iam::db::types::common::ListByIdQuery;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::ssh_public_key::{InsertSshPublicKey, UpdateSshPublicKeyQuery};
 use crate::http::aws::iam::db::types::ssh_public_key_type::SshPublicKeyStatusType;
@@ -103,7 +104,20 @@ pub(crate) async fn list_ssh_public_keys<'a>(
 ) -> Result<ListSshPublicKeysOutput, ActionError> {
     input.validate("$")?;
 
-    let output = ListSshPublicKeysOutput::builder().build();
+    let user_name = input.user_name().unwrap(); // TODO: if user_name is not provided, obtain the info from request
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
+    let query = ListByIdQuery::new(user_id, input.max_items(), input.marker_type());
+
+    let found_keys = db::ssh_public_key::find_by_user_id(tx.as_mut(), &query).await?;
+
+    let keys = super::common::convert_and_limit(&found_keys, query.limit);
+    let marker = super::common::create_encoded_marker(&query, found_keys.len())?;
+
+    let output = ListSshPublicKeysOutput::builder()
+        .set_ssh_public_keys(keys)
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build();
     Ok(output)
 }
 

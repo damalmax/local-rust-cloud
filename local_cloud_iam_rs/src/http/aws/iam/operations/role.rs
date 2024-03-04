@@ -25,7 +25,8 @@ use sqlx::{Executor, Sqlite, Transaction};
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
+use crate::http::aws::iam::db::types::common::ListByIdQuery;
+use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::role::{
     InsertRole, InsertRoleBuilder, InsertRoleBuilderError, SelectRole, SelectRoleWithDetails,
@@ -227,7 +228,7 @@ pub(crate) async fn list_role_policies<'a>(
     let role_name = input.role_name().unwrap().trim();
     let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, role_name).await?;
 
-    let query = ListInlinePoliciesQuery::new(role_id, input.max_items(), input.marker_type());
+    let query = ListByIdQuery::new(role_id, input.max_items(), input.marker_type());
     let found_policies = db::role_inline_policy::find_by_role_id(tx.as_mut(), &query).await?;
 
     let policy_names = super::common::convert_and_limit(&found_policies, query.limit);
