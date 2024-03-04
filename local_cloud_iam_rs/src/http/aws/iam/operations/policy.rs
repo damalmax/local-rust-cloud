@@ -400,6 +400,19 @@ pub(crate) async fn set_default_policy_version<'a>(
 ) -> Result<SetDefaultPolicyVersionOutput, ActionError> {
     input.validate("$")?;
 
+    let policy_arn = input.policy_arn().unwrap();
+    let policy_id = find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
+
+    // find and disable previous default policy version
+    db::policy_version::disable_default_by_policy_id(tx, policy_id).await?;
+
+    let version: u16 = input.version_id().unwrap().strip_prefix("v").unwrap().parse().unwrap();
+
+    let is_updated = db::policy_version::set_default(tx, policy_id, version).await?;
+    if !is_updated {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
+
     let output = SetDefaultPolicyVersionOutput::builder().build();
     Ok(output)
 }
