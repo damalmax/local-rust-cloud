@@ -8,6 +8,7 @@ use aws_sdk_iam::operation::remove_client_id_from_open_id_connect_provider::Remo
 use aws_sdk_iam::operation::tag_open_id_connect_provider::TagOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::untag_open_id_connect_provider::UntagOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintOutput;
+use aws_sdk_iam::types::OpenIdConnectProviderListEntry;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
 
@@ -206,6 +207,17 @@ pub(crate) async fn list_open_id_connect_providers<'a>(
 ) -> Result<ListOpenIdConnectProvidersOutput, ActionError> {
     input.validate("$")?;
 
-    let output = ListOpenIdConnectProvidersOutput::builder().build();
+    let mut providers = vec![];
+    let found_providers = db::open_id_connect_provider::list(tx.as_mut(), ctx.account_id).await?;
+    for found_provider in found_providers {
+        let provider = OpenIdConnectProviderListEntry::builder()
+            .arn(&found_provider.arn)
+            .build();
+        providers.push(provider);
+    }
+
+    let output = ListOpenIdConnectProvidersOutput::builder()
+        .set_open_id_connect_provider_list(Some(providers))
+        .build();
     Ok(output)
 }
