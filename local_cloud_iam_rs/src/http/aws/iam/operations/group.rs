@@ -21,11 +21,12 @@ use sqlx::{Executor, Sqlite, Transaction};
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
+use crate::http::aws::iam::db::types::common::ListByIdQuery;
 use crate::http::aws::iam::db::types::group::{
     InsertGroup, InsertGroupBuilder, InsertGroupBuilderError, ListGroupsByUserQuery, ListGroupsQuery, SelectGroup,
     UpdateGroupQuery,
 };
-use crate::http::aws::iam::db::types::inline_policy::{DbInlinePolicy, ListInlinePoliciesQuery};
+use crate::http::aws::iam::db::types::inline_policy::DbInlinePolicy;
 use crate::http::aws::iam::db::types::resource_identifier::ResourceType;
 use crate::http::aws::iam::db::types::user::ListUsersByGroupQuery;
 use crate::http::aws::iam::operations::common::create_resource_id;
@@ -311,7 +312,7 @@ pub(crate) async fn list_group_policies<'a>(
     let group_name = input.group_name().unwrap().trim();
     let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, group_name).await?;
 
-    let query = ListInlinePoliciesQuery::new(group_id, input.max_items(), input.marker_type());
+    let query = ListByIdQuery::new(group_id, input.max_items(), input.marker_type());
     let found_policies = db::group_inline_policy::find_by_group_id(tx.as_mut(), &query).await?;
 
     let policy_names = super::common::convert_and_limit(&found_policies, query.limit);

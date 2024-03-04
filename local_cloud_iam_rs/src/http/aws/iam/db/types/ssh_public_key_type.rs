@@ -50,3 +50,12 @@ impl From<&StatusType> for SshPublicKeyStatusType {
         }
     }
 }
+
+impl From<&SshPublicKeyStatusType> for aws_sdk_iam::types::StatusType {
+    fn from(value: &SshPublicKeyStatusType) -> Self {
+        match value {
+            SshPublicKeyStatusType::Active => aws_sdk_iam::types::StatusType::Active,
+            SshPublicKeyStatusType::Inactive => aws_sdk_iam::types::StatusType::Inactive,
+        }
+    }
+}
