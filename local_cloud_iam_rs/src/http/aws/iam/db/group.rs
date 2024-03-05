@@ -122,7 +122,7 @@ where
     Ok(group_id)
 }
 
-pub(crate) async fn assign_user_to_group<'a>(
+pub(crate) async fn assign_user<'a>(
     tx: &mut Transaction<'a, Sqlite>, group_id: i64, user_id: i64,
 ) -> Result<(), Error> {
     sqlx::query(r#"INSERT INTO group_users (group_id, user_id) VALUES ($1, $2)"#)
@@ -133,7 +133,7 @@ pub(crate) async fn assign_user_to_group<'a>(
     Ok(())
 }
 
-pub(crate) async fn assign_policy_to_group<'a>(
+pub(crate) async fn assign_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, group_id: i64, policy_id: i64,
 ) -> Result<(), Error> {
     sqlx::query(r#"INSERT INTO policy_groups (group_id, policy_id) VALUES ($1, $2)"#)
@@ -142,6 +142,17 @@ pub(crate) async fn assign_policy_to_group<'a>(
         .execute(tx.as_mut())
         .await?;
     Ok(())
+}
+
+pub(crate) async fn detach_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, group_id: i64, policy_id: i64,
+) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM policy_groups WHERE group_id=$1 AND policy_id=$2")
+        .bind(group_id)
+        .bind(policy_id)
+        .execute(tx.as_mut())
+        .await?;
+    Ok(result.rows_affected() == 1)
 }
 
 pub(crate) async fn find_by_user_id<'a, E>(

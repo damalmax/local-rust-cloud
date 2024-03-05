@@ -152,7 +152,7 @@ pub(crate) async fn add_user_to_group<'a>(
 
     let found_group = find_by_name(ctx, tx.as_mut(), input.group_name().unwrap().trim()).await?;
     let found_user = super::user::find_by_name(ctx, tx.as_mut(), input.user_name().unwrap().trim()).await?;
-    db::group::assign_user_to_group(tx, found_group.id, found_user.id).await?;
+    db::group::assign_user(tx, found_group.id, found_user.id).await?;
     let output = AddUserToGroupOutput::builder().build();
     Ok(output)
 }
@@ -200,7 +200,7 @@ pub(crate) async fn attach_group_policy<'a>(
     let found_policy_id =
         super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, input.policy_arn().unwrap().trim()).await?;
 
-    db::group::assign_policy_to_group(tx, found_group.id, found_policy_id).await?;
+    db::group::assign_policy(tx, found_group.id, found_policy_id).await?;
 
     let output = AttachGroupPolicyOutput::builder().build();
     Ok(output)
@@ -377,6 +377,17 @@ pub(crate) async fn detach_group_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DetachGroupPolicyRequest,
 ) -> Result<DetachGroupPolicyOutput, ActionError> {
     input.validate("$")?;
+
+    let group_name = input.group_name().unwrap();
+    let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, group_name).await?;
+
+    let policy_arn = input.policy_arn().unwrap();
+    let policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
+
+    let is_updated = db::group::detach_policy(tx, group_id, policy_id).await?;
+    if !is_updated {
+        return Err(ActionError::new(ApiErrorKind::InvalidInput, "Policy is not attached to the group."));
+    }
 
     let output = DetachGroupPolicyOutput::builder().build();
     Ok(output)
