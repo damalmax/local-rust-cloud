@@ -409,7 +409,16 @@ pub(crate) async fn detach_user_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DetachUserPolicyRequest,
 ) -> Result<DetachUserPolicyOutput, ActionError> {
     input.validate("$")?;
+    let user_name = input.user_name().unwrap();
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
 
+    let policy_arn = input.policy_arn().unwrap();
+    let policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
+
+    let is_updated = db::user::detach_policy(tx, user_id, policy_id).await?;
+    if !is_updated {
+        return Err(ActionError::new(ApiErrorKind::InvalidInput, "Policy is not attached to the user."));
+    }
     let output = DetachUserPolicyOutput::builder().build();
     Ok(output)
 }

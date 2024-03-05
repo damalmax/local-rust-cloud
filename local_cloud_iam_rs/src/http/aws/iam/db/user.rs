@@ -128,6 +128,17 @@ where
     Ok(())
 }
 
+pub(crate) async fn detach_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, user_id: i64, policy_id: i64,
+) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM policy_users WHERE user_id=$1 AND policy_id=$2")
+        .bind(user_id)
+        .bind(policy_id)
+        .execute(tx.as_mut())
+        .await?;
+    Ok(result.rows_affected() == 1)
+}
+
 pub(crate) async fn list<'a, E>(executor: E, account_id: i64, query: &ListUsersQuery) -> Result<Vec<SelectUser>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,

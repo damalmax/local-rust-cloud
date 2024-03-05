@@ -65,7 +65,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] delete_virtual_mfa_device
 - [X] detach_group_policy
 - [ ] detach_role_policy
-- [ ] detach_user_policy
+- [X] detach_user_policy
 - [X] enable_mfa_device
 - [ ] generate_credential_report
 - [ ] generate_organizations_access_report

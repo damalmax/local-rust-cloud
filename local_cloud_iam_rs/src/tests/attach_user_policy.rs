@@ -1,5 +1,7 @@
 use crate::tests::fixture::CREATE_USER_PERMISSIONS_BOUNDARY;
 
+const USER_NAME: &str = "user1";
+
 #[tokio::test]
 async fn attach_user_policy() {
     let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
@@ -7,7 +9,7 @@ async fn attach_user_policy() {
     let config = super::aws_config(port);
     let client = aws_sdk_iam::Client::new(&config);
 
-    super::fixture::create_user(&client, "user1", "/", None, None)
+    super::fixture::create_user(&client, USER_NAME, "/", None, None)
         .await
         .expect("Failed to create IAM user");
 
@@ -24,11 +26,11 @@ async fn attach_user_policy() {
 
     client
         .attach_user_policy()
-        .user_name("user1")
+        .user_name(USER_NAME)
         .policy_arn(policy_output.policy().unwrap().arn().unwrap())
         .send()
         .await
-        .expect("Failed to attach role policy");
+        .expect("Failed to attach user policy");
 
     ctx.stop_server().await;
 }
