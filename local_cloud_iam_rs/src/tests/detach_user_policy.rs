@@ -3,7 +3,7 @@ use crate::tests::fixture::CREATE_USER_PERMISSIONS_BOUNDARY;
 const USER_NAME: &str = "user1";
 
 #[tokio::test]
-async fn attach_user_policy() {
+async fn detach_user_policy() {
     let ctx = local_cloud_testing::axum_suite::create_test_ctx(super::test_suite::start_server).await;
     let port = ctx.port;
     let config = super::aws_config(port);
@@ -39,7 +39,7 @@ async fn attach_user_policy() {
         .policy_arn(policy_arn)
         .send()
         .await
-        .expect("Failed to detach user policy");
+        .expect("Failed to detach policy from user");
 
     ctx.stop_server().await;
 }

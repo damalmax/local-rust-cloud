@@ -109,6 +109,17 @@ pub(crate) async fn assign_policy_to_role<'a>(
     Ok(())
 }
 
+pub(crate) async fn detach_policy<'a>(
+    tx: &mut Transaction<'a, Sqlite>, role_id: i64, policy_id: i64,
+) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM policy_roles WHERE role_id=$1 AND policy_id=$2")
+        .bind(role_id)
+        .bind(policy_id)
+        .execute(tx.as_mut())
+        .await?;
+    Ok(result.rows_affected() == 1)
+}
+
 pub(crate) async fn list<'a, E>(executor: E, account_id: i64, query: &ListRolesQuery) -> Result<Vec<SelectRole>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
