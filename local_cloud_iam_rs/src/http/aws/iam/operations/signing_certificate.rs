@@ -12,6 +12,7 @@ use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
 use crate::http::aws::iam::db;
+use crate::http::aws::iam::db::types::common::ListByIdQuery;
 use crate::http::aws::iam::db::types::signing_certificate::{InsertSigningCertificate, UpdateSigningCertificateQuery};
 use crate::http::aws::iam::db::types::signing_certificate_status_type::SigningCertificateStatusType;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
@@ -96,7 +97,21 @@ pub(crate) async fn list_signing_certificates<'a>(
 ) -> Result<ListSigningCertificatesOutput, ActionError> {
     input.validate("$")?;
 
-    let output = ListSigningCertificatesOutput::builder().build().unwrap();
+    let user_name = input.user_name().unwrap();
+    let user_id = super::user::find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
+
+    let query = ListByIdQuery::new(user_id, input.max_items(), input.marker_type());
+
+    let found_certificates = db::sighing_certificate::find_by_user_id(tx.as_mut(), &query).await?;
+    let certificates = super::common::convert_and_limit(&found_certificates, query.limit);
+    let marker = super::common::create_encoded_marker(&query, found_certificates.len())?;
+
+    let output = ListSigningCertificatesOutput::builder()
+        .set_certificates(certificates)
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
 
