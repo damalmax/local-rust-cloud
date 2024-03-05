@@ -363,6 +363,17 @@ pub(crate) async fn detach_role_policy<'a>(
 ) -> Result<DetachRolePolicyOutput, ActionError> {
     input.validate("$")?;
 
+    let role_name = input.role_name().unwrap();
+    let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, role_name).await?;
+
+    let policy_arn = input.policy_arn().unwrap();
+    let policy_id = super::policy::find_id_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
+
+    let is_updated = db::role::detach_policy(tx, role_id, policy_id).await?;
+    if !is_updated {
+        return Err(ActionError::new(ApiErrorKind::InvalidInput, "Policy is not attached to the role."));
+    }
+
     let output = DetachRolePolicyOutput::builder().build();
     Ok(output)
 }
