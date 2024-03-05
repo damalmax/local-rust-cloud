@@ -8,6 +8,16 @@ pub enum SigningCertificateStatusType {
     Expired,
 }
 
+impl From<&SigningCertificateStatusType> for aws_sdk_iam::types::StatusType {
+    fn from(value: &SigningCertificateStatusType) -> Self {
+        match value {
+            SigningCertificateStatusType::Active => aws_sdk_iam::types::StatusType::Active,
+            SigningCertificateStatusType::Inactive => aws_sdk_iam::types::StatusType::Inactive,
+            SigningCertificateStatusType::Expired => aws_sdk_iam::types::StatusType::Inactive,
+        }
+    }
+}
+
 impl SigningCertificateStatusType {
     pub(crate) fn as_i32(&self) -> i32 {
         match self {

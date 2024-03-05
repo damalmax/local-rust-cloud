@@ -46,7 +46,7 @@ pub(crate) async fn find_by_user_id<'a, E>(executor: E, query: &ListByIdQuery) -
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {
-    let policies = sqlx::query(
+    let keys = sqlx::query(
         "SELECT \
             k.id AS id, \
             k.user_id AS user_id, \
@@ -67,5 +67,5 @@ where
     .fetch_all(executor)
     .await?;
 
-    Ok(policies)
+    Ok(keys)
 }

@@ -1,7 +1,10 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::signing_certificate::{InsertSigningCertificate, UpdateSigningCertificateQuery};
+use crate::http::aws::iam::db::types::common::{ListByIdQuery, Pageable};
+use crate::http::aws::iam::db::types::signing_certificate::{
+    InsertSigningCertificate, SelectSigningCertificate, UpdateSigningCertificateQuery,
+};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, cert: &mut InsertSigningCertificate,
@@ -48,4 +51,34 @@ where
     .await?;
 
     Ok(result.rows_affected() == 1)
+}
+
+pub(crate) async fn find_by_user_id<'a, E>(
+    executor: E, query: &ListByIdQuery,
+) -> Result<Vec<SelectSigningCertificate>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let keys = sqlx::query(
+        "SELECT \
+            sc.id AS id, \
+            sc.user_id AS user_id, \
+            u.username AS user_name, \
+            sc.certificate_id AS certificate_id, \
+            sc.certificate_body AS certificate_body, \
+            sc.status AS status, \
+            sc.upload_date AS upload_date \
+        FROM signing_certificates sc LEFT JOIN users u ON sc.user_id = u.id \
+        WHERE sc.user_id = $1 \
+        ORDER BY sc.certificate_id \
+        LIMIT $2 OFFSET $3",
+    )
+    .bind(query.parent_id)
+    .bind(query.limit() + 1)
+    .bind(query.skip())
+    .map(|row: SqliteRow| SelectSigningCertificate::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
+
+    Ok(keys)
 }
