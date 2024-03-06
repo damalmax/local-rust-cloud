@@ -48,3 +48,15 @@ where
     .await?;
     Ok(result)
 }
+
+pub(crate) async fn delete<'a, E>(executor: E, open_id_connect_provider_id: i64, client_id: &str) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query("DELETE FROM open_id_connect_provider_client_ids WHERE provider_id=$1 AND client_id=$2")
+        .bind(open_id_connect_provider_id)
+        .bind(client_id)
+        .execute(executor)
+        .await?;
+    Ok(result.rows_affected() == 1)
+}

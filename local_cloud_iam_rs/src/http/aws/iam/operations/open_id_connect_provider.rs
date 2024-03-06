@@ -200,6 +200,15 @@ pub(crate) async fn remove_client_id_from_open_id_connect_provider<'a>(
 ) -> Result<RemoveClientIdFromOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
 
+    let arn = input.open_id_connect_provider_arn().unwrap();
+    let provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
+
+    let client_id = input.client_id().unwrap();
+    let is_deleted = db::open_id_connect_provider_client_id::delete(tx.as_mut(), provider_id, client_id).await?;
+    if !is_deleted {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist"));
+    }
+
     let output = RemoveClientIdFromOpenIdConnectProviderOutput::builder().build();
     Ok(output)
 }

@@ -135,7 +135,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] put_role_policy
 - [X] put_user_permissions_boundary
 - [X] put_user_policy
-- [ ] remove_client_id_from_open_id_connect_provider
+- [X] remove_client_id_from_open_id_connect_provider
 - [ ] remove_role_from_instance_profile
 - [ ] remove_user_from_group
 - [ ] reset_service_specific_credential
