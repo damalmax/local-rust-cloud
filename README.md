@@ -61,7 +61,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] delete_ssh_public_key
 - [ ] delete_user
 - [X] delete_user_permissions_boundary
-- [ ] delete_user_policy
+- [X] delete_user_policy
 - [ ] delete_virtual_mfa_device
 - [X] detach_group_policy
 - [X] detach_role_policy
