@@ -44,7 +44,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] delete_account_alias
 - [ ] delete_account_password_policy
 - [ ] delete_group
-- [ ] delete_group_policy
+- [X] delete_group_policy
 - [ ] delete_instance_profile
 - [ ] delete_login_profile
 - [ ] delete_open_id_connect_provider

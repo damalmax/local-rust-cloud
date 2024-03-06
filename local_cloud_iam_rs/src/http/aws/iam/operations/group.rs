@@ -397,6 +397,14 @@ pub(crate) async fn delete_group_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteGroupPolicyRequest,
 ) -> Result<DeleteGroupPolicyOutput, ActionError> {
     input.validate("$")?;
+    let group_name = input.group_name().unwrap().trim();
+    let group_id = find_id_by_name(tx.as_mut(), ctx.account_id, group_name).await?;
+
+    let policy_name = input.policy_name().unwrap();
+    let is_deleted = db::group_inline_policy::delete_by_group_id_and_name(tx.as_mut(), group_id, policy_name).await?;
+    if !is_deleted {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
 
     let output = DeleteGroupPolicyOutput::builder().build();
     Ok(output)
