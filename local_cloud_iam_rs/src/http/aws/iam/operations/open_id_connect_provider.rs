@@ -9,13 +9,16 @@ use aws_sdk_iam::operation::tag_open_id_connect_provider::TagOpenIdConnectProvid
 use aws_sdk_iam::operation::untag_open_id_connect_provider::UntagOpenIdConnectProviderOutput;
 use aws_sdk_iam::operation::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintOutput;
 use aws_sdk_iam::types::OpenIdConnectProviderListEntry;
+use aws_smithy_types::DateTime;
 use chrono::Utc;
 use sqlx::{Executor, Sqlite, Transaction};
 
 use local_cloud_validate::NamedValidator;
 
 use crate::http::aws::iam::actions::error::ApiErrorKind;
-use crate::http::aws::iam::db::types::open_id_connect_provider::InsertOpenIdConnectProvider;
+use crate::http::aws::iam::db::types::open_id_connect_provider::{
+    InsertOpenIdConnectProvider, SelectOpenIdConnectProvider,
+};
 use crate::http::aws::iam::db::types::tags::ListTagsQuery;
 use crate::http::aws::iam::operations::ctx::OperationCtx;
 use crate::http::aws::iam::operations::error::ActionError;
@@ -31,17 +34,6 @@ use crate::http::aws::iam::types::untag_open_id_connect_provider::UntagOpenIdCon
 use crate::http::aws::iam::types::update_open_id_connect_provider_thumbprint::UpdateOpenIdConnectProviderThumbprintRequest;
 use crate::http::aws::iam::{constants, db};
 
-pub(crate) async fn add_client_id_to_open_id_connect_provider<'a>(
-    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AddClientIdToOpenIdConnectProviderRequest,
-) -> Result<AddClientIdToOpenIdConnectProviderOutput, ActionError> {
-    input.validate("$")?;
-    let arn = input.open_id_connect_provider_arn().unwrap();
-    let provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
-    db::open_id_connect_provider_client_id::create(tx, provider_id, input.client_id().unwrap()).await?;
-    let output = AddClientIdToOpenIdConnectProviderOutput::builder().build();
-    Ok(output)
-}
-
 pub(crate) async fn find_id_by_arn<'a, E>(executor: E, account_id: i64, arn: &str) -> Result<i64, ActionError>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
@@ -55,6 +47,34 @@ where
             ));
         }
     }
+}
+
+pub(crate) async fn find_by_arn<'a, E>(
+    executor: E, account_id: i64, arn: &str,
+) -> Result<SelectOpenIdConnectProvider, ActionError>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    match db::open_id_connect_provider::find_by_arn(executor, account_id, arn).await? {
+        Some(provider_id) => Ok(provider_id),
+        None => {
+            return Err(ActionError::new(
+                ApiErrorKind::NoSuchEntity,
+                format!("IAM OpenID connect provider with ARN '{}' doesn't exist.", arn).as_str(),
+            ));
+        }
+    }
+}
+
+pub(crate) async fn add_client_id_to_open_id_connect_provider<'a>(
+    tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &AddClientIdToOpenIdConnectProviderRequest,
+) -> Result<AddClientIdToOpenIdConnectProviderOutput, ActionError> {
+    input.validate("$")?;
+    let arn = input.open_id_connect_provider_arn().unwrap();
+    let provider_id = find_id_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
+    db::open_id_connect_provider_client_id::create(tx, provider_id, input.client_id().unwrap()).await?;
+    let output = AddClientIdToOpenIdConnectProviderOutput::builder().build();
+    Ok(output)
 }
 
 pub(crate) async fn create_open_id_connect_provider<'a>(
@@ -198,7 +218,26 @@ pub(crate) async fn get_open_id_connect_provider<'a>(
 ) -> Result<GetOpenIdConnectProviderOutput, ActionError> {
     input.validate("$")?;
 
-    let output = GetOpenIdConnectProviderOutput::builder().build();
+    let arn = input.open_id_connect_provider_arn().unwrap();
+    let provider = find_by_arn(tx.as_mut(), ctx.account_id, arn).await?;
+    let client_ids = db::open_id_connect_provider_client_id::list(tx.as_mut(), provider.id)
+        .await?
+        .into_iter()
+        .map(|c| c.client_id)
+        .collect();
+
+    let thumbprints = db::open_id_connect_provider_client_thumbprint::list(tx.as_mut(), provider.id)
+        .await?
+        .into_iter()
+        .map(|t| t.thumbprint)
+        .collect();
+
+    let output = GetOpenIdConnectProviderOutput::builder()
+        .url(&provider.url)
+        .create_date(DateTime::from_secs(provider.create_date))
+        .set_client_id_list(Some(client_ids))
+        .set_thumbprint_list(Some(thumbprints))
+        .build();
     Ok(output)
 }
 

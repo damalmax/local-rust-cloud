@@ -17,3 +17,15 @@ pub(crate) struct SelectOpenIdConnectProvider {
     pub(crate) url: String,
     pub(crate) create_date: i64,
 }
+
+#[derive(Debug, FromRow)]
+pub(crate) struct SelectOpenIdConnectProviderClientId {
+    pub(crate) id: i64,
+    pub(crate) client_id: String,
+}
+
+#[derive(Debug, FromRow)]
+pub(crate) struct SelectOpenIdConnectProviderThumbprint {
+    pub(crate) id: i64,
+    pub(crate) thumbprint: String,
+}
