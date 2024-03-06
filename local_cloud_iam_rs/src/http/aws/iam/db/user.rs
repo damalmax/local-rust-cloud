@@ -1,9 +1,8 @@
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::user::{
-    InsertUser, ListUsersByGroupQuery, ListUsersQuery, SelectUser, UpdateUserQuery,
-};
+use crate::http::aws::iam::db::types::common::ListByPathQuery;
+use crate::http::aws::iam::db::types::user::{InsertUser, ListUsersByGroupQuery, SelectUser, UpdateUserQuery};
 
 pub(crate) async fn create<'a>(tx: &mut Transaction<'a, Sqlite>, user: &mut InsertUser) -> Result<(), Error> {
     let result = sqlx::query(
@@ -139,7 +138,7 @@ pub(crate) async fn detach_policy<'a>(
     Ok(result.rows_affected() == 1)
 }
 
-pub(crate) async fn list<'a, E>(executor: E, account_id: i64, query: &ListUsersQuery) -> Result<Vec<SelectUser>, Error>
+pub(crate) async fn list<'a, E>(executor: E, account_id: i64, query: &ListByPathQuery) -> Result<Vec<SelectUser>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
 {

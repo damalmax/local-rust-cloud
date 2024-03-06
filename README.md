@@ -122,7 +122,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] list_saml_provider_tags
 - [X] list_saml_providers
 - [X] list_server_certificate_tags
-- [ ] list_server_certificates
+- [X] list_server_certificates
 - [ ] list_service_specific_credentials
 - [X] list_signing_certificates
 - [X] list_ssh_public_keys

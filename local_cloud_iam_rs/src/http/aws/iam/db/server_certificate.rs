@@ -1,7 +1,10 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Executor, QueryBuilder, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, QueryBuilder, Row, Sqlite, Transaction};
 
-use crate::http::aws::iam::db::types::server_certificate::{InsertServerCertificate, UpdateServerCertificateQuery};
+use crate::http::aws::iam::db::types::common::ListByPathQuery;
+use crate::http::aws::iam::db::types::server_certificate::{
+    InsertServerCertificate, SelectServerCertificate, UpdateServerCertificateQuery,
+};
 
 pub(crate) async fn create<'a>(
     tx: &mut Transaction<'a, Sqlite>, cert: &mut InsertServerCertificate,
@@ -96,4 +99,42 @@ where
         .await?;
 
     Ok(result.rows_affected() == 1)
+}
+
+pub(crate) async fn list<'a, E>(
+    executor: E, account_id: i64, query: &ListByPathQuery,
+) -> Result<Vec<SelectServerCertificate>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new(
+        r#"
+        SELECT
+            sc.id AS id,
+            sc.account_id AS account_id,
+            sc.arn AS arn,
+            sc.path AS path,
+            sc.certificate_body AS certificate_body,
+            sc.certificate_chain AS certificate_chain,
+            sc.server_certificate_name AS server_certificate_name,
+            sc.server_certificate_id AS server_certificate_id,
+            sc.upload_date as upload_date,
+            sc.expiration as expiration
+        FROM server_certificates sc
+        WHERE sc.account_id = "#,
+    );
+    let certificates = query_builder
+        .push_bind(account_id)
+        .push(" AND sc.path LIKE ")
+        .push_bind(format!("{}%", &query.path_prefix))
+        .push(" ORDER BY sc.unique_server_certificate_name ASC")
+        .push(" LIMIT ")
+        .push_bind(query.limit + 1) // request more elements than we need to return. used to identify if NextPage token needs to be generated
+        .push(" OFFSET ")
+        .push_bind(query.skip)
+        .build()
+        .map(|row: SqliteRow| SelectServerCertificate::from_row(&row).unwrap())
+        .fetch_all(executor)
+        .await?;
+    Ok(certificates)
 }
