@@ -52,7 +52,7 @@ The project is created to help with serverless apps testing on local environment
 - [X] delete_policy_version
 - [ ] delete_role
 - [ ] delete_role_permissions_boundary
-- [ ] delete_role_policy
+- [X] delete_role_policy
 - [ ] delete_saml_provider
 - [ ] delete_server_certificate
 - [ ] delete_service_linked_role
