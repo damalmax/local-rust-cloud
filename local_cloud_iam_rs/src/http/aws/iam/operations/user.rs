@@ -263,7 +263,8 @@ pub(crate) async fn put_user_policy<'a>(
 ) -> Result<PutUserPolicyOutput, ActionError> {
     input.validate("$")?;
 
-    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, input.user_name().unwrap().trim()).await?;
+    let user_name = input.user_name().unwrap().trim();
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
 
     let mut inline_policy =
         DbInlinePolicy::new(user_id, input.policy_name().unwrap(), input.policy_document().unwrap());
@@ -400,6 +401,15 @@ pub(crate) async fn delete_user_policy<'a>(
     tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx, input: &DeleteUserPolicyRequest,
 ) -> Result<DeleteUserPolicyOutput, ActionError> {
     input.validate("$")?;
+
+    let user_name = input.user_name().unwrap().trim();
+    let user_id = find_id_by_name(tx.as_mut(), ctx.account_id, user_name).await?;
+
+    let policy_name = input.policy_name().unwrap();
+    let is_deleted = db::user_inline_policy::delete_by_user_id_and_name(tx.as_mut(), user_id, policy_name).await?;
+    if !is_deleted {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
 
     let output = DeleteUserPolicyOutput::builder().build();
     Ok(output)

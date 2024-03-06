@@ -23,6 +23,15 @@ where
     db::inline_policy::find_by_parent_id_and_name(executor, "user_inline_policies", user_id, policy_name).await
 }
 
+pub(crate) async fn delete_by_user_id_and_name<'a, E>(
+    executor: E, user_id: i64, policy_name: &str,
+) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    db::inline_policy::delete_by_parent_id_and_name(executor, "user_inline_policies", user_id, policy_name).await
+}
+
 pub(crate) async fn find_by_user_id<'a, E>(executor: E, query: &ListByIdQuery) -> Result<Vec<DbInlinePolicy>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,

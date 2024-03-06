@@ -62,6 +62,22 @@ where
     Ok(policy)
 }
 
+pub(crate) async fn delete_by_parent_id_and_name<'a, E>(
+    executor: E, table_name: &str, parent_id: i64, policy_name: &str,
+) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result =
+        sqlx::query(format!("DELETE FROM {table_name} WHERE parent_id = $1 AND unique_policy_name = $2").as_str())
+            .bind(parent_id)
+            .bind(policy_name.to_uppercase())
+            .execute(executor)
+            .await?;
+
+    Ok(result.rows_affected() == 1)
+}
+
 pub(crate) async fn find_by_parent_id<'a, E>(
     executor: E, parent_table_name: &str, table_name: &str, query: &ListByIdQuery,
 ) -> Result<Vec<DbInlinePolicy>, Error>
