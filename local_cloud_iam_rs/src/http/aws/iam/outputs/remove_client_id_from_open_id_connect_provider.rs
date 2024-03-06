@@ -9,6 +9,6 @@ pub type LocalRemoveClientIdFromOpenIdConnectProviderOutput =
 
 impl From<LocalRemoveClientIdFromOpenIdConnectProviderOutput> for XmlResponse {
     fn from(val: LocalRemoveClientIdFromOpenIdConnectProviderOutput) -> Self {
-        super::confirmation::xml_response("RemoveClientIdFromOpenIdConnectProviderResponse", &val.request_id)
+        super::confirmation::xml_response("RemoveClientIDFromOpenIDConnectProviderResponse", &val.request_id)
     }
 }

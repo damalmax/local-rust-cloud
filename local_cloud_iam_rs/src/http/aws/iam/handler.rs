@@ -218,7 +218,7 @@ action_handler! {
         PutRolePolicy: role.put_role_policy(PutRolePolicyRequest) -> PutRolePolicyOutput,
         PutUserPermissionsBoundary: user.put_user_permissions_boundary(PutUserPermissionsBoundaryRequest) -> PutUserPermissionsBoundaryOutput,
         PutUserPolicy: user.put_user_policy(PutUserPolicyRequest) -> PutUserPolicyOutput,
-        RemoveClientIdFromOpenIDConnectProvider: open_id_connect_provider.remove_client_id_from_open_id_connect_provider(RemoveClientIdFromOpenIdConnectProviderRequest) -> RemoveClientIdFromOpenIdConnectProviderOutput,
+        RemoveClientIDFromOpenIDConnectProvider: open_id_connect_provider.remove_client_id_from_open_id_connect_provider(RemoveClientIdFromOpenIdConnectProviderRequest) -> RemoveClientIdFromOpenIdConnectProviderOutput,
         RemoveRoleFromInstanceProfile: instance_profile.remove_role_from_instance_profile(RemoveRoleFromInstanceProfileRequest) -> RemoveRoleFromInstanceProfileOutput,
         RemoveUserFromGroup: group.remove_user_from_group(RemoveUserFromGroupRequest) -> RemoveUserFromGroupOutput,
         ResetServiceSpecificCredential: service_specific_credential.reset_service_specific_credential(ResetServiceSpecificCredentialRequest) -> ResetServiceSpecificCredentialOutput,
