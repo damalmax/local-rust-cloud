@@ -1,4 +1,7 @@
+use local_cloud_validate::validate_named;
+
 use crate::http::aws::iam::types;
+use crate::http::aws::iam::types::marker_type::MarkerType;
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct ListServerCertificatesRequest {
@@ -7,7 +10,7 @@ pub(crate) struct ListServerCertificatesRequest {
     #[serde(rename = "PathPrefix")]
     pub(crate) path_prefix: Option<types::path_prefix_type::PathPrefixType>,
     #[serde(rename = "Marker")]
-    pub(crate) marker: Option<types::marker_type::MarkerType>,
+    pub(crate) marker: Option<MarkerType>,
 }
 
 impl ListServerCertificatesRequest {
@@ -20,13 +23,16 @@ impl ListServerCertificatesRequest {
     pub(crate) fn marker(&self) -> Option<&str> {
         self.marker.as_deref()
     }
+    pub(crate) fn marker_type(&self) -> Option<&MarkerType> {
+        self.marker.as_ref()
+    }
 }
 
 impl local_cloud_validate::NamedValidator for &ListServerCertificatesRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
-        local_cloud_validate::validate_named(self.path_prefix.as_ref(), format!("{at}.{}", "PathPrefix").as_str())?;
-        local_cloud_validate::validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
+        validate_named(self.max_items.as_ref(), format!("{at}.{}", "MaxItems").as_str())?;
+        validate_named(self.path_prefix.as_ref(), format!("{at}.{}", "PathPrefix").as_str())?;
+        validate_named(self.marker.as_ref(), format!("{at}.{}", "Marker").as_str())?;
         Ok(())
     }
 }

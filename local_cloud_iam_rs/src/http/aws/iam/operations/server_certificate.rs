@@ -183,7 +183,17 @@ pub(crate) async fn list_server_certificates<'a>(
 ) -> Result<ListServerCertificatesOutput, ActionError> {
     input.validate("$")?;
 
-    let output = ListServerCertificatesOutput::builder().build().unwrap();
+    let query = input.into();
+    let found_certificates = db::server_certificate::list(tx.as_mut(), ctx.account_id, &query).await?;
+    let certificates = super::common::convert_and_limit(&found_certificates, query.limit);
+    let marker = super::common::create_encoded_marker(&query, found_certificates.len())?;
+
+    let output = ListServerCertificatesOutput::builder()
+        .set_server_certificate_metadata_list(certificates)
+        .set_is_truncated(marker.as_ref().map(|_v| true))
+        .set_marker(marker)
+        .build()
+        .unwrap();
     Ok(output)
 }
 
