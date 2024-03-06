@@ -1,6 +1,7 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
+use crate::http::aws::iam::db::types::open_id_connect_provider::SelectOpenIdConnectProviderClientId;
 use crate::http::aws::iam::types::client_id_type::ClientIdType;
 
 pub(crate) async fn create<'a>(
@@ -25,4 +26,25 @@ pub(crate) async fn create_all<'a>(
         create(tx, open_id_connect_provider_id, client_id).await?;
     }
     Ok(())
+}
+
+pub(crate) async fn list<'a, E>(
+    executor: E, open_id_connect_provider_id: i64,
+) -> Result<Vec<SelectOpenIdConnectProviderClientId>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT \
+            id, \
+            client_id \
+        FROM open_id_connect_provider_client_ids \
+        WHERE provider_id = $1 \
+        ORDER BY client_id ASC",
+    )
+    .bind(open_id_connect_provider_id)
+    .map(|row: SqliteRow| SelectOpenIdConnectProviderClientId::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
+    Ok(result)
 }

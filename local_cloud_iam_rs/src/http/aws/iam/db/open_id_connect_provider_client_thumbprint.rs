@@ -1,6 +1,7 @@
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Error, Row, Sqlite, Transaction};
+use sqlx::{Error, Executor, FromRow, Row, Sqlite, Transaction};
 
+use crate::http::aws::iam::db::types::open_id_connect_provider::SelectOpenIdConnectProviderThumbprint;
 use crate::http::aws::iam::types::thumbprint_type::ThumbprintType;
 
 pub(crate) async fn create<'a>(
@@ -24,4 +25,24 @@ pub(crate) async fn create_all<'a>(
         create(tx, open_id_connect_provider_id, thumbprint).await?;
     }
     Ok(())
+}
+
+pub(crate) async fn list<'a, E>(
+    executor: E, open_id_connect_provider_id: i64,
+) -> Result<Vec<SelectOpenIdConnectProviderThumbprint>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT \
+            id, \
+            thumbprint \
+        FROM open_id_connect_provider_thumbprints \
+        WHERE provider_id = $1",
+    )
+    .bind(open_id_connect_provider_id)
+    .map(|row: SqliteRow| SelectOpenIdConnectProviderThumbprint::from_row(&row).unwrap())
+    .fetch_all(executor)
+    .await?;
+    Ok(result)
 }

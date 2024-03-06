@@ -33,6 +33,30 @@ where
     Ok(result)
 }
 
+pub(crate) async fn find_by_arn<'a, E>(
+    executor: E, account_id: i64, arn: &str,
+) -> Result<Option<SelectOpenIdConnectProvider>, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query(
+        "SELECT \
+            id, \
+            account_id, \
+            arn, \
+            url, \
+            create_date \
+        FROM open_id_connect_providers \
+        WHERE account_id = $1 AND arn = $2",
+    )
+    .bind(account_id)
+    .bind(arn)
+    .map(|row: SqliteRow| SelectOpenIdConnectProvider::from_row(&row).unwrap())
+    .fetch_optional(executor)
+    .await?;
+    Ok(result)
+}
+
 pub(crate) async fn list<'a, E>(executor: E, account_id: i64) -> Result<Vec<SelectOpenIdConnectProvider>, Error>
 where
     E: 'a + Executor<'a, Database = Sqlite>,
