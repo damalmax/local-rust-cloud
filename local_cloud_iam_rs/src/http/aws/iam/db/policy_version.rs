@@ -119,6 +119,19 @@ pub(crate) async fn disable_default_by_policy_id<'a>(
     Ok(())
 }
 
+pub(crate) async fn delete_by_version<'a, E>(executor: E, policy_id: i64, version: u16) -> Result<bool, Error>
+where
+    E: 'a + Executor<'a, Database = Sqlite>,
+{
+    let result = sqlx::query("DELETE FROM policy_versions WHERE policy_id=$1 AND version=$2")
+        .bind(policy_id)
+        .bind(version)
+        .execute(executor)
+        .await?;
+
+    Ok(result.rows_affected() == 1)
+}
+
 pub(crate) async fn set_default<'a>(
     tx: &mut Transaction<'a, Sqlite>, policy_id: i64, version: u16,
 ) -> Result<bool, Error> {

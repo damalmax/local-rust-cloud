@@ -49,7 +49,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] delete_login_profile
 - [ ] delete_open_id_connect_provider
 - [ ] delete_policy
-- [ ] delete_policy_version
+- [X] delete_policy_version
 - [ ] delete_role
 - [ ] delete_role_permissions_boundary
 - [ ] delete_role_policy
