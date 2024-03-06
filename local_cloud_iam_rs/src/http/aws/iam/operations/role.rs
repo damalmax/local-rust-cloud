@@ -430,6 +430,15 @@ pub(crate) async fn delete_role_policy<'a>(
 ) -> Result<DeleteRolePolicyOutput, ActionError> {
     input.validate("$")?;
 
+    let role_name = input.role_name().unwrap().trim();
+    let role_id = find_id_by_name(tx.as_mut(), ctx.account_id, role_name).await?;
+
+    let policy_name = input.policy_name().unwrap();
+    let is_deleted = db::role_inline_policy::delete_by_role_id_and_name(tx.as_mut(), role_id, policy_name).await?;
+    if !is_deleted {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
+
     let output = DeleteRolePolicyOutput::builder().build();
     Ok(output)
 }
