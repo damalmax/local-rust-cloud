@@ -88,6 +88,7 @@ impl ApiErrorKind {
     pub(crate) fn status_code(&self) -> StatusCode {
         match self {
             ApiErrorKind::NoSuchEntity => StatusCode::NOT_FOUND,
+            ApiErrorKind::DeleteConflict => StatusCode::CONFLICT,
             ApiErrorKind::LimitExceeded => StatusCode::CONFLICT,
             ApiErrorKind::EntityAlreadyExists => StatusCode::CONFLICT,
             ApiErrorKind::ServiceFailure => StatusCode::INTERNAL_SERVER_ERROR,

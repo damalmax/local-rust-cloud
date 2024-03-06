@@ -1,4 +1,5 @@
 use crate::http::aws::iam::types;
+use local_cloud_validate::{validate_named, validate_required, NamedValidator};
 
 #[derive(Debug, PartialEq, serde::Deserialize)]
 pub(crate) struct DeletePolicyVersionRequest {
@@ -17,12 +18,12 @@ impl DeletePolicyVersionRequest {
     }
 }
 
-impl local_cloud_validate::NamedValidator for &DeletePolicyVersionRequest {
+impl NamedValidator for &DeletePolicyVersionRequest {
     fn validate(&self, at: &str) -> Result<(), local_cloud_validate::ValidationError> {
-        local_cloud_validate::validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;
-        local_cloud_validate::validate_named(self.policy_arn.as_ref(), format!("{at}.{}", "PolicyArn").as_str())?;
-        local_cloud_validate::validate_required(self.version_id(), format!("{at}.{}", "VersionId").as_str())?;
-        local_cloud_validate::validate_named(self.version_id.as_ref(), format!("{at}.{}", "VersionId").as_str())?;
+        validate_required(self.policy_arn(), format!("{at}.{}", "PolicyArn").as_str())?;
+        validate_named(self.policy_arn.as_ref(), format!("{at}.{}", "PolicyArn").as_str())?;
+        validate_required(self.version_id(), format!("{at}.{}", "VersionId").as_str())?;
+        validate_named(self.version_id.as_ref(), format!("{at}.{}", "VersionId").as_str())?;
         Ok(())
     }
 }

@@ -431,6 +431,19 @@ pub(crate) async fn delete_policy_version<'a>(
 ) -> Result<DeletePolicyVersionOutput, ActionError> {
     input.validate("$")?;
 
+    let policy_arn = input.policy_arn().unwrap();
+    let policy = find_by_arn(tx.as_mut(), ctx.account_id, policy_arn).await?;
+    let version: u16 = input.version_id().unwrap().strip_prefix("v").unwrap().parse().unwrap();
+
+    if policy.version as u16 == version {
+        return Err(ActionError::new(ApiErrorKind::DeleteConflict, "The policy version is set as default."));
+    }
+
+    let is_deleted = db::policy_version::delete_by_version(tx.as_mut(), policy.id, version).await?;
+    if !is_deleted {
+        return Err(ActionError::new(ApiErrorKind::NoSuchEntity, "Entity does not exist."));
+    }
+
     let output = DeletePolicyVersionOutput::builder().build();
     Ok(output)
 }
