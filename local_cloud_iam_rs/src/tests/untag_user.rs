@@ -42,6 +42,4 @@ async fn untag_user() {
         .expect("Failed to get a list of tags for IAM user");
 
     assert_eq!(tags_output.tags().len(), 3);
-
-    ctx.stop_server().await;
 }

@@ -24,6 +24,4 @@ async fn put_group_policy() {
         .await;
 
     assert!(result.is_ok());
-
-    ctx.stop_server().await;
 }

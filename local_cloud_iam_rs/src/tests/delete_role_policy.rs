@@ -35,6 +35,4 @@ async fn delete_role_policy() {
         .send()
         .await
         .expect("Failed to delete role policy");
-
-    ctx.stop_server().await;
 }

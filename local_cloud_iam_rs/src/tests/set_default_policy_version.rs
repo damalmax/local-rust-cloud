@@ -52,8 +52,6 @@ async fn set_default_policy_version() {
         .expect("Failed to get IAM policy");
 
     assert_eq!(get_policy_output.policy().unwrap().default_version_id().unwrap(), "v1");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -99,6 +97,4 @@ async fn set_default_policy_version_version_does_not_exist() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Entity does not exist.");
-
-    ctx.stop_server().await;
 }

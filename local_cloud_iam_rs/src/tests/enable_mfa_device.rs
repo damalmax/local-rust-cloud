@@ -28,6 +28,4 @@ async fn enable_mfa_device() {
         .send()
         .await
         .expect("Failed to enable MFA device for IAM user");
-
-    ctx.stop_server().await;
 }

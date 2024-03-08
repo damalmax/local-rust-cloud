@@ -42,6 +42,4 @@ async fn untag_open_id_connect_provider() {
         .expect("Failed to get a list of tags for IAM OpenID Connect provider");
 
     assert_eq!(tags_output.tags().len(), 3);
-
-    ctx.stop_server().await;
 }

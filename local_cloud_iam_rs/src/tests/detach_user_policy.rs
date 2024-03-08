@@ -40,6 +40,4 @@ async fn detach_user_policy() {
         .send()
         .await
         .expect("Failed to detach policy from user");
-
-    ctx.stop_server().await;
 }

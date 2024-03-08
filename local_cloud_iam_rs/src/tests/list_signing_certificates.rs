@@ -23,5 +23,4 @@ async fn list_signing_certificates_empty() {
         .expect("Failed to get a list of signing certificates");
 
     assert!(result.certificates().is_empty());
-    ctx.stop_server().await;
 }

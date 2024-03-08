@@ -48,6 +48,4 @@ async fn add_user_to_group() {
         .send()
         .await
         .expect("Failed to add role to instance profile");
-
-    ctx.stop_server().await;
 }

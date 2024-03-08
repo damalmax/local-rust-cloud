@@ -30,6 +30,4 @@ async fn upload_ssh_public_key() {
     assert!(ssh_public_key.ssh_public_key_id().starts_with("APKA"));
     assert_eq!(ssh_public_key.status().as_str(), StatusType::Active.as_str());
     assert_eq!(ssh_public_key.ssh_public_key_id().len(), 21);
-
-    ctx.stop_server().await;
 }

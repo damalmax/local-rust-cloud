@@ -45,6 +45,4 @@ async fn detach_group_policy() {
         .send()
         .await
         .expect("Failed to detach group policy");
-
-    ctx.stop_server().await;
 }

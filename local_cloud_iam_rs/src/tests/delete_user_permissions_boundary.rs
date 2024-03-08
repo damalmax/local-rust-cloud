@@ -31,6 +31,4 @@ async fn delete_user_permissions_boundary() {
         .send()
         .await
         .expect("Failed to delete permissions boundary from IAM user");
-
-    ctx.stop_server().await;
 }

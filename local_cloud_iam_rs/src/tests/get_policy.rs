@@ -40,8 +40,6 @@ async fn get_policy() {
     assert_not_empty(policy.path());
     assert_not_empty(policy.policy_name());
     assert!(policy.is_attachable());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -65,6 +63,4 @@ async fn get_policy_does_not_exist() {
         error.meta().message().unwrap(),
         "IAM policy with ARN 'arn:aws:iam::000000000001:policy/unknown' doesn't exist."
     );
-
-    ctx.stop_server().await;
 }

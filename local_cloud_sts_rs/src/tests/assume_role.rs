@@ -32,5 +32,4 @@ async fn assume_role() {
     let parts = assumed_role_id.split(':');
 
     assert_eq!(test_role_session_name, parts.enumerate().last().unwrap().1);
-    ctx.stop_server().await;
 }

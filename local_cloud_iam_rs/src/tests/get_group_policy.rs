@@ -39,6 +39,4 @@ async fn get_group_policy() {
     assert_eq!(output.group_name(), "test_group_1");
     assert_eq!(output.policy_name(), "test_policy_1");
     assert_not_empty(output.policy_document());
-
-    ctx.stop_server().await;
 }

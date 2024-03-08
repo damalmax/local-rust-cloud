@@ -22,6 +22,4 @@ async fn create_saml_provider() {
     assert!(result.saml_provider_arn().is_some());
     assert_eq!(result.saml_provider_arn().unwrap(), "arn:aws:iam::000000000001:saml-provider/MyUniversity");
     assert_eq!(result.tags().len(), 3);
-
-    ctx.stop_server().await;
 }

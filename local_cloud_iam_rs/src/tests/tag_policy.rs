@@ -31,8 +31,6 @@ async fn test_tag_policy() {
         .send()
         .await
         .expect("Failed to tag IAM policy");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -79,8 +77,6 @@ async fn test_tag_policy_limit_exceeded() {
     assert_eq!("LimitExceeded", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Cannot assign more than 50 tags to IAM policy.");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -118,6 +114,4 @@ async fn test_tag_policy_with_replacement() {
         .send()
         .await
         .expect("Failed to assign maximum allowed number of tags with value replacements to IAM policy");
-
-    ctx.stop_server().await;
 }

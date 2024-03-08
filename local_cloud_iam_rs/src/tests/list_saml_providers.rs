@@ -22,8 +22,6 @@ async fn list_saml_providers() {
         .expect("Failed to get a list of SAML providers");
 
     assert_eq!(result.saml_provider_list().len(), 1);
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -40,6 +38,4 @@ async fn list_saml_providers_empty() {
         .expect("Failed to get a list of SAML providers");
 
     assert!(result.saml_provider_list().is_empty());
-
-    ctx.stop_server().await;
 }

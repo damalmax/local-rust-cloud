@@ -51,6 +51,4 @@ async fn list_group_policies_with_marker() {
     assert!(!result.is_truncated);
     assert_eq!(result.policy_names().len(), 5);
     assert!(result.marker().is_none());
-
-    ctx.stop_server().await;
 }

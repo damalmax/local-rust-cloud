@@ -32,8 +32,6 @@ async fn test_create_policy() {
     assert_not_empty(policy.path());
     assert_not_empty(policy.policy_name());
     assert!(policy.is_attachable());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -65,6 +63,4 @@ async fn create_policy_too_many_tags() {
     assert_eq!("InvalidInput", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Number of '$.Tags' cannot be greater than 50.");
-
-    ctx.stop_server().await;
 }

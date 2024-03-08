@@ -39,6 +39,4 @@ async fn get_role_policy() {
     assert_eq!(output.role_name(), "Test-Role");
     assert_eq!(output.policy_name(), "test_policy_1");
     assert_not_empty(output.policy_document());
-
-    ctx.stop_server().await;
 }

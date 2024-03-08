@@ -14,8 +14,6 @@ async fn list_roles_empty() {
         .expect("Failed to get a list of IAM roles");
 
     assert!(roles.roles().is_empty());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -67,6 +65,4 @@ async fn list_roles() {
         .expect("Failed to get a list of IAM roles");
 
     assert_eq!(roles.roles().len(), 2);
-
-    ctx.stop_server().await;
 }

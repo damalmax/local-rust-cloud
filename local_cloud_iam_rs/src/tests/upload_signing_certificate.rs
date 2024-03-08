@@ -26,6 +26,4 @@ async fn upload_signing_certificate() {
     assert_eq!(certificate.certificate_body(), include_str!("resources/cert.pem").trim());
     assert!(certificate.upload_date().is_some());
     assert_not_empty(certificate.certificate_id());
-
-    ctx.stop_server().await;
 }

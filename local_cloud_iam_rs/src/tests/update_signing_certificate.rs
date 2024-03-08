@@ -34,6 +34,4 @@ async fn update_signing_certificate() {
         .send()
         .await
         .expect("Failed to update signing certificate");
-
-    ctx.stop_server().await;
 }

@@ -27,8 +27,6 @@ async fn test_create_instance_profile() {
     assert!(instance_profile.roles().is_empty());
     assert_not_empty(instance_profile.instance_profile_name());
     assert_eq!(instance_profile.instance_profile_name(), "instance-profile-1");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -55,6 +53,4 @@ async fn test_create_instance_profile_without_path() {
     assert!(instance_profile.roles().is_empty());
     assert_not_empty(instance_profile.instance_profile_name());
     assert_eq!(instance_profile.instance_profile_name(), "instance-profile-1");
-
-    ctx.stop_server().await;
 }

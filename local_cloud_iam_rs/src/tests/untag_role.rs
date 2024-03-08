@@ -41,6 +41,4 @@ async fn untag_role() {
         .expect("Failed to get a list of tags for IAM role");
 
     assert_eq!(tags_output.tags().len(), 3);
-
-    ctx.stop_server().await;
 }

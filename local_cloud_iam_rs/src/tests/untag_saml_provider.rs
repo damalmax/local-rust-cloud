@@ -41,6 +41,4 @@ async fn untag_saml_provider() {
         .expect("Failed to get a list of tags for IAM SAML provider");
 
     assert_eq!(tags_output.tags().len(), 3);
-
-    ctx.stop_server().await;
 }

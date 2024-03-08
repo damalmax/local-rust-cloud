@@ -33,6 +33,4 @@ async fn attach_group_policy() {
         .send()
         .await
         .expect("Failed to attach group policy");
-
-    ctx.stop_server().await;
 }

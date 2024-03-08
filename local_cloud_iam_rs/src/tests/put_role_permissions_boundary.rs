@@ -37,8 +37,6 @@ async fn put_role_permissions_boundary() {
         .send()
         .await
         .expect("Failed to put permissions boundary to IAM role");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -77,8 +75,6 @@ async fn put_role_permissions_boundary_policy_does_not_exist() {
         error.meta().message().unwrap(),
         "IAM policy with ARN 'arn:aws:iam::000000000001:policy/unknown' doesn't exist."
     );
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -116,6 +112,4 @@ async fn put_role_permissions_boundary_role_does_not_exist() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "IAM role with name 'test-role1' doesn't exist.");
-
-    ctx.stop_server().await;
 }

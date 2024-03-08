@@ -26,8 +26,6 @@ async fn update_saml_provider() {
         .send()
         .await
         .expect("Failed to update IAM SAML provider");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -57,6 +55,4 @@ async fn update_saml_provider_does_not_exist() {
         error.meta().message().unwrap(),
         "IAM SAML provider with ARN 'arn:aws:iam::000000000001:saml-provider/MyUniversity2' doesn't exist."
     );
-
-    ctx.stop_server().await;
 }

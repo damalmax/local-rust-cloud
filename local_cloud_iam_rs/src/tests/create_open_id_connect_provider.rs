@@ -25,6 +25,4 @@ async fn create_open_id_connect_provider() {
         "arn:aws:iam::000000000001:oidc-provider/server.example.com"
     );
     assert_eq!(response.tags().len(), 2);
-
-    ctx.stop_server().await;
 }

@@ -24,6 +24,4 @@ async fn update_group() {
         .send()
         .await
         .expect("Failed to update IAM group");
-
-    ctx.stop_server().await;
 }

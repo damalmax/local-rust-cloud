@@ -47,5 +47,4 @@ async fn add_user_to_group() {
         .send()
         .await
         .expect("Failed to add user to group");
-    ctx.stop_server().await;
 }

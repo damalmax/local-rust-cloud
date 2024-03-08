@@ -16,7 +16,6 @@ async fn list_policies_empty() {
         .expect("Failed to get a list of IAM policies");
 
     assert!(result.policies().is_empty());
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -63,7 +62,6 @@ async fn list_policies_no_marker() {
     assert!(policy.create_date().is_some());
     assert!(policy.update_date().is_some());
     assert!(policy.tags().is_empty());
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -124,5 +122,4 @@ async fn list_policies_with_marker() {
     assert_eq!(result.policies().len(), 1);
     assert!(!result.is_truncated());
     assert!(result.marker().is_none());
-    ctx.stop_server().await;
 }

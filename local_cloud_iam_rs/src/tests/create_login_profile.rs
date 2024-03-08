@@ -32,7 +32,6 @@ async fn create_login_profile() {
         .expect("Failed to create login profile");
 
     assert!(response.login_profile().is_some());
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -81,5 +80,4 @@ async fn create_login_profile_login_profile_already_exists() {
 
     let sdk_error = response.unwrap_err();
     assert_eq!(409u16, sdk_error.raw_response().unwrap().status().as_u16());
-    ctx.stop_server().await;
 }

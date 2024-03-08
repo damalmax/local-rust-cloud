@@ -45,7 +45,7 @@ where
 #[derive(Debug)]
 pub struct AxumTestContext {
     pub port: u16,
-    server_event_sender: tokio::sync::oneshot::Sender<ServerEvent>,
+    server_event_sender: Option<tokio::sync::oneshot::Sender<ServerEvent>>,
 }
 
 #[non_exhaustive]
@@ -58,7 +58,7 @@ impl AxumTestContext {
     pub fn new(port: u16, server_event_sender: tokio::sync::oneshot::Sender<ServerEvent>) -> Self {
         AxumTestContext {
             port,
-            server_event_sender,
+            server_event_sender: Some(server_event_sender),
         }
     }
 
@@ -101,8 +101,18 @@ impl AxumTestContext {
         Ok(AxumTestContext::new(port, server_event_sender))
     }
 
-    pub async fn stop_server(self) {
-        self.server_event_sender.send(ServerEvent::Terminate).unwrap();
+    pub fn stop_server(&mut self) {
+        if let Some(server_event_sender) = self.server_event_sender.take() {
+            server_event_sender
+                .send(ServerEvent::Terminate)
+                .expect("Failed to stop Axum server");
+        }
+    }
+}
+
+impl Drop for AxumTestContext {
+    fn drop(&mut self) {
+        self.stop_server();
     }
 }
 

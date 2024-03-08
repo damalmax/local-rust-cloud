@@ -33,7 +33,6 @@ async fn get_group_no_users() {
     assert_eq!(response.users.len(), 0);
     assert!(!response.is_truncated);
     assert!(response.marker.is_none());
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -54,8 +53,6 @@ async fn get_group_group_does_not_exist() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "IAM group with name 'test_group_1' doesn't exist.");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -131,5 +128,4 @@ async fn get_group_with_users() {
 
     assert!(!response.is_truncated);
     assert!(response.marker.is_none());
-    ctx.stop_server().await;
 }

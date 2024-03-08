@@ -29,6 +29,4 @@ async fn delete_user_policy() {
         .send()
         .await
         .expect("Failed to delete user policy");
-
-    ctx.stop_server().await;
 }

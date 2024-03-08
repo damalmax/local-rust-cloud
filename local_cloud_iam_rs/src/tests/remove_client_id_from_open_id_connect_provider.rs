@@ -26,6 +26,4 @@ async fn remove_client_id_from_open_id_connect_provider() {
         .send()
         .await
         .expect("Failed to remove client ID from OpenID connect provider");
-
-    ctx.stop_server().await;
 }

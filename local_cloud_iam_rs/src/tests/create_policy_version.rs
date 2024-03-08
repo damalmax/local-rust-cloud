@@ -30,8 +30,6 @@ async fn create_policy_version() {
         .expect("Failed to create IAM policy version");
 
     assert!(create_policy_version_response.policy_version().is_some());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -88,6 +86,4 @@ async fn create_policy_version_limit_exceeded() {
         error.meta().message().unwrap(),
         "Number of Policy Versions cannot be greater than '5'. Actual count: '5'."
     );
-
-    ctx.stop_server().await;
 }

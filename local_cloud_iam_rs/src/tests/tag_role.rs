@@ -30,8 +30,6 @@ async fn test_tag_role() {
         .send()
         .await
         .expect("Failed to tag IAM role");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -74,8 +72,6 @@ async fn test_tag_role_limit_exceeded() {
     assert_eq!("LimitExceeded", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Cannot assign more than 50 tags to IAM role.");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -109,6 +105,4 @@ async fn test_tag_role_with_replacement() {
         .send()
         .await
         .expect("Failed to assign maximum allowed number of tags with value replacements to IAM role");
-
-    ctx.stop_server().await;
 }

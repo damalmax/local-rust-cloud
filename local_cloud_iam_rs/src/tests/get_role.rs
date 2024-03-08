@@ -60,7 +60,6 @@ async fn get_role() {
     assert_eq!(role.path(), "/");
     assert_eq!(role.arn(), create_role_output.role().unwrap().arn());
     assert_eq!(role.description().unwrap(), ROLE_DESCRIPTION);
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -80,6 +79,4 @@ async fn get_role_does_not_exist() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "IAM role with name 'Test-Role' doesn't exist.");
-
-    ctx.stop_server().await;
 }

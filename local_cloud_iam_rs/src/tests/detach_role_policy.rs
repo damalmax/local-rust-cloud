@@ -46,6 +46,4 @@ async fn detach_role_policy() {
         .send()
         .await
         .expect("Failed to detach policy from role");
-
-    ctx.stop_server().await;
 }

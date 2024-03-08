@@ -12,5 +12,4 @@ async fn list_server_certificates_empty() {
         .expect("Failed to get a list of server users");
 
     assert!(result.server_certificate_metadata_list().is_empty());
-    ctx.stop_server().await;
 }

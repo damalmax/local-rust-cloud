@@ -27,8 +27,6 @@ async fn get_mfa_device() {
     assert_eq!(result.serial_number(), serial_number);
     assert!(result.user_name().is_none()); // MFA device is not attached to any user
     assert!(result.certifications().is_none()); // Virtual MFA device doesn't have certifications
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -70,6 +68,4 @@ async fn get_mfa_device_with_attached_user() {
 
     assert!(result.user_name().is_some());
     assert_eq!(result.user_name().unwrap(), USER_NAME);
-
-    ctx.stop_server().await;
 }

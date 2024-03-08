@@ -17,8 +17,6 @@ async fn list_virtual_mfa_devices_empty() {
         .expect("Failed to get a list of IAM virtual MFA devices");
 
     assert!(result.virtual_mfa_devices().is_empty());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -68,6 +66,4 @@ async fn list_virtual_mfa_devices_with_attached_user() {
     assert_not_empty(user.user_name());
     assert_not_empty(user.arn());
     assert_not_empty(user.path());
-
-    ctx.stop_server().await;
 }

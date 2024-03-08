@@ -21,6 +21,4 @@ async fn create_group() {
     assert_not_empty(group.arn());
     assert_not_empty(group.group_id());
     assert_not_empty(group.group_name());
-
-    ctx.stop_server().await;
 }

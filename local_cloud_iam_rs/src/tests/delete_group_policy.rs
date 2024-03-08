@@ -33,6 +33,4 @@ async fn delete_group_policy() {
         .send()
         .await
         .expect("Failed to delete group policy");
-
-    ctx.stop_server().await;
 }

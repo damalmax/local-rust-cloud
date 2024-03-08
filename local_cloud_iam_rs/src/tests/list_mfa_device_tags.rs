@@ -49,5 +49,4 @@ async fn list_mfa_device_tags_with_marker() {
     assert_eq!(result.tags().len(), 2);
     assert!(!result.is_truncated());
     assert!(result.marker().is_none());
-    ctx.stop_server().await;
 }

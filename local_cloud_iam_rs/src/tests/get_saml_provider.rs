@@ -34,8 +34,6 @@ async fn get_saml_provider() {
     assert_not_empty(result.saml_metadata_document());
     assert!(result.valid_until().is_none());
     assert!(result.create_date().is_some());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -68,6 +66,4 @@ async fn get_saml_provider_does_not_exist() {
         error.meta().message().unwrap(),
         "IAM SAML provider with ARN 'arn:aws:iam::000000000001:saml-provider/MyUniversity2' doesn't exist."
     );
-
-    ctx.stop_server().await;
 }

@@ -39,6 +39,4 @@ async fn create_role() {
     assert_not_empty(role.path());
     assert_not_empty(role.arn());
     assert_not_empty(role.role_name());
-
-    ctx.stop_server().await;
 }

@@ -34,6 +34,4 @@ async fn get_user_policy() {
     assert_eq!(output.user_name(), "user1");
     assert_eq!(output.policy_name(), "test_policy_1");
     assert_not_empty(output.policy_document());
-
-    ctx.stop_server().await;
 }

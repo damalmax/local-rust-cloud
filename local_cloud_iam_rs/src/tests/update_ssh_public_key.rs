@@ -34,5 +34,4 @@ async fn update_ssh_public_key() {
         .send()
         .await
         .expect("Failed to update SSH public key");
-    ctx.stop_server().await;
 }

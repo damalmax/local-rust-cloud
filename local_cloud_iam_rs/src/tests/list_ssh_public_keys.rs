@@ -23,5 +23,4 @@ async fn list_ssh_public_keys() {
         .expect("Failed to get a list of SSH public keys");
 
     assert!(result.ssh_public_keys().is_empty());
-    ctx.stop_server().await;
 }

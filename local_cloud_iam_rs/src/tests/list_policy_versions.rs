@@ -57,6 +57,4 @@ async fn list_policy_versions_with_marker() {
     assert_eq!(result.versions().len(), 2);
     assert!(result.marker().is_none());
     assert!(!result.is_truncated());
-
-    ctx.stop_server().await;
 }

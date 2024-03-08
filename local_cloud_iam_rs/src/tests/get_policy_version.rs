@@ -42,7 +42,6 @@ async fn get_policy_version() {
     assert!(!policy_version.is_default_version());
     assert!(policy_version.create_date().is_some());
     assert_not_empty(policy_version.document());
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -80,6 +79,4 @@ async fn get_policy_version_does_not_exist() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Entity does not exist.");
-
-    ctx.stop_server().await;
 }

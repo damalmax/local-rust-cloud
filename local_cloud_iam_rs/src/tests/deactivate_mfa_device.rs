@@ -37,8 +37,6 @@ async fn deactivate_mfa_device() {
         .send()
         .await
         .expect("Failed to deactivate MFA device for IAM user");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -86,8 +84,6 @@ async fn deactivate_mfa_device_user_not_found() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "IAM user with name 'user2' doesn't exist.");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -122,8 +118,6 @@ async fn deactivate_mfa_device_not_found() {
         error.meta().message().unwrap(),
         "IAM MFA device with serial number 'arn:aws:iam::000000000001:mfa/ExampleName' doesn't exist."
     );
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -175,6 +169,4 @@ async fn deactivate_mfa_device_assigned_to_different_user() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Failed to disable MFA device. It is assigned to a different user.");
-
-    ctx.stop_server().await;
 }

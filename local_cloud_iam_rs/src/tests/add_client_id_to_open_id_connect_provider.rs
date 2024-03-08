@@ -25,6 +25,4 @@ async fn add_client_id_to_open_id_connect_provider() {
         .send()
         .await
         .expect("Failed to add client ID to OpenID connect provider");
-
-    ctx.stop_server().await;
 }

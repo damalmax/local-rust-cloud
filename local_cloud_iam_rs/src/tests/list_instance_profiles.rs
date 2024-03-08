@@ -42,8 +42,6 @@ async fn list_instance_profiles() {
     assert_eq!(result.instance_profiles().len(), 4);
     assert!(result.marker().is_none());
     assert!(!result.is_truncated());
-
-    ctx.stop_server().await;
 }
 
 const INSTANCE_PROFILE_NAME: &str = "instance-profile-0";
@@ -95,8 +93,6 @@ async fn list_instance_profiles_with_role() {
 
     let roles = result.instance_profiles()[0].roles();
     assert_eq!(roles.len(), 2);
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -114,6 +110,4 @@ async fn list_instance_profiles_empty() {
         .expect("Failed to get a list of IAM instance profiles");
 
     assert!(result.instance_profiles().is_empty());
-
-    ctx.stop_server().await;
 }

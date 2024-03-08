@@ -13,5 +13,4 @@ async fn list_groups_empty() {
         .expect("Failed to get a list of IAM groups");
 
     assert!(result.groups().is_empty());
-    ctx.stop_server().await;
 }

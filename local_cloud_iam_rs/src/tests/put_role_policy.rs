@@ -25,6 +25,4 @@ async fn put_role_policy() {
         .await;
 
     assert!(result.is_ok());
-
-    ctx.stop_server().await;
 }

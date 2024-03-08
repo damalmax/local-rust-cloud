@@ -33,6 +33,4 @@ async fn get_open_id_connect_provider() {
     assert_eq!(response.thumbprint_list().len(), 1);
     assert!(response.create_date().is_some());
     assert!(response.tags().is_empty());
-
-    ctx.stop_server().await;
 }

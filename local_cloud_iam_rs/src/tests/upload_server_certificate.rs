@@ -25,6 +25,4 @@ async fn upload_server_certificate() {
     assert_eq!(metadata.arn(), "arn:aws:iam::000000000001:server-certificate/servers/TestCertificate1");
     assert_eq!(metadata.path(), "/servers/");
     assert!(metadata.expiration.is_some());
-
-    ctx.stop_server().await;
 }

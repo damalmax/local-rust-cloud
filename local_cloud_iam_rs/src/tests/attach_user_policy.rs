@@ -31,6 +31,4 @@ async fn attach_user_policy() {
         .send()
         .await
         .expect("Failed to attach user policy");
-
-    ctx.stop_server().await;
 }

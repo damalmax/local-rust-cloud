@@ -32,8 +32,6 @@ async fn create_virtual_mfa_device() {
     let qr_code_image_bytes = virtual_mfa_device.qr_code_png().unwrap().as_ref();
     let image = image::load_from_memory_with_format(&qr_code_image_bytes, ImageFormat::Png);
     assert!(image.is_ok());
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -66,6 +64,4 @@ async fn create_virtual_mfa_device_limit_exceeded() {
     assert_eq!("LimitExceeded", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "It is allowed to register up to 8 MFA devices per user.");
-
-    ctx.stop_server().await;
 }

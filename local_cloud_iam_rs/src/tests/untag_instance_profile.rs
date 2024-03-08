@@ -36,6 +36,4 @@ async fn untag_instance_profile() {
         .expect("Failed to get a list of tags for IAM instance profile");
 
     assert!(tags_output.tags().is_empty());
-
-    ctx.stop_server().await;
 }

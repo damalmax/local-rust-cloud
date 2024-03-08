@@ -13,5 +13,4 @@ async fn list_users_empty() {
         .expect("Failed to get a list of IAM users");
 
     assert!(result.users().is_empty());
-    ctx.stop_server().await;
 }

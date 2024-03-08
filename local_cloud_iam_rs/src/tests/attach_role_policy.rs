@@ -34,6 +34,4 @@ async fn attach_role_policy() {
         .send()
         .await
         .expect("Failed to attach role policy");
-
-    ctx.stop_server().await;
 }

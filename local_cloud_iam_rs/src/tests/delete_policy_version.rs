@@ -40,8 +40,6 @@ async fn delete_policy_version() {
         .send()
         .await
         .expect("Failed to delete IAM policy version");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -93,8 +91,6 @@ async fn delete_policy_version_delete_default() {
     assert_eq!("DeleteConflict", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "The policy version is set as default.");
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -131,6 +127,4 @@ async fn delete_policy_version_policy_version_does_not_exist() {
     assert_eq!("NoSuchEntity", error.meta().code().unwrap());
     assert!(error.meta().message().unwrap().len() > 0);
     assert_eq!(error.meta().message().unwrap(), "Entity does not exist.");
-
-    ctx.stop_server().await;
 }

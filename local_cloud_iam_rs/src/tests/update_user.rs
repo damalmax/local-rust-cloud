@@ -24,6 +24,4 @@ async fn update_user() {
         .send()
         .await
         .expect("Failed to update user");
-
-    ctx.stop_server().await;
 }

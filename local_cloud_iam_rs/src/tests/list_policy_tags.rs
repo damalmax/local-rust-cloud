@@ -57,5 +57,4 @@ async fn list_policy_tags_with_marker() {
     assert_eq!(result.tags().len(), 3);
     assert!(!result.is_truncated());
     assert!(result.marker().is_none());
-    ctx.stop_server().await;
 }

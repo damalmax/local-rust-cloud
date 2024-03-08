@@ -41,6 +41,4 @@ async fn create_user() {
     assert_not_empty(user.arn());
     assert_not_empty(user.user_name());
     assert_not_empty(user.user_id());
-
-    ctx.stop_server().await;
 }

@@ -30,8 +30,6 @@ async fn list_open_id_connect_providers() {
 
     assert!(!response.open_id_connect_provider_list().is_empty());
     assert_eq!(response.open_id_connect_provider_list().len(), 2);
-
-    ctx.stop_server().await;
 }
 
 #[tokio::test]
@@ -47,6 +45,4 @@ async fn list_open_id_connect_providers_empty() {
         .expect("Failed to get a list of OpenID connect providers");
 
     assert!(response.open_id_connect_provider_list().is_empty());
-
-    ctx.stop_server().await;
 }
