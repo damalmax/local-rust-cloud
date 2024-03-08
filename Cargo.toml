@@ -32,10 +32,11 @@ futures-core = "0.3"
 futures-util = "0.3"
 log = "0.4"
 
-base64 = "0.21"
+base64 = "0.22"
 data-encoding = "2.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
+serde_yaml = "0.9"
 serde_aws_query_ce = "0.1"
 validator = { version = "0.16", features = ["derive"] }
 
@@ -70,7 +71,7 @@ regex = "1.10"
 password-hash = "0.5"
 argon2 = "0.5"
 openssh-keys = "0.6"
-x509-parser = "0.15"
+x509-parser = "0.16"
 
 etcd-client = "0.12"
 
