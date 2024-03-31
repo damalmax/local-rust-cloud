@@ -9,7 +9,6 @@ macro_rules! action_handler {
         use axum::response::Response;
         use axum::extract::State;
         use axum::http::StatusCode;
-        use uuid::Uuid;
         use sqlx::{Sqlite, Transaction};
 
         use local_cloud_axum::local::web::{AwsQueryBody, XmlResponse};
@@ -37,23 +36,20 @@ macro_rules! action_handler {
         const CONTENT_TYPE_HEADER: &str = "Content-Type";
         const CONTENT_TYPE_HEADER_VALUE: &str = "text/xml; charset=utf-8";
 
-        pub(crate) async fn handle(State(db): State<LocalDb>, aws_query: AwsQueryBody<AwsRequest>,) -> Response<String> {
-            let account_id = 1i64;
+        pub(crate) async fn handle(State(db): State<LocalDb>, ctx: OperationCtx, aws_query: AwsQueryBody<AwsRequest>,) -> Response<String> {
             let aws_request = aws_query.into_inner();
-            let aws_request_id = Uuid::new_v4().to_string();
-
 
             let output: Result<XmlResponse, ActionError> = match aws_request {
                 $(
-                    $name::$variant(request) => handle_action_with_tx(&db, account_id, &aws_request_id, request).await,
+                    $name::$variant(request) => handle_action_with_tx(&db, &ctx, request).await,
                 )+
             };
             let output: Result<XmlResponse, ApiError> = output.map_err(|error| match error {
                 ActionError::Service { kind, msg } => {
                     tracing::error!("Failed to execute operation. Error message: {}", msg);
-                    ApiError::new(kind, &msg, &aws_request_id)
+                    ApiError::new(kind, &msg, &ctx.aws_request_id)
                 }
-                ActionError::Validation(error) => ApiError::from_validation_error(&error, &aws_request_id)
+                ActionError::Validation(error) => ApiError::from_validation_error(&error, &ctx.aws_request_id)
             });
             match output {
                 Ok(body) => {
@@ -75,9 +71,9 @@ macro_rules! action_handler {
             }
         }
 
-        async fn handle_action_with_tx(db: &LocalDb, account_id: i64, aws_request_id: &str, action: impl Action) -> Result<XmlResponse, ActionError> {
+        async fn handle_action_with_tx(db: &LocalDb, ctx: &OperationCtx, action: impl Action) -> Result<XmlResponse, ActionError> {
             let mut tx = db.new_tx().await?;
-            let response = action.execute(&mut tx, account_id, &aws_request_id)
+            let response = action.execute(&mut tx, ctx)
                             .await
                             .map(|out| out.into())?;
             tx.commit().await?;
@@ -87,10 +83,9 @@ macro_rules! action_handler {
         $(
             impl Action for $request {
                 type Output = OutputWrapper<$response>;
-                async fn execute<'a>(&self, tx: &mut Transaction<'a, Sqlite>, account_id: i64, aws_request_id: &str) -> Result<Self::Output, ActionError> {
-                    let ctx = OperationCtx::new(account_id, aws_request_id);
+                async fn execute<'a>(&self, tx: &mut Transaction<'a, Sqlite>, ctx: &OperationCtx) -> Result<Self::Output, ActionError> {
                     let output = crate::http::aws::iam::operations::$resource::$action(tx, &ctx, self).await?;
-                    Ok(OutputWrapper::new(output, aws_request_id))
+                    Ok(OutputWrapper::new(output, &ctx.aws_request_id))
                 }
             }
         )+
