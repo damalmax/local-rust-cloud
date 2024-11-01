@@ -29,7 +29,7 @@ impl From<LocalGetAccessKeyLastUsedOutput> for XmlResponse {
             write_iso8061_datetime_value_tag(
                 &mut key_last_used_tag,
                 "LastUsedDate",
-                Some(&key_last_used.last_used_date()),
+                key_last_used.last_used_date(),
             );
             write_tag_with_value(&mut key_last_used_tag, "ServiceName", Some(&key_last_used.service_name));
         }

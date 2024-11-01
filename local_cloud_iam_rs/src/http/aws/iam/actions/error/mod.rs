@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::fmt::Display;
 
 use axum::http::StatusCode;
 use derive_more::Display;

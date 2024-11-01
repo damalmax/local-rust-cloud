@@ -8,10 +8,10 @@ The project is created to help with serverless apps testing on local environment
 
 ## AWS
 
-| Service Name | Binary name               | Depends On |
-|--------------|---------------------------|------------|
-| IAM          | `local_rust_cloud_iam_rs` |            |
-| STS          | `local_rust_cloud_sts_rs` |            |
+| Service Name | Binary name               |
+|--------------|---------------------------|
+| IAM          | `local_rust_cloud_iam_rs` |
+| STS          | `local_rust_cloud_sts_rs` |
 
 ### Services implementation coverage
 
@@ -100,7 +100,7 @@ The project is created to help with serverless apps testing on local environment
 - [ ] list_account_aliases
 - [ ] list_attached_group_policies
 - [ ] list_attached_role_policies
-- [ ] list_attached_user_policies
+- [X] list_attached_user_policies
 - [ ] list_entities_for_policy
 - [X] list_group_policies
 - [X] list_groups
