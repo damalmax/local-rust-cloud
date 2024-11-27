@@ -1,0 +1,39 @@
+[package]
+name = "sts_rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Maksim Dadzerkin <maksim.dadzerkin@gmail.com>"]
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+chrono.workspace = true
+dotenv.workspace = true
+env_logger.workspace = true
+log.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+uuid.workspace = true
+
+sqlx.workspace = true
+url.workspace = true
+futures.workspace = true
+
+rand.workspace = true
+parking_lot.workspace = true
+
+aws-config.workspace = true
+aws-smithy-xml.workspace = true
+aws-smithy-types.workspace = true
+aws-sdk-sts.workspace = true
+aws-credential-types.workspace = true
+
+web = { path = "../../dependencies/common/web" }
+utils = { path = "../../dependencies/common/utils" }
+xml = { path = "../../dependencies/common/xml" }
+db = { path = "../../dependencies/common/db" }
+
+[dev-dependencies]
+testing = { path = "../../dependencies/common/testing" }

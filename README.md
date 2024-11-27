@@ -8,10 +8,10 @@ The project is created to help with serverless apps testing on local environment
 
 ## AWS
 
-| Service Name | Binary name               |
-|--------------|---------------------------|
-| IAM          | `local_rust_cloud_iam_rs` |
-| STS          | `local_rust_cloud_sts_rs` |
+| Service Name | Binary name |
+|--------------|-------------|
+| IAM          | `iam_rs`    |
+| STS          | `sts_rs`    |
 
 ### Services implementation coverage
 

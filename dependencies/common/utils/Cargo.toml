@@ -1,0 +1,10 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+log.workspace = true
+url = "2.5"
+rand.workspace = true
