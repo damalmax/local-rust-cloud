@@ -41,12 +41,12 @@ aws-types.workspace = true
 aws-sdk-iam.workspace = true
 aws-credential-types.workspace = true
 
-web = { path = "../../dependencies/common/web" }
-utils = { path = "../../dependencies/common/utils" }
-validators = { path = "../../dependencies/common/validators" }
-xml = { path = "../../dependencies/common/xml" }
-db = { path = "../../dependencies/common/db" }
-iam_policy = { path = "../../dependencies/iam/iam_policy" }
+web = { path = "../../runtime/common/web" }
+utils = { path = "../../runtime/common/utils" }
+validators = { path = "../../runtime/common/validators" }
+xml = { path = "../../runtime/common/xml" }
+db = { path = "../../runtime/common/db" }
+iam_policy = { path = "../../runtime/iam/iam_policy" }
 
 lazy_static.workspace = true
 encoding_rs.workspace = true
@@ -54,8 +54,9 @@ data-encoding.workspace = true
 urlencoding.workspace = true
 
 [dev-dependencies]
+local-aws-query-protocol = { path = "../../runtime/common/local-aws-query-protocol" }
 aws-smithy-runtime-api.workspace = true
-serde_aws_query_ce.workspace = true
 serde_urlencoded = "0.7"
 rstest.workspace = true
-testing = { path = "../../dependencies/common/testing" }
+testing = { path = "../../runtime/common/testing" }
+

@@ -1047,6 +1047,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
+ "serde",
 ]
 
 [[package]]
@@ -1476,7 +1477,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http 0.2.12",
- "indexmap",
+ "indexmap 2.6.0",
  "slab",
  "tokio",
  "tokio-util",
@@ -1495,7 +1496,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "http 1.1.0",
- "indexmap",
+ "indexmap 2.6.0",
  "slab",
  "tokio",
  "tokio-util",
@@ -1511,6 +1512,12 @@ dependencies = [
  "cfg-if",
  "crunchy",
 ]
+
+[[package]]
+name = "hashbrown"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
@@ -1765,6 +1772,7 @@ dependencies = [
  "iam_policy",
  "image 0.24.9",
  "lazy_static",
+ "local-aws-query-protocol",
  "log",
  "openssh-keys",
  "parking_lot",
@@ -1774,7 +1782,6 @@ dependencies = [
  "regex",
  "rstest",
  "serde",
- "serde_aws_query_ce",
  "serde_json",
  "serde_urlencoded",
  "sqlx",
@@ -2035,12 +2042,24 @@ checksum = "d0263a3d970d5c054ed9312c0057b4f3bde9c0b33836d3637361d4a9e6e7a408"
 
 [[package]]
 name = "indexmap"
+version = "1.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
+dependencies = [
+ "autocfg",
+ "hashbrown 0.12.3",
+ "serde",
+]
+
+[[package]]
+name = "indexmap"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "707907fe3c25f5424cce2cb7e1cbcafee6bdbe735ca90ef77c29e84591e5b9da"
 dependencies = [
  "equivalent",
  "hashbrown 0.15.2",
+ "serde",
 ]
 
 [[package]]
@@ -2161,6 +2180,19 @@ name = "litemap"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee93343901ab17bd981295f2cf0026d4ad018c7c31ba84549a4ddbb47a45104"
+
+[[package]]
+name = "local-aws-query-protocol"
+version = "0.1.1"
+dependencies = [
+ "aws-smithy-types",
+ "form_urlencoded",
+ "log",
+ "serde",
+ "serde_derive",
+ "serde_urlencoded",
+ "serde_with",
+]
 
 [[package]]
 name = "lock_api"
@@ -3105,18 +3137,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_aws_query_ce"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "395d4a7c9535bf6276e1aebfa428bba47b69b726aebe61bedf666a63a9008e94"
-dependencies = [
- "aws-smithy-types",
- "form_urlencoded",
- "log",
- "serde",
-]
-
-[[package]]
 name = "serde_derive"
 version = "1.0.215"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3168,6 +3188,36 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_with"
+version = "3.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e28bdad6db2b8340e449f7108f020b3b092e8583a9e3fb82713e1d4e71fe817"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+ "hex",
+ "indexmap 1.9.3",
+ "indexmap 2.6.0",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_with_macros",
+ "time",
+]
+
+[[package]]
+name = "serde_with_macros"
+version = "3.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d846214a9854ef724f3da161b426242d8de7c1fc7de2f89bb1efcb154dca79d"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.89",
 ]
 
 [[package]]
@@ -3333,7 +3383,7 @@ dependencies = [
  "hashbrown 0.14.5",
  "hashlink",
  "hex",
- "indexmap",
+ "indexmap 2.6.0",
  "log",
  "memchr",
  "native-tls",
@@ -3837,7 +3887,7 @@ version = "0.22.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ae48d6208a266e853d946088ed816055e556cc6028c5e8e2b84d9fa5dd7c7f5"
 dependencies = [
- "indexmap",
+ "indexmap 2.6.0",
  "serde",
  "serde_spanned",
  "toml_datetime",
@@ -4244,10 +4294,10 @@ dependencies = [
  "http-body-util",
  "hyper 1.5.1",
  "hyper-util",
+ "local-aws-query-protocol",
  "log",
  "nom",
  "serde",
- "serde_aws_query_ce",
  "tokio",
  "tower",
  "tower-http",

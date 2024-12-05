@@ -12,6 +12,7 @@ pub fn write_tag_with_value(parent_tag: &mut ScopeWriter, child_tag_name: &str, 
 }
 
 ///Adds a new sub-tag to the parent tag with the given name in case if value is defined.
+#[inline]
 pub fn write_iso8061_datetime_value_tag(
     parent_tag: &mut ScopeWriter, child_tag_name: &str, value: Option<&aws_smithy_types::DateTime>,
 ) {

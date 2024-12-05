@@ -23,7 +23,7 @@ where
     T: DeserializeOwned,
 {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, AwsQueryRejection> {
-        let entity: T = serde_aws_query_ce::from_bytes(bytes.as_ref())
+        let entity: T = local_aws_query_protocol::from_bytes(bytes.as_ref())
             .map_err(|_err| AwsQueryRejection::FailedToDeserializeAwsQueryBody)?;
         Ok(AwsQueryBody(entity))
     }

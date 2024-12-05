@@ -125,7 +125,7 @@ mod tests {
 
         let query_str = serde_urlencoded::to_string(params).unwrap();
 
-        let result = serde_aws_query_ce::from_str::<Request>(&query_str);
+        let result = local_aws_query_protocol::from_str::<Request>(&query_str);
 
         assert!(result.is_ok());
         let request = result.unwrap();

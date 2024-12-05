@@ -1,19 +1,20 @@
 [workspace]
 members = [
     # common modules
-    "dependencies/common/db",
-    "dependencies/common/qrcode",
-    "dependencies/common/utils",
-    "dependencies/common/validators",
-    "dependencies/common/xml",
-    "dependencies/common/web",
+    "runtime/common/local-aws-query-protocol",
+    "runtime/common/db",
+    "runtime/common/qrcode",
+    "runtime/common/utils",
+    "runtime/common/validators",
+    "runtime/common/xml",
+    "runtime/common/web",
     # IAM modules
-    "dependencies/iam/iam_policy",
+    "runtime/iam/iam_policy",
     "aws/iam_rs",
     # STS modules
     "aws/sts_rs",
     # modules for testing
-    "dependencies/common/testing",
+    "runtime/common/testing",
 ]
 resolver = "2"
 
@@ -42,7 +43,6 @@ data-encoding = "2.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
-serde_aws_query_ce = "0.1"
 validator = { version = "0.16", features = ["derive"] }
 
 sqlx = { version = "0.8", features = [
@@ -59,6 +59,7 @@ qrcode = "0.13"
 image = "0.24"
 
 chrono = { version = "0.4", features = ["serde"] }
+form_urlencoded = "1.2"
 
 # AWS dependencies
 aws-config = "1.5"
