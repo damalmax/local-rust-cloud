@@ -1,4 +1,3 @@
-use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use web::local::AwsRequestHeaders;
@@ -14,7 +13,6 @@ pub struct OperationCtx {
     pub(crate) aws_request_id: String,
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for OperationCtx
 where
     S: Send + Sync,

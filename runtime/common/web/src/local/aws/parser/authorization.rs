@@ -1,7 +1,7 @@
 use nom::bytes::complete::{tag, take_till};
 use nom::combinator::{all_consuming, fail};
 use nom::multi::separated_list1;
-use nom::IResult;
+use nom::{IResult, Parser};
 
 use crate::local::aws::authorization::{AuthAlgorithm, Authorization};
 use crate::local::aws::parser::credential::parse_credential;
@@ -10,7 +10,7 @@ use crate::local::aws::parser::utils::text;
 use super::utils;
 
 fn parse_auth_algorithm(input: &str) -> IResult<&str, AuthAlgorithm> {
-    let (input, algorithm_str) = take_till(|c| c == ' ')(input)?;
+    let (input, algorithm_str) = take_till(|c| c == ' ').parse(input)?;
 
     Ok((input, AuthAlgorithm::from_str(algorithm_str)))
 }
@@ -32,7 +32,7 @@ pub(crate) fn parse_authorization(input: &str) -> IResult<&str, Authorization> {
         match param_key {
             "Credential" => {
                 if credential_parsed {
-                    return fail(input_right);
+                    return fail().parse(input_right);
                 }
                 let (input_str, credential_str) = utils::till_comma(input_right)?;
                 let (_, credential_value) = parse_credential(credential_str)?;
@@ -42,11 +42,11 @@ pub(crate) fn parse_authorization(input: &str) -> IResult<&str, Authorization> {
             }
             "SignedHeaders" => {
                 if signed_headers_parsed {
-                    return fail(input_right);
+                    return fail().parse(input_right);
                 }
                 let (input_str, signed_header_names_str) = utils::till_comma(input_right)?;
                 let (_, mut signed_header_names) =
-                    all_consuming(separated_list1(tag(";"), text))(signed_header_names_str)?;
+                    all_consuming(separated_list1(tag(";"), text)).parse(signed_header_names_str)?;
                 input = input_str.trim();
                 signed_headers_parsed = true;
                 signed_header_names.sort();
@@ -54,19 +54,19 @@ pub(crate) fn parse_authorization(input: &str) -> IResult<&str, Authorization> {
             }
             "Signature" => {
                 if signature_parsed {
-                    return fail(input_right);
+                    return fail().parse(input_right);
                 }
                 let (input_str, signature_str) = utils::till_comma(input_right)?;
                 signature = Some(signature_str);
                 input = input_str.trim();
                 signature_parsed = true;
             }
-            _ => return fail(input_right),
+            _ => return fail().parse(input_right),
         }
     }
 
     if !credential_parsed || !signed_headers_parsed || !signature_parsed {
-        return fail(input);
+        return fail().parse(input);
     }
 
     Ok((

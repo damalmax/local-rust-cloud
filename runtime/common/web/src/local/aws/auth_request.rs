@@ -1,8 +1,4 @@
-use axum::async_trait;
-use axum::extract::{FromRequest, Request};
-use axum::response::IntoResponse;
-
-use super::{authorization::Authorization, parser::authorization::parse_authorization};
+use super::authorization::Authorization;
 
 #[derive(Debug, PartialEq)]
 pub struct AwsSdkRequest {

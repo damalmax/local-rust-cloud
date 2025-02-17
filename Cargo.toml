@@ -10,19 +10,19 @@ members = [
     "runtime/common/web",
     # IAM modules
     "runtime/iam/iam_policy",
-    "aws/iam_rs",
+    "cloud/iam_rs",
     # STS modules
-    "aws/sts_rs",
+    "cloud/sts_rs",
     # modules for testing
     "runtime/common/testing",
 ]
 resolver = "2"
 
 [workspace.dependencies]
-axum = "0.7"
+axum = "0.8"
 hyper = { version = "1.5", features = [] }
 hyper-util = { version = "0.1", features = ["tokio", "server-auto", "http1"] }
-tokio = { version = "1.41", features = ["full"] }
+tokio = { version = "1.43", features = ["full"] }
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.6", features = ["timeout", "trace"] }
 tracing = "0.1"
@@ -55,8 +55,9 @@ sqlx = { version = "0.8", features = [
 
 url = "2.5"
 urlencoding = "2.1"
-qrcode = "0.13"
-image = "0.24"
+qrcode = "0.14"
+image = "0.25"
+nom = "8.0"
 
 chrono = { version = "0.4", features = ["serde"] }
 form_urlencoded = "1.2"

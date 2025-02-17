@@ -15,7 +15,7 @@ use aws_sdk_iam::types::VirtualMfaDevice;
 use aws_smithy_types::{Blob, DateTime};
 use chrono::Utc;
 use data_encoding::BASE64;
-use image::{ImageOutputFormat, Luma};
+use image::{ImageFormat, Luma};
 use qrcode::QrCode;
 use sqlx::{Executor, Sqlite, Transaction};
 
@@ -90,7 +90,7 @@ pub(crate) async fn create_virtual_mfa_device<'a>(
     let mut image_bytes_cursor = Cursor::new(Vec::new());
 
     image
-        .write_to(&mut image_bytes_cursor, ImageOutputFormat::Png)
+        .write_to(&mut image_bytes_cursor, ImageFormat::Png)
         .map_err(|_| {
             ActionError::new(
                 ApiErrorKind::ServiceFailure,

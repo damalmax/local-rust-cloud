@@ -1,19 +1,18 @@
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::combinator::all_consuming;
-use nom::sequence::tuple;
-use nom::IResult;
+use nom::{IResult, Parser};
 
 use crate::local::aws::authorization::Credential;
 use crate::local::aws::parser::utils::text;
 
 pub(crate) fn parse_credential(input: &str) -> IResult<&str, Credential> {
-    let (input, (access_key, _, time, _)) = tuple((text, tag("/"), text, tag("/")))(input)?;
+    let (input, (access_key, _, time, _)) = (text, tag("/"), text, tag("/")).parse(input)?;
 
     let (input, (region, _, service, _)) = all_consuming(alt((
-        tuple((text, tag("/"), text, tag("/aws4_request"))),
-        tuple((tag(""), tag(""), text, tag("/aws4_request"))),
-    )))(input)?;
+        (text, tag("/"), text, tag("/aws4_request")),
+        (tag(""), tag(""), text, tag("/aws4_request")),
+    ))).parse(input)?;
 
     let region = if region.is_empty() { None } else { Some(region) };
     Ok((

@@ -1,7 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 
-use axum::async_trait;
 use axum::body::Bytes;
 use axum::extract::{FromRequest, Request};
 use axum::http::StatusCode;
@@ -43,7 +42,6 @@ impl<T> DerefMut for AwsQueryBody<T> {
     }
 }
 
-#[async_trait]
 impl<T, S> FromRequest<S> for AwsQueryBody<T>
 where
     T: DeserializeOwned,
